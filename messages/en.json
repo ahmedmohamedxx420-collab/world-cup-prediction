@@ -1,0 +1,17 @@
+{
+  "common": {
+    "appName": "World Cup Predictions",
+    "tagline": "Predict the scores and compete with your family on one board.",
+    "start": "Get started"
+  },
+  "nav": {
+    "fixtures": "Fixtures",
+    "leaderboard": "Leaderboard",
+    "profile": "Profile"
+  },
+  "language": {
+    "label": "Language",
+    "ar": "العربية",
+    "en": "English"
+  }
+}

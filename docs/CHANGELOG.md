@@ -28,6 +28,47 @@
 
 ---
 
+## 2026-06-12 — 0.3 i18n + RTL with next-intl
+**Plan item:** 0.3   **Status:** done
+
+**What changed**
+- Installed **next-intl v4**; wired the plugin in `next.config.ts`
+  (`createNextIntlPlugin` → `src/i18n/request.ts`).
+- Added `src/i18n/{routing,navigation,request}.ts`: locales `ar` (default, RTL) +
+  `en` (LTR); locale-aware `Link`/`router`/`usePathname` helpers.
+- Added `src/proxy.ts` (Next 16's renamed middleware) running next-intl's locale
+  middleware; matcher skips api/_next/_vercel and files with extensions.
+- Moved the app under **`src/app/[locale]/`**: `layout.tsx` sets
+  `<html lang dir>` + Tajawal + `NextIntlClientProvider`, with
+  `generateStaticParams` and localized `generateMetadata`; deleted the old
+  `src/app/{layout,page}.tsx`.
+- Added `messages/ar.json` + `messages/en.json` (`common`/`nav`/`language`).
+- Added `src/components/language-switcher.tsx` (ar ⇄ en, preserves path).
+- Sample page uses logical props only (`ps-`, `border-s`, `text-start`).
+
+**Why**
+- Item 0.3: Arabic-first localization with automatic RTL/LTR mirroring, enforced
+  at the layout layer so every later screen inherits it.
+
+**Files touched**
+- next.config.ts
+- src/i18n/routing.ts, src/i18n/navigation.ts, src/i18n/request.ts, src/proxy.ts
+- src/app/[locale]/layout.tsx, src/app/[locale]/page.tsx
+- src/components/language-switcher.tsx
+- messages/ar.json, messages/en.json
+- removed: src/app/layout.tsx, src/app/page.tsx
+
+**Notes / gotchas**
+- **Next 16** uses `src/proxy.ts`, not `middleware.ts`. The `[locale]/layout.tsx`
+  is the effective root layout (no `src/app/layout.tsx`).
+- `NextIntlClientProvider` is used without props — it inherits messages/locale
+  from the request config (next-intl v4 behavior).
+- Verified via curl: `/` → 307 → `/ar`; `/ar` = `dir="rtl"` (Arabic), `/en` =
+  `dir="ltr"` (English); logical-property grep guard clean.
+- `/[locale]` currently renders dynamically (ƒ); fine for Phase 0.
+
+---
+
 ## 2026-06-12 — 0.2 App scaffold: Next.js + Tailwind + shadcn/ui + Tajawal
 **Plan item:** 0.2 (+ 0.1 Step 5 sign-off)   **Status:** done
 

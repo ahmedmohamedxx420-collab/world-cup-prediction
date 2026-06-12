@@ -18,10 +18,10 @@
 
 ## Current Position
 
-➡️ **Phase 0 → Item 0.3 → i18n + RTL.** Owner signed off on docs (0.1 ✅). App
-scaffolded (0.2 ✅): Next 16 + TS + Tailwind v4 + shadcn/ui (RTL), Tajawal font,
-green sports theme; `npm run build`/`lint` clean. Next: next-intl with `[locale]`
-routing (`ar` default).
+➡️ **Phase 0 → Item 0.4 → Supabase wiring.** Docs (0.1), scaffold (0.2), and
+i18n+RTL (0.3) all ✅. App routes under `[locale]`; `ar`/RTL default, `en`/LTR,
+language switcher working. **0.4 is blocked on owner-supplied Supabase URL + keys**
+— I'll scaffold the clients/env and run the live smoke test once they arrive.
 
 ---
 
@@ -46,13 +46,13 @@ routing (`ar` default).
 - ☑ Step 4 — Arabic-friendly font (**Tajawal**) wired into the root layout as `--font-sans`
 - ☑ Step 5 — Verified `npm run build` + `npm run lint`; committed
 
-### 0.3 i18n + RTL (next-intl) ☐
+### 0.3 i18n + RTL (next-intl) ☑
 
-- ☐ Step 1 — Install/configure next-intl; locales `ar` (default) + `en`
-- ☐ Step 2 — `messages/ar.json`, `messages/en.json` scaffolds
-- ☐ Step 3 — Locale-aware layout: `dir="rtl"` for `ar`, `ltr` for `en`
-- ☐ Step 4 — Convert layout to logical Tailwind props (`ps-`/`pe-`, `text-start`)
-- ☐ Step 5 — Language switcher component; verify mirroring on a sample page
+- ☑ Step 1 — next-intl v4 configured (`[locale]` routing, `src/proxy.ts`); locales `ar` (default) + `en`
+- ☑ Step 2 — `messages/ar.json`, `messages/en.json` scaffolds (`common`/`nav`/`language`)
+- ☑ Step 3 — Locale-aware `[locale]/layout.tsx`: `dir="rtl"` for `ar`, `ltr` for `en` (verified via curl)
+- ☑ Step 4 — Sample page uses logical Tailwind props (`ps-`/`border-s`/`text-start`); grep guard clean
+- ☑ Step 5 — Language switcher (ar ⇄ en); `/` → 307 → `/ar`, mirroring verified
 
 ### 0.4 Supabase wiring ☐
 
