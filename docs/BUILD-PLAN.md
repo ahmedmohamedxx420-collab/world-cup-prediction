@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-12 (rev 4)
+> **Last updated:** 2026-06-12 (rev 5)
 
 ---
 
@@ -18,9 +18,10 @@
 
 ## Current Position
 
-➡️ **Phase 1 → 1.2 (Profile setup).** The localized two-step OTP UI is built and
-verified by lint/build. Owner dashboard setup and a real email round-trip remain
-for 1.1 Step 4. Next, build onboarding plus profile editing.
+➡️ **Phase 1 → 1.3 (Sessions & route protection).** Onboarding, profile editing,
+locale preference, saved confirmation, and sign-out are built. Next, compose
+Supabase session refresh and auth gating into `src/proxy.ts`, then add the
+incomplete-profile gate to the app layout.
 
 ---
 
@@ -88,16 +89,16 @@ for 1.1 Step 4. Next, build onboarding plus profile editing.
 - ☑ Step 3 — Error/resend handling; localized copy
 - ☐ Step 4 — Verify full round-trip with a real email
 
-### 1.2 Profile setup ☐
+### 1.2 Profile setup ☑
 
-- ☐ Step 1 — `profiles` row creation on first login (full name required)
+- ☑ Step 1 — `profiles` row creation on first login (full name required)
 - ⊘ Step 2 — Optional avatar upload deferred; `avatar_url` exists but is unused
-- ☐ Step 3 — Edit profile (name, locale)
+- ☑ Step 3 — Edit profile (name, locale)
 
-### 1.3 Sessions & route protection ☐
+### 1.3 Sessions & route protection ◐
 
 - ☐ Step 1 — Middleware: gate app routes behind auth
-- ☐ Step 2 — Sign-out
+- ☑ Step 2 — Sign-out
 - ☐ Step 3 — Redirect logic (unauth → login, incomplete profile → setup)
 
 ---

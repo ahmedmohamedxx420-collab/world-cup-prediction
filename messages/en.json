@@ -34,6 +34,33 @@
       "generic": "Something went wrong. Please try again."
     }
   },
+  "onboarding": {
+    "title": "Set up your profile",
+    "description": "Tell the family who you are and pick your preferred language.",
+    "nameLabel": "Full name",
+    "namePlaceholder": "Your name",
+    "localeLabel": "Preferred language",
+    "save": "Finish setup",
+    "saving": "Saving…",
+    "errors": {
+      "nameRequired": "Enter your name to continue.",
+      "generic": "We couldn't save your profile. Please try again."
+    }
+  },
+  "profile": {
+    "title": "Your profile",
+    "description": "Update the name and language shown for your account.",
+    "nameLabel": "Full name",
+    "localeLabel": "Preferred language",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Profile saved.",
+    "signOut": "Sign out",
+    "errors": {
+      "nameRequired": "Enter your name to continue.",
+      "generic": "We couldn't save your changes. Please try again."
+    }
+  },
   "comingSoon": {
     "title": "Coming soon",
     "description": "This section is under construction."

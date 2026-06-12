@@ -28,6 +28,34 @@
 
 ---
 
+## 2026-06-12 — 1.2 onboarding and profile management
+**Plan item:** 1.2 (+ 1.3 Step 2)   **Status:** done
+
+**What changed**
+- Added server-side profile helpers for the current user and profile row.
+- Added first-login onboarding with required full name and locale, inserting the
+  RLS-bound profile row before redirecting to fixtures.
+- Replaced the profile placeholder with name/locale editing, locale-aware
+  redirect, saved confirmation, and sign-out.
+
+**Why**
+- A missing profile row is the explicit incomplete-onboarding state; profile
+  writes stay within the member-editable grants from migration `0001`.
+
+**Files touched**
+- src/lib/profile.ts
+- src/app/[locale]/(auth)/onboarding/*
+- src/app/[locale]/(app)/profile/*
+- messages/ar.json, messages/en.json, docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- next-intl's locale-aware `redirect` is typed as `void`, so server actions and
+  components include unreachable fallback returns for TypeScript narrowing.
+- Sign-out (1.3 Step 2) landed here because it belongs on the real profile page.
+- Lint, production build, and logical-property grep pass.
+
+---
+
 ## 2026-06-12 — 1.1 localized email OTP flow
 **Plan item:** 1.1 Steps 1–3   **Status:** done; real email round-trip pending
 
