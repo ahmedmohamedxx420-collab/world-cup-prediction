@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# World Cup Predictions
 
-## Getting Started
+A private, mobile-first, Arabic-first (RTL) FIFA World Cup score-prediction app
+for one family group with a single shared leaderboard.
 
-First, run the development server:
+See [`docs/PROJECT-CONTEXT.md`](docs/PROJECT-CONTEXT.md) for the full spec,
+[`docs/BUILD-PLAN.md`](docs/BUILD-PLAN.md) for the backlog, and
+[`CLAUDE.md`](CLAUDE.md) for the working conventions.
+
+## Stack
+
+Next.js 16 (App Router) · TypeScript · Tailwind v4 + shadcn/ui · next-intl
+(ar default + en) · Supabase (Postgres + Auth + Storage + RLS) · Vercel.
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # then fill in the Supabase values
+npm run dev                  # http://localhost:3000  (redirects to /ar)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Copy `.env.example` to `.env.local` and fill in from your Supabase project
+(Dashboard → Project Settings → API):
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Where it's used | Notes |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | browser + server | Project URL; public |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser + server | anon/publishable key; public, RLS-bound |
+| `SUPABASE_SERVICE_ROLE_KEY` | **server only** | service_role/secret key; bypasses RLS — never expose |
 
-## Learn More
+`.env.local` is git-ignored; `.env.example` is committed as the template.
 
-To learn more about Next.js, take a look at the following resources:
+After setting the values, confirm connectivity by visiting
+`/api/supabase-health` (returns `{ ok: true, connected: true }`). That route is a
+temporary smoke test and will be removed once verified.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `npm run dev` — dev server
+- `npm run build` — production build
+- `npm run lint` — ESLint

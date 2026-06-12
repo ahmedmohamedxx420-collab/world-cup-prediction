@@ -28,6 +28,43 @@
 
 ---
 
+## 2026-06-12 — 0.4 Supabase wiring (clients + env; smoke test pending keys)
+**Plan item:** 0.4   **Status:** in progress (blocked on owner-supplied keys)
+
+**What changed**
+- Installed `@supabase/supabase-js` + `@supabase/ssr`.
+- Added clients in `src/lib/supabase/`:
+  - `client.ts` — browser client (anon key, RLS-bound).
+  - `server.ts` — server client with async `cookies()` (Next 16) for session
+    persistence.
+  - `admin.ts` — service-role client, guarded with `import "server-only"`.
+- Added `.env.example` (URL, anon key, service-role key) and a `!.env.example`
+  exception in `.gitignore` so the template is committed but real `.env.local`
+  stays ignored.
+- Documented env vars + setup in `README.md` (replaced the CNA boilerplate).
+- Added a temporary smoke-test route `GET /api/supabase-health` that confirms
+  PostgREST connectivity (treats `42P01` as success → connected, no table yet).
+
+**Why**
+- Item 0.4: stand up the Supabase access layer with the RLS-correct split
+  (anon vs service-role) so later phases just import these clients.
+
+**Files touched**
+- package.json
+- src/lib/supabase/{client,server,admin}.ts
+- src/app/api/supabase-health/route.ts
+- .env.example, .gitignore, README.md
+
+**Notes / gotchas**
+- **BLOCKED:** owner must create the Supabase project and supply
+  `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+  `SUPABASE_SERVICE_ROLE_KEY`. Then: `cp .env.example .env.local`, fill, hit
+  `/api/supabase-health` to verify, and **delete the smoke-test route**.
+- `admin.ts` must never be imported from client code (`server-only` enforces it).
+- Build verified clean without real keys (clients instantiate lazily).
+
+---
+
 ## 2026-06-12 — 0.3 i18n + RTL with next-intl
 **Plan item:** 0.3   **Status:** done
 

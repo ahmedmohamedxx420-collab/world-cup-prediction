@@ -54,12 +54,12 @@ language switcher working. **0.4 is blocked on owner-supplied Supabase URL + key
 - ☑ Step 4 — Sample page uses logical Tailwind props (`ps-`/`border-s`/`text-start`); grep guard clean
 - ☑ Step 5 — Language switcher (ar ⇄ en); `/` → 307 → `/ar`, mirroring verified
 
-### 0.4 Supabase wiring ☐
+### 0.4 Supabase wiring ◐ (code done; live smoke test ⊘ blocked on owner keys)
 
-- ☐ Step 1 — Create Supabase project; capture URL + anon/service keys in env
-- ☐ Step 2 — `@supabase/supabase-js` + SSR helpers; browser & server clients
-- ☐ Step 3 — `.env.local` + `.env.example`; document required vars
-- ☐ Step 4 — Smoke-test a server-side query against Supabase
+- ⊘ Step 1 — Create Supabase project; capture URL + anon/service keys — **owner action** (not yet supplied)
+- ☑ Step 2 — `@supabase/supabase-js` + `@supabase/ssr`; browser / server / admin clients (`src/lib/supabase/`)
+- ☑ Step 3 — `.env.example` (+ `.gitignore` `!.env.example`); vars documented in README
+- ⊘ Step 4 — Smoke-test route `GET /api/supabase-health` written; **run once keys are set**, then remove route
 
 ### 0.5 App shell ☐
 
