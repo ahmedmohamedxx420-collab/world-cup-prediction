@@ -28,6 +28,27 @@
 
 ---
 
+## 2026-06-12 — Phase 1 final OTP error-mapping pass
+**Plan item:** 1.1 Step 3   **Status:** done
+
+**What changed**
+- Kept invalid/expired code errors distinct from generic verification failures;
+  rate limits remain their own localized state.
+
+**Why**
+- Network or server failures should not tell a member that a valid code is wrong.
+
+**Files touched**
+- src/app/[locale]/(auth)/login/login-form.tsx
+- docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Final lint and Turbopack build pass. Logical-property/navigation-import guards
+  are clean; local smoke tests confirm ar/RTL, en/LTR, and locale-aware
+  logged-out route redirects.
+
+---
+
 ## 2026-06-12 — 1.3 session refresh and route protection
 **Plan item:** 1.3   **Status:** done
 

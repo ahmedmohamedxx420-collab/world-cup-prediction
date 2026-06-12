@@ -71,7 +71,13 @@ export function LoginForm() {
 
     if (authError) {
       setIsLoading(false);
-      setError(authError.status === 429 ? "rateLimited" : "invalidCode");
+      if (authError.status === 429) {
+        setError("rateLimited");
+      } else if (authError.status === 400 || authError.status === 403) {
+        setError("invalidCode");
+      } else {
+        setError("generic");
+      }
       return;
     }
 
