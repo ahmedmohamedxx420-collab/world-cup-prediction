@@ -28,6 +28,34 @@
 
 ---
 
+## 2026-06-12 — 0.4 complete: Supabase live smoke test passed
+**Plan item:** 0.4 (Step 1 + Step 4)   **Status:** done — **Phase 0 complete**
+
+**What changed**
+- Owner created the Supabase project; keys placed in `.env.local` (git-ignored).
+- Ran the live smoke test: `GET /api/supabase-health` → `{ok:true, connected:true}`,
+  confirming the server client reaches the project and authenticates.
+- Recognized PostgREST's `PGRST205` (table-not-found in schema cache) as a
+  "connected, no table yet" success alongside Postgres `42P01`.
+- Removed the throwaway smoke-test route (`src/app/api/...`) per plan.
+
+**Why**
+- Closes item 0.4 Steps 1 & 4 and finishes Phase 0.
+
+**Files touched**
+- removed: src/app/api/supabase-health/route.ts
+- docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- **Security:** the real keys were briefly pasted into the tracked `.env.example`;
+  moved them to `.env.local` and restored `.env.example` placeholders **before any
+  commit**, so no secret entered git history. `.env.example` must stay
+  placeholder-only.
+- A "table not found" error from the smoke check is the *expected* success signal
+  pre-Phase-2 (no app tables exist yet).
+
+---
+
 ## 2026-06-12 — 0.5 App shell: nav, placeholder routes, primitives
 **Plan item:** 0.5   **Status:** done
 

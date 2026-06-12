@@ -18,12 +18,11 @@
 
 ## Current Position
 
-➡️ **Phase 0 ≈ done → next: finish 0.4, then Phase 1 (1.1 Email OTP).** Items
-0.1, 0.2, 0.3, 0.5 are ✅; the app shell (header + bottom nav + Fixtures/
-Leaderboard/Profile placeholders) runs in `ar`/RTL and `en`/LTR. **Only remaining
-Phase 0 work: the 0.4 live Supabase smoke test**, blocked on owner-supplied URL +
-keys (clients/env already wired; hit `/api/supabase-health` once keys are set,
-then remove that route). After that, start **Phase 1 → 1.1 (Email OTP)**.
+➡️ **Phase 0 complete ✅ → next: Phase 1 → 1.1 (Email OTP).** All of 0.1–0.5 done:
+docs signed off, app scaffolded, i18n+RTL, Supabase wired & smoke-tested live, and
+the app shell (header + bottom nav + Fixtures/Leaderboard/Profile placeholders)
+runs in `ar`/RTL and `en`/LTR. Supabase keys live in `.env.local` (git-ignored).
+Begin **1.1 Email OTP**: email entry → `signInWithOtp` → code verification.
 
 ---
 
@@ -56,12 +55,12 @@ then remove that route). After that, start **Phase 1 → 1.1 (Email OTP)**.
 - ☑ Step 4 — Sample page uses logical Tailwind props (`ps-`/`border-s`/`text-start`); grep guard clean
 - ☑ Step 5 — Language switcher (ar ⇄ en); `/` → 307 → `/ar`, mirroring verified
 
-### 0.4 Supabase wiring ◐ (code done; live smoke test ⊘ blocked on owner keys)
+### 0.4 Supabase wiring ☑
 
-- ⊘ Step 1 — Create Supabase project; capture URL + anon/service keys — **owner action** (not yet supplied)
+- ☑ Step 1 — Supabase project created by owner; URL + anon/service keys in `.env.local` (git-ignored)
 - ☑ Step 2 — `@supabase/supabase-js` + `@supabase/ssr`; browser / server / admin clients (`src/lib/supabase/`)
 - ☑ Step 3 — `.env.example` (+ `.gitignore` `!.env.example`); vars documented in README
-- ⊘ Step 4 — Smoke-test route `GET /api/supabase-health` written; **run once keys are set**, then remove route
+- ☑ Step 4 — Smoke test passed (`/api/supabase-health` → `{ok:true, connected:true}`); throwaway route removed
 
 ### 0.5 App shell ☑
 
