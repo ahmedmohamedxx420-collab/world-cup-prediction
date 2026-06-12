@@ -3,7 +3,7 @@
 > **Single source of truth.** Read this before writing any code. If something here
 > is wrong or out of date, fix it here first, then build to match.
 >
-> **Last updated:** 2026-06-12 (rev 3) · **Status:** Building — Phase 0 (app scaffolded)
+> **Last updated:** 2026-06-12 (rev 4) · **Status:** Building — Phase 1 (authentication)
 
 ---
 
@@ -133,6 +133,10 @@ API-ready, manual-entry-first. Names are the working spec; finalize in migration
 | `locale` | text, default `'ar'` | UI preference |
 | `created_at` | timestamptz | |
 
+Created in Phase 1 by `supabase/migrations/0001_profiles.sql`. The app inserts
+the row during onboarding; an authenticated user with no row has an incomplete
+profile. Avatar upload is deferred, so `avatar_url` exists but is unused.
+
 ### `teams`
 | Column | Type | Notes |
 |---|---|---|
@@ -193,7 +197,8 @@ not just in the UI, so the API can never leak a hidden prediction.
 - **`predictions` INSERT/UPDATE:** only your own row, and only while
   `now() < matches.kickoff_at` (predictions close at kickoff).
 - **`profiles`:** everyone (authenticated) can read names/avatars (leaderboard);
-  you can update only your own.
+  you can insert/update only your own row. Column grants exclude `is_admin`, so
+  owning a row cannot be used to self-promote. There is no user DELETE policy.
 - **`teams` / `matches` / `app_settings`:** read for all authenticated users;
   write only for admins (`is_admin = true`, checked via a `SECURITY DEFINER`
   helper to avoid RLS recursion).
@@ -244,6 +249,7 @@ Documented defaults (change here if the owner decides otherwise):
   schedule; verify against FIFA at seed time and store venue-local kickoff times
   as UTC.
 - **Tournament-long bonus picks** (champion, top scorer) are out of scope for v1.
+- **Profile avatar upload:** deferred; Phase 1 profile setup is name + locale.
 
 ---
 

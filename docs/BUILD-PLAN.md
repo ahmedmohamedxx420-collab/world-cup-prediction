@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-12 (rev 2)
+> **Last updated:** 2026-06-12 (rev 3)
 
 ---
 
@@ -18,11 +18,10 @@
 
 ## Current Position
 
-➡️ **Phase 0 complete ✅ → next: Phase 1 → 1.1 (Email OTP).** All of 0.1–0.5 done:
-docs signed off, app scaffolded, i18n+RTL, Supabase wired & smoke-tested live, and
-the app shell (header + bottom nav + Fixtures/Leaderboard/Profile placeholders)
-runs in `ar`/RTL and `en`/LTR. Supabase keys live in `.env.local` (git-ignored).
-Begin **1.1 Email OTP**: email entry → `signInWithOtp` → code verification.
+➡️ **Phase 1 → 1.1 (Email OTP).** The `profiles` table, RLS, and protected
+user-editable column grants are defined in migration `0001_profiles.sql`.
+Apply it in the Supabase SQL editor, then build **1.1 Email OTP**: email entry →
+`signInWithOtp` → code verification.
 
 ---
 
@@ -76,6 +75,13 @@ Begin **1.1 Email OTP**: email entry → `signInWithOtp` → code verification.
 > Goal: a family member can register and log in with an email code, and has a
 > profile. Registration is **open** (per decision §4.3).
 
+### 1.0 Profiles table + RLS ☑
+
+- ☑ Step 1 — Versioned `0001_profiles.sql` migration creates `profiles`
+- ☑ Step 2 — RLS: authenticated read, own insert, own update, no delete
+- ☑ Step 3 — Column grants prevent users from updating `is_admin`
+- ☐ Step 4 — Owner applies migration in the Supabase SQL editor and confirms RLS
+
 ### 1.1 Email OTP flow ☐
 
 - ☐ Step 1 — Email entry screen → `signInWithOtp`
@@ -86,8 +92,8 @@ Begin **1.1 Email OTP**: email entry → `signInWithOtp` → code verification.
 ### 1.2 Profile setup ☐
 
 - ☐ Step 1 — `profiles` row creation on first login (full name required)
-- ☐ Step 2 — Optional avatar upload to Supabase Storage
-- ☐ Step 3 — Edit profile (name, avatar, locale)
+- ⊘ Step 2 — Optional avatar upload deferred; `avatar_url` exists but is unused
+- ☐ Step 3 — Edit profile (name, locale)
 
 ### 1.3 Sessions & route protection ☐
 
@@ -104,7 +110,7 @@ Begin **1.1 Email OTP**: email entry → `signInWithOtp` → code verification.
 
 ### 2.1 Schema migrations ☐
 
-- ☐ Step 1 — `profiles`, `teams`, `matches`, `predictions`, `app_settings`
+- ☐ Step 1 — `teams`, `matches`, `predictions`, `app_settings` (`profiles` exists)
 - ☐ Step 2 — Constraints (unique prediction per user/match) + indexes
 - ☐ Step 3 — `app_settings` singleton seeded with 7 / 4 / 2
 - ☐ Step 4 — Grant admin to the owner (`ahmed.mohamed.xx420@gmail.com`): trigger on
@@ -114,7 +120,7 @@ profile creation, or a one-off update after first login
 
 - ☐ Step 1 — `is_admin()` SECURITY DEFINER helper
 - ☐ Step 2 — `predictions` policies (own-or-after-kickoff SELECT; pre-kickoff own INSERT/UPDATE)
-- ☐ Step 3 — `profiles` / `teams` / `matches` / `app_settings` policies
+- ☐ Step 3 — `teams` / `matches` / `app_settings` policies (`profiles` exists)
 - ☐ Step 4 — **Verify privacy**: a second user cannot read pre-kickoff predictions
 
 ### 2.3 Seed teams & full schedule ☐
@@ -216,4 +222,3 @@ After each coding execution:
 2. Move the **Current Position** pointer.
 3. Add or re-order items if reality differed from the plan (note why).
 4. Append a dated entry to `[CHANGELOG.md](./CHANGELOG.md)`.
-

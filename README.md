@@ -33,9 +33,16 @@ Copy `.env.example` to `.env.local` and fill in from your Supabase project
 
 `.env.local` is git-ignored; `.env.example` is committed as the template.
 
-After setting the values, confirm connectivity by visiting
-`/api/supabase-health` (returns `{ ok: true, connected: true }`). That route is a
-temporary smoke test and will be removed once verified.
+## Supabase setup
+
+Database migrations live in [`supabase/migrations/`](supabase/migrations/) and
+are applied manually, in numeric order, by pasting each file into the Supabase
+dashboard's **SQL Editor**. See [`supabase/README.md`](supabase/README.md) for the
+workflow.
+
+For typed email-code login, update **Auth → Emails → Magic Link** in the
+Supabase dashboard so the message displays the six-digit `{{ .Token }}`. Also
+confirm **Auth → Providers → Email** is enabled and email signups are on.
 
 ## Scripts
 

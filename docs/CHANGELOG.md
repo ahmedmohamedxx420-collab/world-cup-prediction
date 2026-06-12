@@ -28,6 +28,31 @@
 
 ---
 
+## 2026-06-12 — 1.0 profiles table + RLS migration
+**Plan item:** 1.0   **Status:** done in code; owner SQL-editor apply pending
+
+**What changed**
+- Added `0001_profiles.sql` with the Phase 1 profile schema, RLS policies, and
+  grants that exclude `is_admin` from member updates.
+- Documented the versioned, paste-into-SQL-editor migration workflow.
+- Pulled profiles out of Phase 2.1, recorded avatar deferral, and updated project
+  security/context docs.
+
+**Why**
+- Onboarding and profile-complete routing need the profile table before the rest
+  of the Phase 2 schema.
+
+**Files touched**
+- supabase/migrations/0001_profiles.sql, supabase/README.md
+- README.md, docs/BUILD-PLAN.md, docs/PROJECT-CONTEXT.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Apply `0001_profiles.sql` once in the Supabase SQL editor and confirm RLS is on.
+- The migration replaces table-wide member UPDATE with column grants; a
+  column-only revoke would not block `is_admin` while table UPDATE remained.
+
+---
+
 ## 2026-06-12 — 0.4 complete: Supabase live smoke test passed
 **Plan item:** 0.4 (Step 1 + Step 4)   **Status:** done — **Phase 0 complete**
 
