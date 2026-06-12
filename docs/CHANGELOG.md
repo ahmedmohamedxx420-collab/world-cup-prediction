@@ -1,0 +1,137 @@
+# Changelog — FIFA World Cup Prediction
+
+> **Why this file exists:** to give the next coding session an accurate, low-noise
+> record of what changed and *why*, so it doesn't re-introduce bugs or undo
+> intentional decisions. Append a new entry **after every coding execution**.
+>
+> **Newest entries on top.** One entry per execution.
+
+### Entry format
+
+```
+## YYYY-MM-DD — <short title>
+**Plan item:** <e.g. 0.2 Step 3>   **Status:** <done / in progress / blocked>
+
+**What changed**
+- bullet points of the actual changes
+
+**Why**
+- the reason / decision behind it (especially if non-obvious)
+
+**Files touched**
+- path/one
+- path/two
+
+**Notes / gotchas**
+- anything the next session must know (migrations to run, env vars added, follow-ups)
+```
+
+---
+
+## 2026-06-12 — 0.2 App scaffold: Next.js + Tailwind + shadcn/ui + Tajawal
+**Plan item:** 0.2 (+ 0.1 Step 5 sign-off)   **Status:** done
+
+**What changed**
+- Owner signed off on the docs (0.1 Step 5 ☑); began the build.
+- Scaffolded the app with `create-next-app`: **Next 16.2.9, React 19, TypeScript,
+  Tailwind v4, ESLint, App Router, `src/` dir, `@/*` alias.** Scaffolded into a
+  temp dir and merged in to preserve `docs/`, `CLAUDE.md`, and `.git`.
+- Initialized **shadcn/ui** with `--rtl` (base-nova style, neutral base, CSS
+  variables); added **button, input, card**.
+- Set a "sports app" theme: **green primary accent** (oklch ~0.58/0.7 hue 152) for
+  light + dark, with matching ring/accent tokens.
+- Wired **Tajawal** (`next/font/google`, arabic+latin) as `--font-sans`; root
+  layout defaults to `lang="ar" dir="rtl"`.
+- Replaced the boilerplate landing page with a minimal Arabic card/button sample.
+- Pinned `turbopack.root` in `next.config.ts` to silence a workspace-root warning
+  caused by a stray `yarn.lock` in the home directory.
+
+**Why**
+- Item 0.2: establish the running, styled shell every later phase builds on.
+  Tajawal + RTL-default chosen per owner (Arabic-first app).
+
+**Files touched**
+- package.json, next.config.ts, components.json
+- src/app/layout.tsx, src/app/globals.css, src/app/page.tsx
+- src/components/ui/{button,input,card}.tsx, src/lib/utils.ts
+- (generated) tsconfig.json, eslint.config.mjs, postcss.config.mjs, .gitignore
+- CLAUDE.md (filled in Commands section)
+
+**Notes / gotchas**
+- **Tailwind v4** = CSS-first config; theme lives in `src/app/globals.css`
+  (`@theme inline` + `:root`/`.dark` CSS vars). No `tailwind.config.js`.
+- shadcn CLI here uses `-b radix|base` (component lib) and a separate `--rtl`
+  flag — *not* `-b <color>`. Base color is set via `-d` default (neutral).
+- `.gitignore` ignores `.env*`; remember to add `!.env.example` when 0.4 lands.
+- Commands now live in CLAUDE.md: `npm run dev | build | lint`.
+
+---
+
+## 2026-06-12 — Requirements round 2: admin, full data seed, mid-tournament launch
+**Plan item:** 0.1 (docs refinement)   **Status:** done (still pending sign-off)
+
+**What changed**
+- Captured four more decisions and updated `PROJECT-CONTEXT.md` (§4 items 5–8, §9,
+  §10) and `BUILD-PLAN.md` (items 2.1, 2.3, 3.1, Current Position):
+  - **Admin** = `ahmed.mohamed.xx420@gmail.com` (single owner; also competes).
+  - **Seed data** = pre-load all 48 teams + the full 104-match official schedule;
+    admin only enters results.
+  - **Launch** = going live mid-tournament; matches already kicked off are
+    results-only (kickoff rule auto-locks them — no extra schema needed).
+  - **Bonus picks** = none in v1; per-match score predictions only.
+
+**Why**
+- Owner answered the round-2 clarifying questions to close build-blocking gaps in
+  admin designation, data seeding, launch behavior, and v1 scope.
+
+**Files touched**
+- docs/PROJECT-CONTEXT.md
+- docs/BUILD-PLAN.md
+- docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Seeding requires the real FIFA 2026 schedule (fixtures, kickoff times, venues).
+  Pull and verify it at build time (Plan 2.3); store venue-local times as UTC.
+- No new "results-only" flag: the existing `now() >= kickoff_at` rule already
+  closes predictions on past matches.
+- Admin grant needs the owner's profile to exist first (post-first-login step).
+
+---
+
+## 2026-06-12 — Project kickoff: requirements locked + support docs created
+**Plan item:** 0.1 Steps 1–4   **Status:** done (pending owner sign-off, Step 5)
+
+**What changed**
+- Captured the four open product decisions via clarifying questions:
+  - Scoring: **exact 7 / goal-diff 4 / winner 2 / miss 0** (precision-heavy).
+  - Match data: **manual admin entry**, schema kept API-ready.
+  - Registration: **open** (anyone with the link).
+  - Knockouts: scored on **official full-time score incl. extra time**; shootout
+    not scored.
+- Created `docs/PROJECT-CONTEXT.md` (objective, scope, stack, decisions, scoring
+  algorithm with worked examples, data model, RLS/privacy model, i18n/design,
+  assumptions).
+- Created `docs/BUILD-PLAN.md` (phases 0–5, item/step backlog, status markers,
+  current-position pointer).
+- Created `docs/CHANGELOG.md` (this file).
+- Created `CLAUDE.md` to wire the docs into the build workflow.
+
+**Why**
+- The owner wants a documentation-first workflow: a context doc, an ordered
+  backlog tracked per step, and a changelog — so the build stays clean and the AI
+  always has fresh context. These four files are that backbone, created before any
+  app code.
+
+**Files touched**
+- docs/PROJECT-CONTEXT.md
+- docs/BUILD-PLAN.md
+- docs/CHANGELOG.md
+- CLAUDE.md
+
+**Notes / gotchas**
+- No application code yet. Next step is owner sign-off on the docs, then scaffold
+  the Next.js app (Plan item 0.2).
+- Scoring numbers will live in an `app_settings` row so they can be tuned without
+  a redeploy — don't hard-code them.
+- Prediction privacy must be enforced in **RLS**, not just the UI (see
+  PROJECT-CONTEXT.md §7).
