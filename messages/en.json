@@ -14,6 +14,26 @@
     "ar": "العربية",
     "en": "English"
   },
+  "auth": {
+    "title": "Welcome",
+    "description": "Enter your email and we'll send you a six-digit login code.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "you@example.com",
+    "sendCode": "Send code",
+    "sending": "Sending…",
+    "codeLabel": "Login code",
+    "codeDescription": "We sent a six-digit code to {email}.",
+    "verify": "Log in",
+    "verifying": "Checking…",
+    "resend": "Resend code",
+    "resendIn": "Resend in {seconds}s",
+    "changeEmail": "Change email",
+    "errors": {
+      "invalidCode": "That code is invalid or expired. Try again or resend it.",
+      "rateLimited": "Too many attempts. Wait a bit, then try again.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
   "comingSoon": {
     "title": "Coming soon",
     "description": "This section is under construction."

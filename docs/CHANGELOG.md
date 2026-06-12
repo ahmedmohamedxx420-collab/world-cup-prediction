@@ -28,6 +28,33 @@
 
 ---
 
+## 2026-06-12 — 1.1 localized email OTP flow
+**Plan item:** 1.1 Steps 1–3   **Status:** done; real email round-trip pending
+
+**What changed**
+- Added a centered `(auth)` layout with the language switcher and no app nav.
+- Added the two-step login form: send email OTP, verify six-digit code, then
+  route to onboarding or fixtures based on profile presence.
+- Added localized inline errors, disabled/loading states, resend cooldown, and
+  the shadcn Label primitive.
+
+**Why**
+- Open registration and returning-member login use the same Supabase email-code
+  flow, while first-time users need to be directed into profile setup.
+
+**Files touched**
+- src/app/[locale]/(auth)/layout.tsx
+- src/app/[locale]/(auth)/login/{page.tsx,login-form.tsx}
+- src/components/ui/label.tsx, messages/ar.json, messages/en.json
+- docs/BUILD-PLAN.md, docs/PROJECT-CONTEXT.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Supabase's Magic Link template must display `{{ .Token }}` before the real
+  typed-code round-trip can pass.
+- Lint, production build, and logical-property grep pass.
+
+---
+
 ## 2026-06-12 — 1.0 profiles table + RLS migration
 **Plan item:** 1.0   **Status:** done in code; owner SQL-editor apply pending
 

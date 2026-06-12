@@ -3,7 +3,7 @@
 > **Single source of truth.** Read this before writing any code. If something here
 > is wrong or out of date, fix it here first, then build to match.
 >
-> **Last updated:** 2026-06-12 (rev 4) · **Status:** Building — Phase 1 (authentication)
+> **Last updated:** 2026-06-12 (rev 5) · **Status:** Building — Phase 1 (authentication)
 
 ---
 
@@ -77,6 +77,9 @@ These were confirmed with the owner. Change them *here* if they change.
    existing `now() >= kickoff_at` gate handles this.
 8. **No tournament-long bonus picks in v1.** Per-match score predictions only. A
    "predict the champion" / top-scorer bonus is explicitly deferred.
+9. **Email OTP is a typed six-digit code.** The Supabase **Magic Link** email
+   template must display `{{ .Token }}`; a confirmation-link-only template does
+   not support the app's two-step code form.
 
 ---
 

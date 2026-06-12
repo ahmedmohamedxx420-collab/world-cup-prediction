@@ -14,6 +14,26 @@
     "ar": "العربية",
     "en": "English"
   },
+  "auth": {
+    "title": "أهلاً بك",
+    "description": "اكتب بريدك وسنرسل لك رمز دخول من 6 أرقام.",
+    "emailLabel": "البريد الإلكتروني",
+    "emailPlaceholder": "you@example.com",
+    "sendCode": "أرسل الرمز",
+    "sending": "جارٍ الإرسال…",
+    "codeLabel": "رمز الدخول",
+    "codeDescription": "أرسلنا رمزاً من 6 أرقام إلى {email}.",
+    "verify": "دخول",
+    "verifying": "جارٍ التحقق…",
+    "resend": "أرسل الرمز مرة ثانية",
+    "resendIn": "إعادة الإرسال خلال {seconds}ث",
+    "changeEmail": "غيّر البريد",
+    "errors": {
+      "invalidCode": "الرمز غير صحيح أو انتهت صلاحيته. جرّب مرة ثانية أو أعد إرساله.",
+      "rateLimited": "محاولات كثيرة. انتظر قليلاً ثم جرّب مرة ثانية.",
+      "generic": "صار خطأ. جرّب مرة ثانية."
+    }
+  },
   "comingSoon": {
     "title": "قريباً",
     "description": "هذا القسم قيد الإنشاء."

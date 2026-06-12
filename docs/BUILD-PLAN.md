@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-12 (rev 3)
+> **Last updated:** 2026-06-12 (rev 4)
 
 ---
 
@@ -18,10 +18,9 @@
 
 ## Current Position
 
-➡️ **Phase 1 → 1.1 (Email OTP).** The `profiles` table, RLS, and protected
-user-editable column grants are defined in migration `0001_profiles.sql`.
-Apply it in the Supabase SQL editor, then build **1.1 Email OTP**: email entry →
-`signInWithOtp` → code verification.
+➡️ **Phase 1 → 1.2 (Profile setup).** The localized two-step OTP UI is built and
+verified by lint/build. Owner dashboard setup and a real email round-trip remain
+for 1.1 Step 4. Next, build onboarding plus profile editing.
 
 ---
 
@@ -82,11 +81,11 @@ Apply it in the Supabase SQL editor, then build **1.1 Email OTP**: email entry �
 - ☑ Step 3 — Column grants prevent users from updating `is_admin`
 - ☐ Step 4 — Owner applies migration in the Supabase SQL editor and confirms RLS
 
-### 1.1 Email OTP flow ☐
+### 1.1 Email OTP flow ◐
 
-- ☐ Step 1 — Email entry screen → `signInWithOtp`
-- ☐ Step 2 — Code verification screen → session established
-- ☐ Step 3 — Error/resend handling; localized copy
+- ☑ Step 1 — Email entry screen → `signInWithOtp`
+- ☑ Step 2 — Code verification screen → session established
+- ☑ Step 3 — Error/resend handling; localized copy
 - ☐ Step 4 — Verify full round-trip with a real email
 
 ### 1.2 Profile setup ☐
