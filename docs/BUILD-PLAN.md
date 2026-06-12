@@ -18,10 +18,12 @@
 
 ## Current Position
 
-➡️ **Phase 0 → Item 0.4 → Supabase wiring.** Docs (0.1), scaffold (0.2), and
-i18n+RTL (0.3) all ✅. App routes under `[locale]`; `ar`/RTL default, `en`/LTR,
-language switcher working. **0.4 is blocked on owner-supplied Supabase URL + keys**
-— I'll scaffold the clients/env and run the live smoke test once they arrive.
+➡️ **Phase 0 ≈ done → next: finish 0.4, then Phase 1 (1.1 Email OTP).** Items
+0.1, 0.2, 0.3, 0.5 are ✅; the app shell (header + bottom nav + Fixtures/
+Leaderboard/Profile placeholders) runs in `ar`/RTL and `en`/LTR. **Only remaining
+Phase 0 work: the 0.4 live Supabase smoke test**, blocked on owner-supplied URL +
+keys (clients/env already wired; hit `/api/supabase-health` once keys are set,
+then remove that route). After that, start **Phase 1 → 1.1 (Email OTP)**.
 
 ---
 
@@ -61,12 +63,12 @@ language switcher working. **0.4 is blocked on owner-supplied Supabase URL + key
 - ☑ Step 3 — `.env.example` (+ `.gitignore` `!.env.example`); vars documented in README
 - ⊘ Step 4 — Smoke-test route `GET /api/supabase-health` written; **run once keys are set**, then remove route
 
-### 0.5 App shell ☐
+### 0.5 App shell ☑
 
-- ☐ Step 1 — Mobile bottom nav (Fixtures / Leaderboard / Profile)
-- ☐ Step 2 — Responsive desktop layout
-- ☐ Step 3 — Loading + empty-state primitives
-- ☐ Step 4 — Verify on small/large viewports
+- ☑ Step 1 — Mobile bottom nav (Fixtures / Leaderboard / Profile) + `(app)` group with placeholder routes
+- ☑ Step 2 — Responsive desktop layout (header `MainNav` at md+, fixed `BottomNav` on mobile)
+- ☑ Step 3 — Loading + empty-state primitives (`Skeleton`, `EmptyState`)
+- ☑ Step 4 — Verified routes/redirect/dir in `ar`+`en` via curl; responsive via `md:` utilities
 
 ---
 

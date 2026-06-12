@@ -28,6 +28,43 @@
 
 ---
 
+## 2026-06-12 — 0.5 App shell: nav, placeholder routes, primitives
+**Plan item:** 0.5   **Status:** done
+
+**What changed**
+- Added the `(app)` route group under `src/app/[locale]/` with a shared shell
+  layout: sticky header (app name + desktop `MainNav` + `LanguageSwitcher`) and a
+  mobile-only fixed `BottomNav`.
+- Added placeholder tabs: `fixtures`, `leaderboard`, `profile` — each renders an
+  `EmptyState` with its localized title.
+- Nav config in `src/lib/nav.ts` (shared by both navs); active state via
+  next-intl `usePathname` (locale-agnostic paths).
+- Primitives: `src/components/empty-state.tsx` and `src/components/ui/skeleton.tsx`.
+- `/[locale]` index now redirects to `/[locale]/fixtures` (app opens on Fixtures).
+- Added `comingSoon` messages (ar/en).
+
+**Why**
+- Item 0.5: a navigable, responsive shell + reusable empty/loading primitives so
+  later phases drop real content into known slots.
+
+**Files touched**
+- src/app/[locale]/(app)/layout.tsx
+- src/app/[locale]/(app)/{fixtures,leaderboard,profile}/page.tsx
+- src/app/[locale]/page.tsx (now a redirect)
+- src/components/{bottom-nav,main-nav,empty-state}.tsx, src/components/ui/skeleton.tsx
+- src/lib/nav.ts, messages/ar.json, messages/en.json
+
+**Notes / gotchas**
+- Responsive split: `BottomNav` is `md:hidden`, `MainNav` is `hidden md:flex`;
+  `<main>` uses `pb-20 md:pb-6` to clear the fixed bottom nav on mobile.
+- Verified via curl: `/ar` → 307 → `/ar/fixtures`; nav labels + empty states
+  render correctly with `dir="rtl"` (ar) and `dir="ltr"` (en). Lint + logical-
+  property grep guard clean.
+- **Phase 0 is functionally complete** apart from 0.4's live Supabase smoke test
+  (awaiting owner keys).
+
+---
+
 ## 2026-06-12 — 0.4 Supabase wiring (clients + env; smoke test pending keys)
 **Plan item:** 0.4   **Status:** in progress (blocked on owner-supplied keys)
 

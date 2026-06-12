@@ -13,5 +13,9 @@
     "label": "اللغة",
     "ar": "العربية",
     "en": "English"
+  },
+  "comingSoon": {
+    "title": "قريباً",
+    "description": "هذا القسم قيد الإنشاء."
   }
 }

@@ -13,5 +13,9 @@
     "label": "Language",
     "ar": "العربية",
     "en": "English"
+  },
+  "comingSoon": {
+    "title": "Coming soon",
+    "description": "This section is under construction."
   }
 }
