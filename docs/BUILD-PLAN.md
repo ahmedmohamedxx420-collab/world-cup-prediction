@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-12 (rev 5)
+> **Last updated:** 2026-06-12 (rev 6)
 
 ---
 
@@ -18,10 +18,10 @@
 
 ## Current Position
 
-➡️ **Phase 1 → 1.3 (Sessions & route protection).** Onboarding, profile editing,
-locale preference, saved confirmation, and sign-out are built. Next, compose
-Supabase session refresh and auth gating into `src/proxy.ts`, then add the
-incomplete-profile gate to the app layout.
+➡️ **Phase 1 code complete → next unblocked: Phase 2.1 (remaining schema).**
+Supabase session refresh, auth gating, incomplete-profile routing, and sign-out
+are built. Owner still needs to apply `0001_profiles.sql`, configure the email
+template, and complete the real-email round-trip before Phase 1 is fully verified.
 
 ---
 
@@ -95,11 +95,11 @@ incomplete-profile gate to the app layout.
 - ⊘ Step 2 — Optional avatar upload deferred; `avatar_url` exists but is unused
 - ☑ Step 3 — Edit profile (name, locale)
 
-### 1.3 Sessions & route protection ◐
+### 1.3 Sessions & route protection ☑
 
-- ☐ Step 1 — Middleware: gate app routes behind auth
+- ☑ Step 1 — Middleware: gate app routes behind auth
 - ☑ Step 2 — Sign-out
-- ☐ Step 3 — Redirect logic (unauth → login, incomplete profile → setup)
+- ☑ Step 3 — Redirect logic (unauth → login, incomplete profile → setup)
 
 ---
 

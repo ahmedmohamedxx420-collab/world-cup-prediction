@@ -2,6 +2,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { MainNav } from "@/components/main-nav";
 import { BottomNav } from "@/components/bottom-nav";
+import { redirect } from "@/i18n/navigation";
+import { getProfile } from "@/lib/profile";
 
 // Shell shared by the three main tabs: a sticky header (app name + desktop nav +
 // language switcher) and a mobile bottom nav. The (app) route group adds no path
@@ -15,6 +17,13 @@ export default async function AppLayout({
 }>) {
   const { locale } = await params;
   setRequestLocale(locale);
+
+  const profile = await getProfile();
+  if (!profile) {
+    redirect({ href: "/onboarding", locale });
+    return null;
+  }
+
   const t = await getTranslations("common");
 
   return (

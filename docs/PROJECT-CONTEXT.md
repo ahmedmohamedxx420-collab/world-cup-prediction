@@ -3,7 +3,7 @@
 > **Single source of truth.** Read this before writing any code. If something here
 > is wrong or out of date, fix it here first, then build to match.
 >
-> **Last updated:** 2026-06-12 (rev 5) · **Status:** Building — Phase 1 (authentication)
+> **Last updated:** 2026-06-12 (rev 6) · **Status:** Phase 1 code complete (owner verification pending)
 
 ---
 
@@ -205,6 +205,9 @@ not just in the UI, so the API can never leak a hidden prediction.
 - **`teams` / `matches` / `app_settings`:** read for all authenticated users;
   write only for admins (`is_admin = true`, checked via a `SECURITY DEFINER`
   helper to avoid RLS recursion).
+- **App routes:** the Next.js proxy refreshes Supabase auth cookies and redirects
+  unauthenticated app requests to login. The app layout redirects authenticated
+  users without a `profiles` row to onboarding.
 
 ---
 

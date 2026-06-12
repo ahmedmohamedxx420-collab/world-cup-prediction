@@ -28,6 +28,35 @@
 
 ---
 
+## 2026-06-12 — 1.3 session refresh and route protection
+**Plan item:** 1.3   **Status:** done
+
+**What changed**
+- Composed the existing next-intl proxy response with a Supabase SSR client that
+  refreshes request/response auth cookies.
+- Added locale-aware login/app redirects while carrying refreshed cookies onto
+  redirect responses.
+- Added the app-layout profile-completeness gate, keeping the database lookup out
+  of middleware.
+
+**Why**
+- App routes must require a validated Supabase user, while authenticated users
+  without a profile must finish onboarding before using the app.
+
+**Files touched**
+- src/lib/supabase/middleware.ts
+- src/proxy.ts, src/app/[locale]/(app)/layout.tsx
+- docs/BUILD-PLAN.md, docs/PROJECT-CONTEXT.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Local unauthenticated smoke test passed: `/ar/fixtures` → `/ar/login`,
+  `/en/leaderboard` → `/en/login`, and `/ar/onboarding` → `/ar/login`.
+- Authenticated/no-profile and real-email checks require the hosted migration and
+  owner dashboard email-template setup.
+- Lint, production build, and logical-property grep pass.
+
+---
+
 ## 2026-06-12 — 1.2 onboarding and profile management
 **Plan item:** 1.2 (+ 1.3 Step 2)   **Status:** done
 
