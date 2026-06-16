@@ -64,5 +64,47 @@
   "comingSoon": {
     "title": "قريباً",
     "description": "هذا القسم قيد الإنشاء."
+  },
+  "fixtures": {
+    "title": "المباريات",
+    "tabsLabel": "تبويبات المباريات",
+    "upcoming": "القادمة",
+    "finished": "المنتهية",
+    "emptyUpcoming": "لا توجد مباريات قادمة",
+    "emptyFinished": "لا توجد مباريات منتهية",
+    "emptyDescription": "ستظهر هنا بعد تشغيل المزامنة.",
+    "tbdLocked": "غير متاحة للتوقع بعد",
+    "locked": "مغلقة",
+    "view": "عرض",
+    "edit": "تعديل",
+    "predict": "توقع",
+    "tbd": "غير محدد",
+    "vs": "ضد",
+    "matchNumber": "مباراة {number}",
+    "group": "المجموعة {group}",
+    "closesAtKickoff": "تغلق عند البداية"
+  },
+  "predict": {
+    "back": "العودة للمباريات",
+    "tbdLocked": "يفتح التوقع بعد تحديد الفريقين.",
+    "lockedNoPrediction": "أغلقت المباراة ولم تحفظ توقعا لها.",
+    "saving": "جار الحفظ...",
+    "saved": "تم الحفظ ✓",
+    "locked": "مغلقة",
+    "closesAtKickoff": "تغلق عند البداية",
+    "increase": "زد أهداف {team}",
+    "decrease": "أنقص أهداف {team}",
+    "revealTitle": "توقعات العائلة",
+    "actualResult": "النتيجة: {score}",
+    "resultPending": "النتيجة لم تسجل بعد",
+    "unknownMember": "عضو",
+    "you": "(أنت)",
+    "pointsPending": "النقاط بانتظار النتيجة",
+    "points": "{points} نقطة",
+    "errors": {
+      "validation": "أدخل نتيجة من 0 إلى 99.",
+      "locked": "أغلقت المباراة. التوقعات تغلق عند البداية.",
+      "generic": "لم نتمكن من حفظ توقعك. جرب مرة ثانية."
+    }
   }
 }

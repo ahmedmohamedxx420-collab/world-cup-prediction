@@ -64,5 +64,47 @@
   "comingSoon": {
     "title": "Coming soon",
     "description": "This section is under construction."
+  },
+  "fixtures": {
+    "title": "Fixtures",
+    "tabsLabel": "Fixture tabs",
+    "upcoming": "Upcoming",
+    "finished": "Finished",
+    "emptyUpcoming": "No upcoming fixtures",
+    "emptyFinished": "No finished fixtures",
+    "emptyDescription": "Fixtures will appear here after the sync runs.",
+    "tbdLocked": "Not predictable yet",
+    "locked": "Locked",
+    "view": "View",
+    "edit": "Edit",
+    "predict": "Predict",
+    "tbd": "TBD",
+    "vs": "vs",
+    "matchNumber": "Match {number}",
+    "group": "Group {group}",
+    "closesAtKickoff": "Closes at kickoff"
+  },
+  "predict": {
+    "back": "Back to fixtures",
+    "tbdLocked": "Predictions open once both teams are assigned.",
+    "lockedNoPrediction": "This match is locked and you did not save a prediction.",
+    "saving": "Saving...",
+    "saved": "Saved ✓",
+    "locked": "Locked",
+    "closesAtKickoff": "Closes at kickoff",
+    "increase": "Increase {team} score",
+    "decrease": "Decrease {team} score",
+    "revealTitle": "Family picks",
+    "actualResult": "Result: {score}",
+    "resultPending": "Result pending",
+    "unknownMember": "Member",
+    "you": "(you)",
+    "pointsPending": "Points pending",
+    "points": "{points} pts",
+    "errors": {
+      "validation": "Enter scores from 0 to 99.",
+      "locked": "This match is locked. Predictions close at kickoff.",
+      "generic": "We couldn't save your prediction. Please try again."
+    }
   }
 }
