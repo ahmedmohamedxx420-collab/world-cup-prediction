@@ -58,6 +58,8 @@
 **Notes / gotchas**
 - Autosave starts only after the first stepper interaction, so opening a blank
   match detail does not write a 0-0 prediction.
+- The form tracks a prediction saved during the current session, so if kickoff
+  passes after a first save without a reload, the saved score remains visible.
 - Device-local kickoff formatting is client-rendered (`LocalKickoff`); server-side
   UTC formatting remains admin-only.
 - Reveal privacy relies on `0003_core_rls.sql`; the UI renders RLS-filtered rows and
