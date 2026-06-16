@@ -89,7 +89,7 @@
     "tbdLocked": "Predictions open once both teams are assigned.",
     "lockedNoPrediction": "This match is locked and you did not save a prediction.",
     "saving": "Saving...",
-    "saved": "Saved ✓",
+    "saved": "Prediction saved ✓ Your score is recorded.",
     "locked": "Locked",
     "closesAtKickoff": "Closes at kickoff",
     "increase": "Increase {team} score",

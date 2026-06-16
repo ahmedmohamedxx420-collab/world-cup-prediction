@@ -28,6 +28,24 @@
 
 ---
 
+## 2026-06-16 — Clearer prediction saved confirmation
+**Plan item:** 3.2 polish   **Status:** done
+
+**What changed**
+- Updated the prediction autosave success message in Arabic and English to say the
+  prediction was saved and the score is recorded.
+
+**Why**
+- The old "Saved ✓" status was too generic; members should know their prediction
+  specifically was recorded.
+
+**Files touched**
+- messages/ar.json, messages/en.json
+
+**Notes / gotchas**
+- Build and lint pass. Existing unrelated message/admin worktree changes remain
+  uncommitted.
+
 ## 2026-06-16 — Phase 3 member predictions loop
 **Plan item:** 3.1, 3.2, 3.3   **Status:** code done (build + lint + RTL guard clean); live DB end-to-end pending
 
