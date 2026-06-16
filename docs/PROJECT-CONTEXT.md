@@ -3,7 +3,7 @@
 > **Single source of truth.** Read this before writing any code. If something here
 > is wrong or out of date, fix it here first, then build to match.
 >
-> **Last updated:** 2026-06-12 (rev 6) · **Status:** Phase 1 code complete (owner verification pending)
+> **Last updated:** 2026-06-16 (rev 10) · **Status:** Phase 3 built (member fixtures + predictions UI) — owner live-apply / end-to-end DB verification pending
 
 ---
 
@@ -53,8 +53,15 @@ These were confirmed with the owner. Change them *here* if they change.
 1. **Scoring = precision-heavy.** Exact 7 / correct goal-difference 4 / correct
    winner 2 / miss 0. (See §5.) Numbers live in an `app_settings` row so they can
    be tuned without a redeploy.
-2. **Match data = manual admin entry.** No external API in v1. The schema is
-   designed **API-ready** so auto-sync can be added later without a rewrite.
+2. **Match data = openfootball worldcup.json sync** (added 2026-06-14 per owner
+   request; originally planned manual-only). Teams, fixtures, and results sync from
+   the free public `openfootball/worldcup.json` GitHub feed (override via
+   `WORLDCUP_FEED_URL`); the admin can still hand-edit via the Teams/Fixtures/Results
+   tabs. **No key and no paid/season plan** — the feed covers all 104 matches of
+   WC2026 today and updates scores live. (It replaced an earlier API-Football design
+   on 2026-06-14: that provider's free tier excludes season 2026, so it couldn't pull
+   real data.) Result pulls are **capped at 30/day**. Final scores from the sync flow
+   through the scoring trigger (§5) and auto-score predictions.
 3. **Registration = open.** Anyone with the link can register (email + full name).
    - *Implication:* the leaderboard is only as private as the URL. A shared
      invite-code gate is a documented, low-effort future enhancement (see §10) if
@@ -66,20 +73,31 @@ These were confirmed with the owner. Change them *here* if they change.
    does not affect points.)
 5. **Admin account = `ahmed.mohamed.xx420@gmail.com`.** Exactly one admin/owner.
    The admin also competes (submits predictions and appears on the leaderboard).
-6. **Tournament data is pre-seeded.** All 48 teams (groups A–L) and the full
-   **104-match** schedule (real fixtures + kickoff times) are loaded as seed data;
-   the admin only enters results. Venue-local kickoff times are stored as **UTC**.
+6. **Tournament data is synced.** All 48 teams (groups A–L) and the full
+   **104-match** schedule (real fixtures + kickoff times) load via the openfootball
+   sync (§4.2); the admin can hand-edit and enters/syncs results going forward.
+   Venue-local kickoff times are stored as **UTC**.
 7. **Launching mid-tournament.** As of 2026-06-12 the World Cup is already underway
    (it began 2026-06-11). Matches whose kickoff has already passed are
    **results-only**: the kickoff rule auto-closes predictions for them, so nobody
    can predict or be scored on them. The leaderboard effectively starts from the
    next upcoming match; late joiners start at 0. *No extra schema needed* — the
-   existing `now() >= kickoff_at` gate handles this.
+   existing `now() >= kickoff_at` gate handles this. Already-kicked-off matches are
+   **seeded with their real final scores** (display-only) so history renders
+   correctly; those matches are never scored.
 8. **No tournament-long bonus picks in v1.** Per-match score predictions only. A
    "predict the champion" / top-scorer bonus is explicitly deferred.
 9. **Email OTP is a typed six-digit code.** The Supabase **Magic Link** email
    template must display `{{ .Token }}`; a confirmation-link-only template does
    not support the app's two-step code form.
+10. **Prediction UX = detail-page loop.** The member Fixtures page is grouped by
+    date with **Upcoming** and **Finished** tabs. Each row links to a per-match
+    detail page; open matches use +/- score steppers that autosave after the
+    user's first interaction (no accidental 0-0 write on page load). Kickoff is
+    rendered in the browser's local timezone. TBD knockout slots are read-only
+    until both teams are assigned. After kickoff, the detail page renders the
+    prediction rows returned by RLS and highlights the current user's row; the UI
+    does not act as the privacy gate.
 
 ---
 
@@ -148,6 +166,7 @@ profile. Avatar upload is deferred, so `avatar_url` exists but is unused.
 | `code` | text | FIFA 3-letter (e.g. `ARG`) |
 | `flag` | text, null | emoji or asset key |
 | `group_letter` | text, null | A–L (2026 has 12 groups) |
+| `api_team_id` | bigint, unique, null | legacy API-Football key; **unused** by the openfootball sync (teams upsert on `code`) |
 
 ### `matches`
 | Column | Type | Notes |
@@ -162,6 +181,7 @@ profile. Avatar upload is deferred, so `avatar_url` exists but is unused.
 | `status` | text | `scheduled` \| `live` \| `finished` (or derived from time + score) |
 | `home_score` / `away_score` | int, null | **official full-time incl. extra time**; the score used for scoring |
 | `shootout_winner_team_id` | FK→teams, null | **display only, never scored** |
+| `api_fixture_id` | bigint, unique, null | stable external sync upsert key: knockout FIFA `num` (73–104), or a hash of the group + team pair for group matches |
 | `created_at` / `updated_at` | timestamptz | |
 
 ### `predictions`
@@ -182,6 +202,11 @@ profile. Avatar upload is deferred, so `avatar_url` exists but is unused.
 | `exact_points` | int | `7` |
 | `goal_diff_points` | int | `4` |
 | `winner_points` | int | `2` |
+
+### `sync_runs` (operational log)
+One row per sync run (`kind` `schedule`|`results`, `ran_at`, `ok`,
+`fixtures_upserted`, `error`). Powers the admin Sync tab's history and the
+server-side ≤30/day cap. Admin-readable; written by the service-role sync job.
 
 ### Leaderboard (view)
 `SUM(points_awarded)` per user, plus `COUNT(*)` of exact hits and predictions
@@ -230,7 +255,8 @@ not just in the UI, so the API can never leak a hidden prediction.
   predictions after kickoff.
 - **Admin (single owner — `ahmed.mohamed.xx420@gmail.com`):** everything a member
   can do (so the admin also predicts and appears on the leaderboard), plus manage
-  fixtures/teams and enter final scores (which triggers scoring). Admin UI is
+  fixtures/teams and enter final scores (which triggers scoring), plus a **Sync**
+  tab to pull teams/fixtures/results from the openfootball feed. Admin UI is
   intentionally minimal in v1.
 
 ---
@@ -246,14 +272,18 @@ Documented defaults (change here if the owner decides otherwise):
 - **Invite-code registration gate:** not built (registration is open per decision
   §4.3). Low-effort future enhancement if privacy needs tightening.
 - **Account deletion / admin user removal:** not in v1 unless requested.
+- **Admin grant:** the single owner is promoted via a **one-off SQL `UPDATE`** in
+  the Supabase editor after first login; no owner email is baked into the schema.
 - **Knockout TBD fixtures:** created with `home_label`/`away_label` placeholders;
   predictions open once both teams are assigned.
 - **Mid-tournament launch:** matches whose kickoff has already passed are
   results-only — the kickoff rule auto-closes predictions, so there's no
   retroactive predicting or back-crediting. Late joiners start at 0.
-- **Seed data:** the 48 teams and 104 fixtures are seeded from the official
-  schedule; verify against FIFA at seed time and store venue-local kickoff times
-  as UTC.
+- **Seed data:** as of 2026-06-14, teams/fixtures/results are populated by the
+  **openfootball worldcup.json sync** (§4.2), which writes UTC kickoff times
+  directly; the manual admin CRUD remains a fallback. (The earlier hand-seed /
+  `0004`–`0005` plan is superseded and was not written.) No paid plan needed — the
+  feed covers WC2026 for free.
 - **Tournament-long bonus picks** (champion, top scorer) are out of scope for v1.
 - **Profile avatar upload:** deferred; Phase 1 profile setup is name + locale.
 

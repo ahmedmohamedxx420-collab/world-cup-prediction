@@ -28,6 +28,321 @@
 
 ---
 
+## 2026-06-16 — Phase 3 member predictions loop
+**Plan item:** 3.1, 3.2, 3.3   **Status:** code done (build + lint + RTL guard clean); live DB end-to-end pending
+
+**What changed**
+- Added `src/lib/predictions.ts` for RLS-bound member prediction reads and
+  match-level reveal reads joined to profile names.
+- Replaced the member Fixtures placeholder with Upcoming / Finished tabs, date
+  groups, browser-local kickoff rendering, and row CTAs for Predict / Edit / View.
+- Added `/fixtures/[id]`: match detail, debounced autosaving +/- score steppers,
+  locked/TBD read-only states, and a post-kickoff reveal list that displays only
+  the predictions returned by RLS.
+- Added the prediction save server action using the authenticated Supabase client
+  only; RLS rejection maps to a typed locked state.
+- Added Arabic + English `fixtures` / `predict` message namespaces.
+
+**Why**
+- Phase 3 is the core member loop: see fixtures, predict before kickoff, edit until
+  kickoff, and see the family reveal once the database privacy gate opens.
+
+**Files touched**
+- src/lib/predictions.ts
+- src/components/local-kickoff.tsx
+- src/app/[locale]/(app)/fixtures/page.tsx
+- src/app/[locale]/(app)/fixtures/[id]/{actions.ts,page.tsx,predict-form.tsx}
+- messages/ar.json, messages/en.json
+- docs/BUILD-PLAN.md, docs/PROJECT-CONTEXT.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Autosave starts only after the first stepper interaction, so opening a blank
+  match detail does not write a 0-0 prediction.
+- Device-local kickoff formatting is client-rendered (`LocalKickoff`); server-side
+  UTC formatting remains admin-only.
+- Reveal privacy relies on `0003_core_rls.sql`; the UI renders RLS-filtered rows and
+  is not the gate.
+- Full predict→reveal verification still needs the owner live steps: apply
+  `0002`–`0007`, run the admin grant, set `CRON_SECRET`, run Full sync, then test
+  with two accounts.
+
+## 2026-06-14 — 2.6 sync provider swapped: API-Football → openfootball worldcup.json
+**Plan item:** 2.6   **Status:** code done (build + lint + tsc clean); owner live-apply pending
+
+**What changed**
+- Replaced the sync data source. New feed client `src/lib/sync/openfootball.ts`
+  fetches `openfootball/worldcup.json` (override via `WORLDCUP_FEED_URL`).
+- Rewrote `src/lib/sync/world-cup.ts` against the feed; **deleted**
+  `src/lib/sync/api-football.ts`. Public function names + return shapes are
+  unchanged, so `/api/sync`, the Sync admin actions, and the UI work untouched.
+- The adapter now: seeds **48 teams** keyed on FIFA `code` (English name → code map,
+  Arabic+flag carried over); converts the feed's local-offset kickoff
+  (`"13:00 UTC-6"`) → **UTC**; keys upserts on `api_fixture_id` = knockout `num`
+  (73–104) or a stable FNV-1a hash of `group + sorted(team pair)` for the 72 group
+  matches (which carry no id); infers `status` from full-time presence; writes scores
+  only when finished (so `0006` scores finals only); labels unresolved knockout slots
+  in **Arabic** (`home/away_label`, e.g. "وصيف المجموعة B", "الفائز من المباراة 74").
+- Env: dropped `API_FOOTBALL_KEY` / `WORLDCUP_LEAGUE_ID` / `WORLDCUP_SEASON`; added
+  optional `WORLDCUP_FEED_URL`. Updated `.env.example` + `PROJECT-CONTEXT` + `BUILD-PLAN`.
+
+**Why**
+- A paid sports API's free tier excludes **season 2026**, so the API-Football sync
+  couldn't pull real WC2026 data — the original plan didn't cover this. openfootball
+  is free, key-less, covers all 104 matches today, and updates scores live.
+
+**Files touched**
+- src/lib/sync/openfootball.ts (new), src/lib/sync/world-cup.ts (rewritten),
+  src/lib/sync/api-football.ts (deleted)
+- .env.example, docs/PROJECT-CONTEXT.md, docs/BUILD-PLAN.md
+
+**Notes / gotchas**
+- No schema change: reuses the existing `api_fixture_id` column as the stable external
+  key; `api_team_id` is now **unused** (teams upsert on `code`). 0007 still applies as-is.
+- The feed has **no "live" status** — an in-progress match reads `scheduled` until its
+  full-time score posts. Harmless: the privacy/close gate keys on `kickoff_at`, not status.
+- Validated against the live feed: 104 matches, **0 external-id collisions**, correct
+  stage split (72/16/8/4/2/1/1), UTC conversion (13:00 UTC-6 → 19:00Z), 7 already finished.
+- Owner: run **Full sync** from the admin Sync tab (expect 48 teams / 104 matches).
+
+---
+
+## 2026-06-14 — 2.6 API-Football sync (`0007`) + admin Sync tab
+**Plan item:** 2.6   **Status:** code done; owner live-apply + paid plan pending
+
+**Decision:** reverses §4.2 ("no external API in v1") per owner request — teams,
+fixtures, and results now sync from **API-Football** (league 1) instead of a hand
+seed. Supersedes the deferred 2.3 manual seed (`0004`/`0005` not written).
+
+**What changed**
+- `0007_api_sync.sql`: `teams.api_team_id` + `matches.api_fixture_id` (unique upsert
+  keys) and a `sync_runs` log (admin-readable; backs the ≤30/day cap).
+- `src/lib/sync/api-football.ts`: typed client (key + league/season from env).
+- `src/lib/sync/world-cup.ts`: `syncSchedule()` (`/teams` + `/standings` groups +
+  `/fixtures`) and `syncResults()` (1 request). Maps UTC `fixture.date`→`kickoff_at`,
+  `goals`→scores (**excludes penalties** per §4.4), `score.penalty`→shootout winner,
+  `round`→stage, `/standings`→`group_letter`; static `TEAM_META` adds Arabic names +
+  flag emojis. Service-role writes; final scores trip the `0006` trigger → auto-score.
+- `POST /api/sync`: Bearer (`CRON_SECRET`) + per-UTC-day cap (30); logs `sync_runs`.
+- Admin **Sync** tab (`/admin/sync`): Full sync / Sync results + recent-runs log;
+  added to admin sub-nav + i18n (ar/en).
+- Env: `.env.example` + README (`API_FOOTBALL_KEY`, `CRON_SECRET`,
+  `WORLDCUP_LEAGUE_ID`, `WORLDCUP_SEASON`); `supabase/README.md` 0007 row.
+
+**Why**
+- Authoritative, auto-updating data (UTC times, venues, results) without hand-entry;
+  reuses the existing scoring trigger so no scoring-logic changes.
+
+**Verified against the live API**
+- League 1 = World Cup; season 2026 exists with full coverage but is **paid-only** on
+  Free ("try from 2022 to 2024"). Validated the fixtures/teams/standings shapes and
+  the `goals` vs `score.penalty` mapping against 2022 (incl. the AET+penalties final).
+  `npm run build` + `npm run lint` + RTL grep guard pass.
+
+**Notes / gotchas**
+- **Owner:** apply `0007`; set `API_FOOTBALL_KEY`/`CRON_SECRET`; **dry-run on
+  `WORLDCUP_SEASON=2022`** (Free) to prove the pipeline; then **subscribe** + set 2026.
+- `round` ("Group Stage - 1") lacks the group letter → derived from `/standings`.
+- Scores written only for finished matches (FT/AET/PEN), so the trigger scores finals
+  only — never live/partial scores.
+- The API key was shared in chat — keep it in `.env.local` only; consider rotating.
+- Cron not wired yet (Phase 5); the manual Sync tab works now. Run a **Full sync**
+  once before results syncs (it resolves the team mapping).
+
+---
+
+## 2026-06-13 — Perf: dedupe per-navigation auth/profile reads
+**Plan item:** n/a (performance fix)   **Status:** done
+
+**What changed**
+- Wrapped `getCurrentUser` and `getProfile` in `src/lib/profile.ts` with React
+  `cache()`, and `getProfile` now reuses the cached `getCurrentUser()` instead of
+  calling `supabase.auth.getUser()` itself.
+
+**Why**
+- Each navigation re-read auth/profile several times: the `(app)` layout, the
+  `admin` layout, and pages all call these, so `/[locale]/profile` fired ~4
+  `getUser()` network calls + 2 `profiles` queries (admin pages double-fetched the
+  profile). `cache()` is request-scoped, so within one render they collapse to a
+  single `getUser()` + single `profiles` query — no cross-request/user leakage.
+
+**Files touched**
+- src/lib/profile.ts
+- docs/CHANGELOG.md
+
+**Notes / gotchas**
+- **Deviation from the approved plan:** kept `profile/page.tsx` calling both
+  `getCurrentUser()` and `getProfile()` rather than dropping the former. Collapsing
+  to `getProfile()` alone would lose the "no user → /login" vs "no profile →
+  /onboarding" distinction (`getProfile()` returns null for both). `cache()` already
+  makes the pair a single round-trip, so there's no perf cost to keeping them.
+- Middleware ([middleware.ts](../src/lib/supabase/middleware.ts)) `getUser()` is
+  unchanged — one authoritative validated check + cookie refresh per nav. `cache()`
+  can't span the middleware↔render boundary, so that call stays separate by design.
+- This does **not** cut dev-mode compile time (the likely bulk of perceived
+  slowness). Measure against `npm run build && npm start`, not `npm run dev`.
+- Deferred: middleware `getClaims()` local JWT verification (needs asymmetric
+  signing keys + accepts a revoked token valid until expiry) — revisit only if
+  still slow in prod.
+- Build + lint pass.
+
+---
+
+## 2026-06-13 — 2.3 deferred (UI-first); 2.4 + 2.5 admin UI + scoring
+**Plan item:** 2.3 (deferred), 2.4 (done), 2.5 (done in code)   **Status:** see below
+
+**Decision: seed deferred (2.3 ⊘).** Web sources for the 2026 schedule/results were
+inconsistent (e.g. a Mexico-based Group A match placed in Atlanta; results varied
+between fetches). Since this data drives scoring and the kickoff lock, the owner
+chose **UI-first**: populate via the admin UI (or a one-off load of owner-provided
+official data) instead of a web-scraped seed. `0004`/`0005` are not written.
+
+**What changed (2.4 — admin fixtures & teams):**
+- `/admin` gated two ways: added `/admin` to the middleware app-route list, and an
+  `admin/layout.tsx` that redirects non-admins (`!profile.is_admin`) to `/fixtures`.
+- Header "Admin" link (Shield icon) shown only to admins; admin sub-nav
+  (Fixtures / Results / Teams).
+- Data layer: `src/lib/teams.ts`, `src/lib/matches.ts` (server-only fetch helpers),
+  `src/lib/match-types.ts` (client-safe constants/types), `src/lib/match-format.ts`
+  (shared `sideName`/`formatKickoffUtc`).
+- **Teams CRUD** and **Fixtures CRUD** (list + add + edit) with shared client forms
+  (`useActionState`), server actions, and a full `admin` i18n namespace (ar + en).
+
+**What changed (2.5 — results & scoring):**
+- `0006_scoring.sql`: `public.score_match()` (SECURITY DEFINER, reads `app_settings`),
+  a BEFORE trigger deriving `status` from scores, and an AFTER trigger rescoring the
+  match's predictions. Signed-GD logic per §5; idempotent; clearing scores resets
+  points to null + status to scheduled.
+- Results tab: per-match score entry (+ optional shootout winner, display-only) and
+  a clear-result action; the DB triggers do the scoring.
+
+**Why**
+- With the seed deferred, the admin UI must create teams + fixtures (not just edit),
+  so teams CRUD was added to 2.4. Scoring lives with results entry (the action that
+  drives it); Phase 4.1 becomes the worked-example check.
+
+**Files touched**
+- supabase/migrations/0006_scoring.sql
+- src/lib/{teams,matches,match-types,match-format}.ts
+- src/lib/supabase/middleware.ts, src/app/[locale]/(app)/layout.tsx
+- src/app/[locale]/(app)/admin/** (layout, admin-nav, page, teams/*, fixtures/*, results/*)
+- messages/ar.json, messages/en.json
+- docs/BUILD-PLAN.md, docs/PROJECT-CONTEXT.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- **Owner:** apply `0006` after `0002`/`0003`; verify §5 examples (actual 2-1:
+  2-1→7, 3-2→4, 1-0→4, 3-0→2, 1-2→0). Admin writes need the `is_admin` grant first.
+- **`server-only` split:** client components must not value-import a `server-only`
+  module. `MATCH_STAGES`/types live in `match-types.ts`; `matches.ts` re-exports
+  them for server code. (`import type` is erased, so `Team` from `teams.ts` is fine.)
+- **Button is Base UI, not Radix** — no `asChild`. Style link-buttons with
+  `buttonVariants()` on a next-intl `<Link>`.
+- Kickoff is entered/displayed in **UTC** in the admin (field labelled UTC) — a v1
+  simplification; the admin converts venue-local → UTC themselves.
+- Build, lint, and the logical-property RTL grep guard all pass.
+
+---
+
+## 2026-06-13 — 2.2 RLS policies + is_admin() (`0003_core_rls.sql`)
+**Plan item:** 2.2   **Status:** code done; owner live-apply + privacy verify pending
+
+**What changed**
+- Added `0003_core_rls.sql`:
+  - `public.is_admin()` — SECURITY DEFINER, `set search_path = public`, `stable`;
+    reads `profiles` without RLS recursion; `execute` to `authenticated`.
+  - `predictions` policies — SELECT own-or-after-kickoff (the core privacy gate);
+    INSERT/UPDATE own-row & pre-kickoff only; no DELETE.
+  - `predictions` **column grants** — members may write only
+    `home_score`/`away_score` (+ `user_id`/`match_id` on insert), so
+    `points_awarded` can never be self-set (mirrors `0001`'s `is_admin` trick).
+  - `teams`/`matches`/`app_settings` — read for all authenticated; admin `for all`
+    write policy gated by `is_admin()`.
+
+**Why**
+- Privacy and write rules belong in the DB, not the UI (§7). The SECURITY DEFINER
+  helper is the documented way to gate admin writes without recursing on
+  `profiles`' own RLS.
+
+**Files touched**
+- supabase/migrations/0003_core_rls.sql
+- docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- **Owner:** apply `0003` after `0002`, then verify with two accounts — B can't
+  read A's pre-kickoff pick (can after kickoff); a member's
+  `update predictions set points_awarded = …` is denied; non-admin writes to
+  `matches` are denied, admin's are allowed.
+- Admin writes need the owner's `profiles.is_admin = true` (the README grant) —
+  until that's run, even the owner can't write teams/matches.
+
+---
+
+## 2026-06-13 — 2.1 core schema migration (`0002_core_schema.sql`)
+**Plan item:** 2.1   **Status:** code done; owner live-apply + admin grant pending
+
+**What changed**
+- Added `0002_core_schema.sql`: `teams`, `matches`, `predictions`, `app_settings`
+  with constraints (`UNIQUE(user_id, match_id)`, non-negative score + stage/status
+  `CHECK`s), indexes (`predictions(match_id)`, `matches(kickoff_at)`,
+  `matches(stage)`), a shared `set_updated_at()` trigger, and the `app_settings`
+  singleton seeded 7 / 4 / 2.
+- **Enabled RLS deny-all on all four tables in `0002`** (refinement over the plan,
+  which deferred enabling to `0003`) so the tables are never exposed via the anon
+  key between migrations. Policies + grants still land in `0003`.
+- Documented the migration order and the one-off admin-grant `UPDATE` in
+  `supabase/README.md`.
+
+**Why**
+- The core data model must exist before RLS, seeds, and admin tooling. Enabling
+  RLS immediately keeps privacy fail-closed if `0003` hasn't been applied yet.
+
+**Files touched**
+- supabase/migrations/0002_core_schema.sql
+- supabase/README.md
+- docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- **Owner:** apply `0002` in the SQL editor (after `0001`), then run the
+  admin-grant `UPDATE` from `supabase/README.md` after first login. RLS is on but
+  has no policies until `0003` → tables are deny-all to members until then.
+- `app_settings` insert runs as the SQL-editor (owner) role, so RLS doesn't block
+  the seed.
+- No app code yet this step; lint/build unaffected (SQL + docs only).
+
+---
+
+## 2026-06-13 — Phase 2 plan locked: data model, RLS, seed, admin
+**Plan item:** Phase 2 (planning)   **Status:** done (planning); execution next
+
+**What changed**
+- Locked four Phase 2 decisions via owner Q&A and recorded them in the docs:
+  - Seed data is **web-fetched** from the official FIFA 2026 schedule and
+    **owner-verified before commit**.
+  - Already-kicked-off matches are seeded with **real final scores (display-only)**.
+  - Owner admin via a **manual one-off SQL `UPDATE`** after first login.
+  - Phase 1 confirmed **applied & verified** live (flipped 1.0 Step 4 and 1.1 to ☑;
+    fixed the stale 0.1 marker).
+- Refined the Phase 2 backlog with migration filenames (`0002`–`0006`), a member-write
+  **column-grant** rule for `predictions.points_awarded`, the `is_admin()`
+  SECURITY DEFINER helper, `matches.match_number`/stored `status`, and a
+  `score_match()` + AFTER-UPDATE trigger for results-driven, idempotent scoring.
+
+**Why**
+- Close build-blocking unknowns before writing the core schema, and keep the plan
+  small/verifiable with each migration verified against the now-live DB.
+
+**Files touched**
+- docs/PROJECT-CONTEXT.md (rev 7)
+- docs/BUILD-PLAN.md (rev 7)
+- docs/CHANGELOG.md
+
+**Notes / gotchas**
+- No app/SQL code yet — this is a planning execution.
+- Next unblocked: **2.1** — write `0002_core_schema.sql`.
+- The scoring function is built in **2.5** (results entry drives it); **4.1**
+  becomes the worked-example unit check, not a second implementation.
+
+---
+
 ## 2026-06-12 — Phase 1 final OTP error-mapping pass
 **Plan item:** 1.1 Step 3   **Status:** done
 

@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-12 (rev 6)
+> **Last updated:** 2026-06-16 (rev 10)
 
 ---
 
@@ -18,10 +18,16 @@
 
 ## Current Position
 
-➡️ **Phase 1 code complete → next unblocked: Phase 2.1 (remaining schema).**
-Supabase session refresh, auth gating, incomplete-profile routing, and sign-out
-are built. Owner still needs to apply `0001_profiles.sql`, configure the email
-template, and complete the real-email round-trip before Phase 1 is fully verified.
+➡️ **Phase 3 built (member fixtures, prediction detail page, autosave, reveal) →
+next: owner live-apply / end-to-end verification, then Phase 4 leaderboard.**
+Members can browse upcoming/finished fixtures, open a match detail page, save/edit a
+score prediction with debounced +/- steppers until kickoff, and see the
+RLS-filtered reveal list after kickoff. Build / lint / RTL-guard pass for the code
+path. **Owner to:** apply `0002`–`0007` live, run the admin-grant `UPDATE`, set
+`CRON_SECRET`, run **Full sync** from the admin Sync tab (expect 48 teams / 104
+matches), then verify two-account privacy, predict→reload persistence, reveal, and
+the §5 scoring examples. Phase 4 focuses on the leaderboard / results breakdown
+(the scoring trigger itself was already built in 2.5).
 
 ---
 
@@ -30,7 +36,7 @@ template, and complete the real-email round-trip before Phase 1 is fully verifie
 > Goal: a running, localized, Supabase-connected Next.js shell with nothing
 > business-specific yet.
 
-### 0.1 Project docs ◐
+### 0.1 Project docs ☑
 
 - ☑ Step 1 — `PROJECT-CONTEXT.md` (objective, decisions, data model, scoring, RLS)
 - ☑ Step 2 — `BUILD-PLAN.md` (this file)
@@ -80,14 +86,14 @@ template, and complete the real-email round-trip before Phase 1 is fully verifie
 - ☑ Step 1 — Versioned `0001_profiles.sql` migration creates `profiles`
 - ☑ Step 2 — RLS: authenticated read, own insert, own update, no delete
 - ☑ Step 3 — Column grants prevent users from updating `is_admin`
-- ☐ Step 4 — Owner applies migration in the Supabase SQL editor and confirms RLS
+- ☑ Step 4 — Owner applied the migration in the Supabase SQL editor; RLS confirmed
 
-### 1.1 Email OTP flow ◐
+### 1.1 Email OTP flow ☑
 
 - ☑ Step 1 — Email entry screen → `signInWithOtp`
 - ☑ Step 2 — Code verification screen → session established
 - ☑ Step 3 — Error/resend handling; localized copy
-- ☐ Step 4 — Verify full round-trip with a real email
+- ☑ Step 4 — Verified full round-trip with a real email
 
 ### 1.2 Profile setup ☑
 
@@ -107,42 +113,116 @@ template, and complete the real-email round-trip before Phase 1 is fully verifie
 
 > Goal: the database exists with privacy enforced, teams + fixtures are loaded,
 > and the admin can run the tournament by hand.
+>
+> **Decisions locked 2026-06-13:** seed data is **web-fetched** from the official
+> FIFA 2026 schedule and **owner-verified before commit**; already-kicked-off
+> matches are seeded with their **real final scores as display-only** results (not
+> scored); the owner gets admin via a **manual one-off SQL `UPDATE`** after first
+> login (no email baked into the schema). Phase 1 is live, so **each migration /
+> policy is verified against the live DB** as it lands. Migrations continue the
+> `000N_*.sql` series (paste into the SQL editor, in order).
 
-### 2.1 Schema migrations ☐
+### 2.1 Schema migrations — `0002_core_schema.sql` ◐
 
-- ☐ Step 1 — `teams`, `matches`, `predictions`, `app_settings` (`profiles` exists)
-- ☐ Step 2 — Constraints (unique prediction per user/match) + indexes
-- ☐ Step 3 — `app_settings` singleton seeded with 7 / 4 / 2
-- ☐ Step 4 — Grant admin to the owner (`ahmed.mohamed.xx420@gmail.com`): trigger on
-profile creation, or a one-off update after first login
+- ☑ Step 1 — Created `teams`, `matches`, `predictions`, `app_settings` (+ shared
+`set_updated_at()` trigger). RLS is **enabled deny-all on all four in `0002`** so
+they stay locked until `0003` adds policies. `matches` keeps stored `status` +
+`match_number` (1–104); the privacy gate keys on `kickoff_at`, never `status`.
+- ☑ Step 2 — Constraints (`UNIQUE(user_id, match_id)`; non-negative score `CHECK`s;
+`stage`/`status` `CHECK`s) + indexes (`predictions(match_id)`,
+`matches(kickoff_at)`, `matches(stage)`).
+- ☑ Step 3 — `app_settings` singleton (`id = 1`) seeded with 7 / 4 / 2.
+- ◐ Step 4 — **Admin grant** one-off `UPDATE` documented in `supabase/README.md`.
+**Owner to apply `0002` live, run the grant after first login, and confirm in
+Table Editor.**
 
-### 2.2 RLS policies ☐
+### 2.2 RLS policies — `0003_core_rls.sql` ◐
 
-- ☐ Step 1 — `is_admin()` SECURITY DEFINER helper
-- ☐ Step 2 — `predictions` policies (own-or-after-kickoff SELECT; pre-kickoff own INSERT/UPDATE)
-- ☐ Step 3 — `teams` / `matches` / `app_settings` policies (`profiles` exists)
-- ☐ Step 4 — **Verify privacy**: a second user cannot read pre-kickoff predictions
+- ☑ Step 1 — `public.is_admin()` SECURITY DEFINER helper (`set search_path = public`)
+reads `profiles` without RLS recursion; `execute` granted to `authenticated`.
+- ☑ Step 2 — `predictions` policies: SELECT own-or-after-kickoff; INSERT/UPDATE own
+& **pre-kickoff only**. **Column grants** restrict member writes to
+`home_score`/`away_score` (+ `user_id`/`match_id` on insert) so `points_awarded`
+can never be self-set — same pattern as `profiles.is_admin`.
+- ☑ Step 3 — `teams` / `matches` / `app_settings`: SELECT for all authenticated;
+admin `for all` write policy via `is_admin()` (admin writes run as the admin user,
+RLS-enforced — no service-role needed).
+- ◐ Step 4 — **Verify privacy live** (after owner applies `0003`): a second account
+cannot read a pre-kickoff prediction, and can once `now() >= kickoff_at`; a member
+cannot self-set `points_awarded`.
 
-### 2.3 Seed teams & full schedule ☐
+### 2.3 Seed teams & full schedule — `0004_seed_teams.sql`, `0005_seed_matches.sql` ⊘
 
-- ☐ Step 1 — 48 teams, groups A–L (en + ar names, codes, flags)
-- ☐ Step 2 — Seed the full official **104-match** schedule (group + knockout),
-kickoff times converted venue-local → UTC; verify against FIFA
+> **Superseded 2026-06-14 by 2.6 (data sync).** First deferred (owner chose
+> UI-first; web sources were too inconsistent), then resolved by syncing from the
+> openfootball `worldcup.json` feed instead — see §2.6. The manual `0004`/`0005` seed
+> was **not written**; these steps won't be executed (kept for history).
+
+- ☐ Step 1 — 48 teams, groups A–L (en + ar names, FIFA codes, flags); web-fetched,
+owner-verified. The match seed references teams by `code` lookup.
+- ☐ Step 2 — Full official **104-match** schedule (group + knockout), kickoff
+converted venue-local → UTC, `match_number` 1–104; **verify against FIFA before
+commit**.
 - ☐ Step 3 — Knockout fixtures seeded with `home_label`/`away_label` where teams
-are still TBD
-- ☐ Step 4 — Confirm already-kicked-off matches are auto-locked (results-only) by
-the kickoff rule — no special flag needed
+are still TBD (team ids null).
+- ☐ Step 4 — Already-kicked-off matches seeded with **real final scores +
+`status = 'finished'`** (display-only); confirm the kickoff rule auto-locks them
+so no one can predict or be scored on them — no special flag needed.
 
-### 2.4 Admin: fixtures ☐
+### 2.4 Admin: fixtures & teams ☑
 
-- ☐ Step 1 — List/create/edit fixtures (teams, stage, kickoff, venue)
-- ☐ Step 2 — Assign teams to knockout slots as they're decided
+- ☑ Step 1 — Admin-only `(app)/admin` area: middleware `/admin` route gate + server
+`is_admin` layout gate (non-admins → `/fixtures`); header "Admin" link shown only
+to the admin; sub-nav (Fixtures / Results / Teams). Client-safe constants/types
+split into `src/lib/match-types.ts`; data/format helpers in
+`src/lib/{teams,matches,match-format}.ts`.
+- ☑ Step 2 — **Teams CRUD** (added because the seed is deferred — owner enters data
+via the UI): list + add + edit (name en/ar, FIFA code, flag, group).
+- ☑ Step 3 — **Fixtures CRUD**: list grouped by stage + add/edit (stage, group,
+home/away team **or** TBD label, kickoff entered/stored UTC, venue, match number).
+Assigning a knockout slot = switching a side from its label to a team.
 
-### 2.5 Admin: results & scoring trigger ☐
+### 2.5 Admin: results & scoring — `0006_scoring.sql` ◐
 
-- ☐ Step 1 — Enter final score (incl. extra time) + optional shootout winner
-- ☐ Step 2 — Setting the score marks match `finished` and runs scoring
-- ☐ Step 3 — Re-entering a corrected score recomputes cleanly
+- ☑ Step 1 — Results tab: per-match score entry (+ optional shootout winner,
+display-only) and a clear-result action.
+- ☑ Step 2 — `public.score_match()` (SECURITY DEFINER, reads `app_settings`) + a
+BEFORE trigger (scores → `status`) and an AFTER trigger (rescore the match's
+predictions), signed-GD logic per §5. *(This is the Phase 4.1 scoring function,
+built here because results entry drives it; 4.1 then becomes the worked-example
+unit check, not a second implementation.)*
+- ☑ Step 3 — Idempotent recompute on a corrected score; clearing the scores resets
+`points_awarded` to null (and `status` back to `scheduled`).
+- ◐ **Owner:** apply `0006` live and verify the §5 worked examples (actual 2-1:
+2-1→7, 3-2→4, 1-0→4, 3-0→2, 1-2→0).
+
+### 2.6 World Cup sync (openfootball worldcup.json) — `0007_api_sync.sql` ◐
+
+> Resolves 2.3 by syncing teams/fixtures/results from the **openfootball
+> worldcup.json** feed instead of a hand seed. Free, public, no key, and it covers
+> **all 104 matches of WC2026 today** (a paid sports API's free tier doesn't include
+> season 2026 — that gap is why this feed replaced API-Football, 2026-06-14). Result
+> pulls capped at **≤30/day**. (Reverses §4.2's original "no external API in v1",
+> per owner request.)
+
+- ☑ Step 1 — `0007`: `api_fixture_id` (stable external upsert key) + `sync_runs` log.
+- ☑ Step 2 — Feed client `src/lib/sync/openfootball.ts` + logic
+`src/lib/sync/world-cup.ts`: `syncSchedule` (seed 48 teams keyed on FIFA `code`,
+group letters from group matches, all 104 matches) and `syncResults` (1 fetch). The
+feed differs from a typed API, so the adapter: resolves teams by **English name →
+code**; converts the feed's local-offset kickoff (`"13:00 UTC-6"`) → **UTC**; keys
+upserts on `api_fixture_id` = knockout `num` (73–104) or a **stable hash** of the
+group + team pair (group matches carry no id); infers `status` from full-time
+presence (no "live" in the feed); writes scores only when finished → `0006` trigger
+→ auto-score; leaves unresolved knockout slots TBD with an **Arabic** `home/away_label`
+(e.g. "وصيف المجموعة B", "الفائز من المباراة 74") that fills in as the bracket resolves.
+- ☑ Step 3 — Protected `POST /api/sync` (Bearer `CRON_SECRET` + ≤30/day cap) + admin
+**Sync** tab (Full sync / Sync results + last-run log). Service-role writes.
+- ☐ Step 4 — **Owner:** apply `0007`; set `CRON_SECRET` in `.env.local`; run **Full
+sync** via the Sync tab (expect **48 teams / 104 matches**; 7 already finished as of
+2026-06-14), confirm a test prediction is scored by `0006`.
+- ☐ Step 5 — Deploy (Phase 5): point an external scheduler at `POST /api/sync`
+(~every 50 min ≈ under the cap).
 
 ---
 
@@ -151,24 +231,24 @@ the kickoff rule — no special flag needed
 > Goal: members predict scores, edit until kickoff, and can't peek at others'
 > picks early.
 
-### 3.1 Fixtures list ☐
+### 3.1 Fixtures list ☑
 
-- ☐ Step 1 — Fixtures grouped by stage/matchday, localized
-- ☐ Step 2 — Kickoff shown in device-local time; clear "closes at kickoff" state
-- ☐ Step 3 — Upcoming matches are predictable; past/locked matches render as
+- ☑ Step 1 — Fixtures grouped by date, localized, with Upcoming / Finished tabs
+- ☑ Step 2 — Kickoff shown in device-local time; clear "closes at kickoff" state
+- ☑ Step 3 — Upcoming matches are predictable; past/locked matches render as
 results-only (no prediction input)
 
-### 3.2 Predict / edit ☐
+### 3.2 Predict / edit ☑
 
-- ☐ Step 1 — Score stepper UI per match
-- ☐ Step 2 — Create/update prediction (blocked at/after kickoff, enforced by RLS)
-- ☐ Step 3 — "Saved" / "locked" states
+- ☑ Step 1 — Score stepper UI per match
+- ☑ Step 2 — Create/update prediction (blocked at/after kickoff, enforced by RLS)
+- ☑ Step 3 — "Saved" / "locked" states
 
-### 3.3 Privacy & reveal ☐
+### 3.3 Privacy & reveal ☑
 
-- ☐ Step 1 — Before kickoff: only my prediction is visible
-- ☐ Step 2 — At/after kickoff: everyone's predictions for that match are shown
-- ☐ Step 3 — Verify against RLS (UI must not assume; DB is the gate)
+- ☑ Step 1 — Before kickoff: only my prediction is visible
+- ☑ Step 2 — At/after kickoff: everyone's predictions for that match are shown
+- ☑ Step 3 — Verify against RLS (UI must not assume; DB is the gate)
 
 ---
 
