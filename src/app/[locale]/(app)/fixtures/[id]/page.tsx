@@ -5,8 +5,14 @@ import { Link } from "@/i18n/navigation";
 import { getMatch } from "@/lib/matches";
 import type { Match } from "@/lib/match-types";
 import { sideName } from "@/lib/match-format";
-import { getMyPrediction } from "@/lib/predictions";
+import {
+  getMatchPredictions,
+  getMyPrediction,
+  type PredictionWithProfile,
+} from "@/lib/predictions";
+import { getCurrentUser } from "@/lib/profile";
 import { listTeams } from "@/lib/teams";
+import { cn } from "@/lib/utils";
 import { PredictForm } from "./predict-form";
 
 function scoreText(match: Match) {
@@ -22,6 +28,62 @@ async function getServerNow() {
   return Date.now();
 }
 
+function RevealList({
+  predictions,
+  myUserId,
+  result,
+  t,
+}: {
+  predictions: PredictionWithProfile[];
+  myUserId: string | undefined;
+  result: string | null;
+  t: Awaited<ReturnType<typeof getTranslations>>;
+}) {
+  return (
+    <section className="space-y-3 rounded-lg border bg-card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 className="text-base font-semibold">{t("revealTitle")}</h2>
+        <span className="text-sm font-medium text-muted-foreground tabular-nums">
+          {result
+            ? t("actualResult", { score: result })
+            : t("resultPending")}
+        </span>
+      </div>
+
+      <ul className="space-y-2">
+        {predictions.map((prediction) => {
+          const mine = prediction.user_id === myUserId;
+
+          return (
+            <li
+              key={prediction.id}
+              className={cn(
+                "flex items-center justify-between gap-3 rounded-lg px-3 py-2",
+                mine ? "bg-accent text-accent-foreground" : "bg-muted/50",
+              )}
+            >
+              <span className="min-w-0">
+                <span className="block truncate text-sm font-semibold">
+                  {prediction.profile?.full_name ?? t("unknownMember")}
+                  {mine ? ` ${t("you")}` : ""}
+                </span>
+                <span className="block text-xs text-muted-foreground">
+                  {prediction.points_awarded == null
+                    ? t("pointsPending")
+                    : t("points", { points: prediction.points_awarded })}
+                </span>
+              </span>
+              <span className="shrink-0 text-lg font-semibold tabular-nums">
+                {prediction.home_score}-{prediction.away_score}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 export default async function FixtureDetailPage({
   params,
 }: {
@@ -33,11 +95,14 @@ export default async function FixtureDetailPage({
   const matchId = Number(id);
   if (!Number.isInteger(matchId)) notFound();
 
-  const [match, teams, myPrediction] = await Promise.all([
-    getMatch(matchId),
-    listTeams(),
-    getMyPrediction(matchId),
-  ]);
+  const [match, teams, myPrediction, visiblePredictions, user] =
+    await Promise.all([
+      getMatch(matchId),
+      listTeams(),
+      getMyPrediction(matchId),
+      getMatchPredictions(matchId),
+      getCurrentUser(),
+    ]);
 
   if (!match) notFound();
 
@@ -64,6 +129,11 @@ export default async function FixtureDetailPage({
   const lockedHint = Date.parse(match.kickoff_at) <= now;
   const tbd = isTbd(match);
   const result = scoreText(match);
+  const hasOtherVisiblePrediction = visiblePredictions.some(
+    (prediction) => prediction.user_id !== user?.id,
+  );
+  const showReveal =
+    visiblePredictions.length > 0 && (lockedHint || hasOtherVisiblePrediction);
 
   return (
     <div className="space-y-6">
@@ -129,6 +199,15 @@ export default async function FixtureDetailPage({
           tbd={tbd}
         />
       )}
+
+      {showReveal ? (
+        <RevealList
+          predictions={visiblePredictions}
+          myUserId={user?.id}
+          result={result}
+          t={t}
+        />
+      ) : null}
     </div>
   );
 }
