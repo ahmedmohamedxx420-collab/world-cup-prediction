@@ -89,6 +89,7 @@ export function PredictForm({
   const t = useTranslations("predict");
   const [homeScore, setHomeScore] = useState(initialHomeScore);
   const [awayScore, setAwayScore] = useState(initialAwayScore);
+  const [hasSavedPrediction, setHasSavedPrediction] = useState(hasPrediction);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [locked, setLocked] = useState(lockedHint);
   const [status, setStatus] = useState<SaveStatus>(
@@ -125,6 +126,7 @@ export function PredictForm({
         if (saveIdRef.current !== saveId) return;
 
         if (result.saved) {
+          setHasSavedPrediction(true);
           setStatus("saved");
           return;
         }
@@ -163,7 +165,7 @@ export function PredictForm({
     setError(undefined);
   };
 
-  if (locked && !hasPrediction) {
+  if (locked && !hasSavedPrediction) {
     return (
       <p
         role="status"
