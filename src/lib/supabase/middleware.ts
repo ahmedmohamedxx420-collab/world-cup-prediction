@@ -51,7 +51,7 @@ export async function updateSession(
   const pathname = request.nextUrl.pathname;
   const locale = getRequestLocale(pathname);
   const localizedPath = pathname.replace(new RegExp(`^/${locale}`), "") || "/";
-  const isAppRoute = ["/fixtures", "/leaderboard", "/profile"].some(
+  const isAppRoute = ["/fixtures", "/leaderboard", "/profile", "/admin"].some(
     (route) =>
       localizedPath === route || localizedPath.startsWith(`${route}/`),
   );

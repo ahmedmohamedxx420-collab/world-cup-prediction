@@ -4,10 +4,23 @@
     "tagline": "Predict the scores and compete with your family on one board.",
     "start": "Get started"
   },
+  "toasts": {
+    "profileSaved": "Profile saved.",
+    "teamSaved": "Team saved.",
+    "fixtureSaved": "Fixture saved.",
+    "resultSaved": "Result saved.",
+    "resultCleared": "Result cleared.",
+    "codeSent": "Login code sent to {email}.",
+    "syncScheduleDone": "Synced {count} fixtures.",
+    "syncResultsDone": "Synced results for {count} fixtures.",
+    "errorGeneric": "Something went wrong. Please try again.",
+    "errorRateLimited": "Too many attempts. Wait a bit, then try again."
+  },
   "nav": {
     "fixtures": "Fixtures",
     "leaderboard": "Leaderboard",
-    "profile": "Profile"
+    "profile": "Profile",
+    "admin": "Admin"
   },
   "language": {
     "label": "Language",
@@ -65,6 +78,37 @@
     "title": "Coming soon",
     "description": "This section is under construction."
   },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "tabsLabel": "Leaderboard tabs",
+    "boardTab": "Board",
+    "myResultsTab": "My results",
+    "rank": "Rank",
+    "points": "Points",
+    "pointsShort": "pts",
+    "predictionsMade": "Predictions",
+    "exact": "Exact",
+    "goalDiff": "Goal diff",
+    "winner": "Winner",
+    "miss": "Miss",
+    "you": "(you)",
+    "prediction": "Prediction",
+    "actual": "Actual",
+    "resultPending": "Pending",
+    "pointsPending": "Pending",
+    "pointsValue": "{points} pts",
+    "empty": "No members yet",
+    "emptyDescription": "The board will fill as family members finish setup.",
+    "emptyResults": "No visible results yet",
+    "emptyResultsDescription": "Predictions appear here after they are visible through the database privacy rules.",
+    "backToBoard": "Back to leaderboard",
+    "viewResults": "View results",
+    "memberResultsTitle": "{name} results",
+    "rankWithPoints": "Rank {rank} · {points} pts",
+    "profileStatsTitle": "Your leaderboard",
+    "profileStatsDescription": "A quick look at your current standing.",
+    "viewMyResults": "View my results"
+  },
   "fixtures": {
     "title": "Fixtures",
     "tabsLabel": "Fixture tabs",
@@ -105,6 +149,106 @@
       "validation": "Enter scores from 0 to 99.",
       "locked": "This match is locked. Predictions close at kickoff.",
       "generic": "We couldn't save your prediction. Please try again."
+    }
+  },
+  "admin": {
+    "title": "Admin",
+    "description": "Manage teams, fixtures, and results.",
+    "nav": {
+      "fixtures": "Fixtures",
+      "results": "Results",
+      "sync": "Sync",
+      "teams": "Teams"
+    },
+    "common": {
+      "save": "Save",
+      "saving": "Saving…",
+      "saved": "Saved.",
+      "cancel": "Cancel",
+      "edit": "Edit"
+    },
+    "teams": {
+      "title": "Teams",
+      "add": "Add team",
+      "addTitle": "Add team",
+      "editTitle": "Edit team",
+      "nameEn": "Name (English)",
+      "nameAr": "Name (Arabic)",
+      "code": "Code (3 letters)",
+      "flag": "Flag (emoji)",
+      "group": "Group (A–L)",
+      "none": "—",
+      "empty": "No teams yet. Add the first one.",
+      "count": "{count} teams",
+      "errors": {
+        "required": "Name (English), name (Arabic), and code are required.",
+        "duplicateCode": "That code is already used by another team.",
+        "generic": "Something went wrong. Please try again."
+      }
+    },
+    "fixtures": {
+      "title": "Fixtures",
+      "add": "Add fixture",
+      "addTitle": "Add fixture",
+      "editTitle": "Edit fixture",
+      "matchNumber": "Match number",
+      "stage": "Stage",
+      "group": "Group (A–L)",
+      "home": "Home team",
+      "away": "Away team",
+      "homeLabel": "Home label (if team is TBD)",
+      "awayLabel": "Away label (if team is TBD)",
+      "kickoff": "Kickoff (UTC)",
+      "venue": "Venue",
+      "tbd": "— TBD —",
+      "empty": "No fixtures yet. Add the first one.",
+      "vs": "vs",
+      "stages": {
+        "group": "Group stage",
+        "round_32": "Round of 32",
+        "round_16": "Round of 16",
+        "quarter": "Quarter-final",
+        "semi": "Semi-final",
+        "third_place": "Third place",
+        "final": "Final"
+      },
+      "errors": {
+        "kickoffRequired": "Kickoff time is required.",
+        "stageRequired": "Stage is required.",
+        "generic": "Something went wrong. Please try again."
+      }
+    },
+    "results": {
+      "title": "Results",
+      "homeScore": "Home score",
+      "awayScore": "Away score",
+      "shootoutWinner": "Shootout winner (display only)",
+      "noShootout": "— None —",
+      "save": "Save result",
+      "clear": "Clear result",
+      "saving": "Saving…",
+      "saved": "Result saved.",
+      "empty": "No fixtures to score yet.",
+      "scored": "Scored",
+      "errors": {
+        "invalidScore": "Enter both scores as 0 or more.",
+        "generic": "Something went wrong. Please try again."
+      }
+    },
+    "sync": {
+      "title": "Sync",
+      "description": "Pull teams, fixtures, and results from API-Football.",
+      "fullSync": "Full sync (teams + fixtures)",
+      "resultsSync": "Sync results",
+      "running": "Syncing…",
+      "lastSync": "Recent syncs",
+      "never": "No sync has run yet.",
+      "ok": "OK",
+      "failed": "Failed",
+      "fixtures": "{count} fixtures",
+      "kindSchedule": "Full",
+      "kindResults": "Results",
+      "note": "Needs a paid API plan for the 2026 season; capped at 30 result pulls/day."
     }
   }
 }

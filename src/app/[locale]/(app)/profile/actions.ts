@@ -39,7 +39,7 @@ export async function updateProfile(
 
   if (error) return { error: "generic" };
 
-  redirect({ href: "/profile?saved=1", locale });
+  redirect({ href: "/profile?toast=profileSaved", locale });
   return {};
 }
 

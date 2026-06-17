@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { toast } from "sonner";
 import { useRouter } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ const RESEND_COOLDOWN_SECONDS = 30;
 
 export function LoginForm() {
   const t = useTranslations("auth");
+  const toastT = useTranslations("toasts");
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [step, setStep] = useState<"email" | "code">("email");
@@ -49,6 +51,7 @@ export function LoginForm() {
       return;
     }
 
+    toast.success(toastT("codeSent", { email }));
     setStep("code");
     setCooldown(RESEND_COOLDOWN_SECONDS);
   }

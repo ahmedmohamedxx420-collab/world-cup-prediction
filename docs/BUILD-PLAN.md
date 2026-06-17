@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-16 (rev 10)
+> **Last updated:** 2026-06-17 (rev 13)
 
 ---
 
@@ -18,16 +18,12 @@
 
 ## Current Position
 
-➡️ **Phase 3 built (member fixtures, prediction detail page, autosave, reveal) →
-next: owner live-apply / end-to-end verification, then Phase 4 leaderboard.**
-Members can browse upcoming/finished fixtures, open a match detail page, save/edit a
-score prediction with debounced +/- steppers until kickoff, and see the
-RLS-filtered reveal list after kickoff. Build / lint / RTL-guard pass for the code
-path. **Owner to:** apply `0002`–`0007` live, run the admin-grant `UPDATE`, set
-`CRON_SECRET`, run **Full sync** from the admin Sync tab (expect 48 teams / 104
-matches), then verify two-account privacy, predict→reload persistence, reveal, and
-the §5 scoring examples. Phase 4 focuses on the leaderboard / results breakdown
-(the scoring trigger itself was already built in 2.5).
+➡️ **Phase 5.2 repo-side deploy prep done → owner production activation next; then 5.3 QA dry-run.**
+Local pre-flight is clean (`npm run build` + `npm run lint`), `.env.example`
+still covers every production env var, and the match-aware GitHub Actions
+scheduler is committed. The remaining 5.2 work is dashboard-bound: create the Vercel
+project, add the production URL to Supabase Auth settings, set GitHub Actions
+secrets, trigger the workflow once, and run the production smoke test.
 
 ---
 
@@ -122,7 +118,7 @@ the §5 scoring examples. Phase 4 focuses on the leaderboard / results breakdown
 > policy is verified against the live DB** as it lands. Migrations continue the
 > `000N_*.sql` series (paste into the SQL editor, in order).
 
-### 2.1 Schema migrations — `0002_core_schema.sql` ◐
+### 2.1 Schema migrations — `0002_core_schema.sql` ☑
 
 - ☑ Step 1 — Created `teams`, `matches`, `predictions`, `app_settings` (+ shared
 `set_updated_at()` trigger). RLS is **enabled deny-all on all four in `0002`** so
@@ -132,11 +128,10 @@ they stay locked until `0003` adds policies. `matches` keeps stored `status` +
 `stage`/`status` `CHECK`s) + indexes (`predictions(match_id)`,
 `matches(kickoff_at)`, `matches(stage)`).
 - ☑ Step 3 — `app_settings` singleton (`id = 1`) seeded with 7 / 4 / 2.
-- ◐ Step 4 — **Admin grant** one-off `UPDATE` documented in `supabase/README.md`.
-**Owner to apply `0002` live, run the grant after first login, and confirm in
-Table Editor.**
+- ☑ Step 4 — **Admin grant** one-off `UPDATE` documented in `supabase/README.md`
+and applied live; admin confirmed.
 
-### 2.2 RLS policies — `0003_core_rls.sql` ◐
+### 2.2 RLS policies — `0003_core_rls.sql` ☑
 
 - ☑ Step 1 — `public.is_admin()` SECURITY DEFINER helper (`set search_path = public`)
 reads `profiles` without RLS recursion; `execute` granted to `authenticated`.
@@ -147,9 +142,9 @@ can never be self-set — same pattern as `profiles.is_admin`.
 - ☑ Step 3 — `teams` / `matches` / `app_settings`: SELECT for all authenticated;
 admin `for all` write policy via `is_admin()` (admin writes run as the admin user,
 RLS-enforced — no service-role needed).
-- ◐ Step 4 — **Verify privacy live** (after owner applies `0003`): a second account
-cannot read a pre-kickoff prediction, and can once `now() >= kickoff_at`; a member
-cannot self-set `points_awarded`.
+- ☑ Step 4 — **Verify privacy live:** a second account cannot read a pre-kickoff
+prediction, and can once `now() >= kickoff_at`; a member cannot self-set
+`points_awarded`.
 
 ### 2.3 Seed teams & full schedule — `0004_seed_teams.sql`, `0005_seed_matches.sql` ⊘
 
@@ -182,7 +177,7 @@ via the UI): list + add + edit (name en/ar, FIFA code, flag, group).
 home/away team **or** TBD label, kickoff entered/stored UTC, venue, match number).
 Assigning a knockout slot = switching a side from its label to a team.
 
-### 2.5 Admin: results & scoring — `0006_scoring.sql` ◐
+### 2.5 Admin: results & scoring — `0006_scoring.sql` ☑
 
 - ☑ Step 1 — Results tab: per-match score entry (+ optional shootout winner,
 display-only) and a clear-result action.
@@ -193,8 +188,8 @@ built here because results entry drives it; 4.1 then becomes the worked-example
 unit check, not a second implementation.)*
 - ☑ Step 3 — Idempotent recompute on a corrected score; clearing the scores resets
 `points_awarded` to null (and `status` back to `scheduled`).
-- ◐ **Owner:** apply `0006` live and verify the §5 worked examples (actual 2-1:
-2-1→7, 3-2→4, 1-0→4, 3-0→2, 1-2→0).
+- ☑ **Owner:** applied `0006` live and verified the §5 worked examples (actual
+2-1: 2-1→7, 3-2→4, 1-0→4, 3-0→2, 1-2→0).
 
 ### 2.6 World Cup sync (openfootball worldcup.json) — `0007_api_sync.sql` ◐
 
@@ -218,11 +213,14 @@ presence (no "live" in the feed); writes scores only when finished → `0006` tr
 (e.g. "وصيف المجموعة B", "الفائز من المباراة 74") that fills in as the bracket resolves.
 - ☑ Step 3 — Protected `POST /api/sync` (Bearer `CRON_SECRET` + ≤30/day cap) + admin
 **Sync** tab (Full sync / Sync results + last-run log). Service-role writes.
-- ☐ Step 4 — **Owner:** apply `0007`; set `CRON_SECRET` in `.env.local`; run **Full
-sync** via the Sync tab (expect **48 teams / 104 matches**; 7 already finished as of
-2026-06-14), confirm a test prediction is scored by `0006`.
-- ☐ Step 5 — Deploy (Phase 5): point an external scheduler at `POST /api/sync`
-(~every 50 min ≈ under the cap).
+- ☑ Step 4 — **Owner:** applied `0007`/`0008`, set `CRON_SECRET` in `.env.local`,
+ran **Full sync** via the Sync tab, and confirmed **48 teams / 104 matches** with
+admin access granted.
+- ◐ Step 5 — Deploy (Phase 5): committed `.github/workflows/sync.yml`, an external
+GitHub Actions scheduler for `POST /api/sync`. It calls twice per fixture
+(kickoff +55m, then a post-match window) with a current max of 12 calls/day.
+Owner still needs to set Actions secrets (`SYNC_URL`, `CRON_SECRET`) after the
+Vercel URL exists and run it once.
 
 ---
 
@@ -256,35 +254,46 @@ results-only (no prediction input)
 
 > Goal: points appear after results, and the shared board ranks everyone.
 
-### 4.1 Scoring function ☐
+### 4.1 Scoring function ☑
 
-- ☐ Step 1 — SQL function: exact 7 / signed-GD 4 / winner 2 / 0, reading `app_settings`
-- ☐ Step 2 — Apply to all predictions of a scored match; idempotent
-- ☐ Step 3 — Unit-check the worked examples from `PROJECT-CONTEXT.md` §5
+- ☑ Step 1 — SQL function: exact 7 / signed-GD 4 / winner 2 / 0, reading `app_settings` (delivered early in 2.5 via `0006_scoring.sql`)
+- ☑ Step 2 — Apply to all predictions of a scored match; idempotent (delivered early in 2.5 via `0006_scoring.sql`)
+- ☑ Step 3 — Rollback-wrapped SQL unit check for the worked examples from `PROJECT-CONTEXT.md` §5 (`supabase/tests/0006_scoring_examples.sql`)
 
-### 4.2 Leaderboard ☐
+### 4.2 Leaderboard ☑
 
-- ☐ Step 1 — Leaderboard view (total, exact-count tie-break, predictions made)
-- ☐ Step 2 — Leaderboard page with avatars, ranks, my-row highlight
+- ☑ Step 1 — Aggregate leaderboard RPC (`0008_leaderboard.sql`) with totals, shared `rank()`, exact-count tie-break, predictions made, and per-tier counts
+- ☑ Step 2 — Leaderboard page with initials avatars, ranks, current-user highlight, full per-tier stats, and tap-any-row member breakdown links
 
-### 4.3 My results ☐
+### 4.3 My results ☑
 
-- ☐ Step 1 — Per-user breakdown: each prediction vs actual + points earned
+- ☑ Step 1 — Shared per-user breakdown component: prediction vs actual + points earned, reused by the Leaderboard "My results" tab, member pages, and Profile link
 
 ---
 
 ## Phase 5 — Polish & deploy
 
-### 5.1 UX polish ☐
+### 5.1 UX polish ☑
 
-- ☐ Step 1 — Skeletons, empty states, toasts
-- ☐ Step 2 — RTL/LTR pass across all screens
+- ☑ Step 1 — Skeletons, empty states, toasts
+- ☑ Step 2 — RTL/LTR pass across all screens
 
-### 5.2 Deploy ☐
+### 5.2 Deploy ◐
 
-- ☐ Step 1 — Vercel project + env vars
-- ☐ Step 2 — Supabase prod settings (auth redirect URLs, storage policies)
-- ☐ Step 3 — Production smoke test
+- ◐ Step 1 — Vercel project + env vars: local pre-flight build/lint clean and env
+  template verified; owner to create the Hobby project, set Production env vars,
+  deploy, and record `https://<app>.vercel.app`.
+- ◐ Step 2 — Supabase prod settings: reuse the existing project; owner to set Site
+  URL to `https://<app>.vercel.app`, add redirect URL
+  `https://<app>.vercel.app/**`, and confirm Email/Magic Link settings.
+- ◐ Step 3 — Production smoke test: checklist ready; owner to run after deploy
+  (ar/en, mobile/desktop, OTP, profile toast, fixtures/predictions/privacy,
+  leaderboard, admin Sync, scheduled Action log).
+- ☑ Step 4 — External scheduler repo artifact: `.github/workflows/sync.yml`
+  provides scheduled + manual GitHub Actions runs against `/api/sync`. The schedule
+  is match-aware: kickoff +55m for a half-time check, then kickoff +125m for group
+  matches or +170m for knockouts so extra time/penalties can finish. Current max
+  is 12 calls/day, under the server-side 30/day cap.
 
 ### 5.3 QA ☐
 

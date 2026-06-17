@@ -4,6 +4,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { Toaster } from "@/components/ui/sonner";
 import "../globals.css";
 
 // Arabic-first UI font (also covers Latin). Exposed as --font-sans so the
@@ -50,7 +51,10 @@ export default async function LocaleLayout({
       className={`${tajawal.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          {children}
+          <Toaster dir={dir} position="top-center" />
+        </NextIntlClientProvider>
       </body>
     </html>
   );

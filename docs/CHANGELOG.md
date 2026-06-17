@@ -28,6 +28,155 @@
 
 ---
 
+## 2026-06-17 - Match-aware result sync schedule
+**Plan item:** 5.2 scheduler refinement   **Status:** done (repo artifact updated; production secrets still owner-bound)
+
+**What changed**
+- Replaced the steady 29/day GitHub Actions result-sync cadence with a match-aware
+  WC2026 schedule generated from the openfootball feed.
+- The workflow now calls `POST /api/sync` twice per fixture: kickoff +55 minutes
+  for a half-time check, then a post-match check at kickoff +125 minutes for group
+  matches or +170 minutes for knockouts so extra time and penalties can finish.
+- Added a 2026 year guard so the date-specific cron entries do not keep calling
+  the endpoint annually after the tournament.
+- Updated README, build plan, and project context to document the new cadence.
+
+**Why**
+- Two match-timed pulls are enough for this app's current data model and use far
+  fewer calls than constant polling. The current schedule peaks at 12 calls/day,
+  comfortably under the endpoint's 30/day cap.
+
+**Files touched**
+- .github/workflows/sync.yml
+- README.md
+- docs/BUILD-PLAN.md
+- docs/PROJECT-CONTEXT.md
+- docs/CHANGELOG.md
+
+**Notes / gotchas**
+- The openfootball feed has an `ht` field, but the app intentionally writes only
+  `ft` full-time scores today. The half-time call is a harmless freshness check;
+  live/half-time score display would need separate storage/UI so it does not trip
+  the final-score trigger.
+- GitHub scheduled workflows can drift or be dropped under load, so cron-job.org
+  remains the punctual fallback if exact match timing matters.
+
+## 2026-06-17 - Phase 5.2 deploy prep and sync scheduler
+**Plan item:** 5.2 repo-side deploy prep + 2.6 Step 5   **Status:** repo artifact done; owner production activation pending
+
+**What changed**
+- Added `.github/workflows/sync.yml`, a scheduled + manual GitHub Actions workflow
+  that posts to the production `POST /api/sync` endpoint with
+  `Authorization: Bearer $CRON_SECRET`.
+- Encoded 29 explicit UTC runs/day (roughly every 50 minutes) instead of the
+  proposed `*/50 * * * *`; that cron form would run 48 times/day and exceed the
+  endpoint's 30/day cap.
+- Updated the build plan and project context for deploy prep, clearing stale live
+  DB/admin/sync owner items and documenting the remaining dashboard-bound work.
+
+**Why**
+- On Vercel Hobby, Vercel Cron's once/day limit is too coarse for result pulls.
+  GitHub Actions gives a version-controlled external cron while keeping
+  cron-job.org documented as the more punctual fallback if schedule drift matters.
+
+**Files touched**
+- .github/workflows/sync.yml
+- docs/BUILD-PLAN.md
+- docs/PROJECT-CONTEXT.md
+- docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Owner still needs to create the Vercel project, set Production env vars, add the
+  `https://<app>.vercel.app` Site URL and `https://<app>.vercel.app/**` redirect
+  wildcard in Supabase Auth, then add GitHub Actions secrets `SYNC_URL` and
+  `CRON_SECRET` with the exact same secret value used in Vercel.
+- Trigger **Actions → Sync results → Run workflow** once after secrets are set;
+  expect a 200 response and a new `sync_runs` row in the admin Sync log.
+- Verification run before the workflow/docs edits: `npm run build` and
+  `npm run lint` both passed.
+
+## 2026-06-17 - Phase 5.1 UX polish
+**Plan item:** 5.1 Step 1, Step 2   **Status:** done (build + lint + RTL guard clean)
+
+**What changed**
+- Added Sonner toast infrastructure with a locale-layout `Toaster` mounted
+  `top-center`, plus a shared `ToastFlash` reader for redirect success params.
+- Migrated profile/admin team/fixture/result success confirmations to toasts;
+  removed the old profile inline `?saved=1` box.
+- Added direct login "code sent" and admin sync result toasts, with sync actions
+  returning `{ ok, count }` state and revalidating the sync log.
+- Added route-level `loading.tsx` skeletons for Fixtures, fixture detail,
+  Leaderboard, member breakdown, Profile, and the admin teams/fixtures/results/sync
+  screens.
+- Swapped remaining admin empty-list paragraphs to the shared `EmptyState`.
+
+**Why**
+- Discrete actions should confirm completion without occupying permanent page
+  space, while contextual validation errors remain next to the field that needs
+  attention. Prediction autosave stays inline to avoid toast noise on every score
+  adjustment.
+
+**Files touched**
+- package.json, package-lock.json
+- src/components/ui/sonner.tsx
+- src/components/toast-flash.tsx
+- src/app/[locale]/layout.tsx
+- src/app/[locale]/(auth)/login/login-form.tsx
+- src/app/[locale]/(app)/profile/{actions.ts,page.tsx,loading.tsx}
+- src/app/[locale]/(app)/fixtures/loading.tsx
+- src/app/[locale]/(app)/fixtures/[id]/loading.tsx
+- src/app/[locale]/(app)/leaderboard/loading.tsx
+- src/app/[locale]/(app)/leaderboard/[userId]/loading.tsx
+- src/app/[locale]/(app)/admin/{teams,fixtures,results,sync}/*
+- messages/ar.json, messages/en.json
+- docs/BUILD-PLAN.md, docs/PROJECT-CONTEXT.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- `Toaster` is `top-center` specifically to avoid the fixed mobile bottom nav.
+- Success flash params are one-shot: `ToastFlash` fires the toast, strips
+  `toast`/`count`/`email`, and preserves any unrelated query params.
+- Verification run: `npm run build`, `npm run lint`, and the RTL physical-property
+  guard all pass.
+
+## 2026-06-17 — Phase 4 leaderboard and results
+**Plan item:** 4.1 Step 3, 4.2, 4.3   **Status:** code done (build + lint + RTL guard clean); live DB apply / SQL verification pending
+
+**What changed**
+- Added `0008_leaderboard.sql` with `public.get_leaderboard()`, a
+  `SECURITY DEFINER` aggregate-only RPC returning total points, prediction counts,
+  per-tier counts, and shared ranks across all profiles.
+- Added `supabase/tests/0006_scoring_examples.sql`, a rollback-wrapped check for
+  the §5 examples against the real `score_match()` trigger path.
+- Added `src/lib/leaderboard.ts`, the shared `ResultsBreakdown` component, the
+  Board / My-results Leaderboard tabs, tap-through member result pages, and the
+  compact Profile leaderboard card.
+- Added the Arabic / English `leaderboard` message namespace and updated the plan
+  / context docs for Phase 4.
+
+**Why**
+- The board needs totals across all users, but individual predictions must still
+  be filtered by RLS. The RPC returns aggregates only; result breakdowns keep using
+  normal RLS-bound `predictions` reads.
+
+**Files touched**
+- supabase/migrations/0008_leaderboard.sql
+- supabase/tests/0006_scoring_examples.sql
+- src/lib/leaderboard.ts
+- src/components/results-breakdown.tsx
+- src/app/[locale]/(app)/leaderboard/page.tsx
+- src/app/[locale]/(app)/leaderboard/[userId]/page.tsx
+- src/app/[locale]/(app)/profile/page.tsx
+- messages/ar.json, messages/en.json
+- docs/BUILD-PLAN.md, docs/PROJECT-CONTEXT.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- **Owner:** apply `0008_leaderboard.sql` after `0006`/`0007`, then run
+  `supabase/tests/0006_scoring_examples.sql` in the SQL editor; it should finish
+  with no exception and roll back its temporary rows.
+- The board intentionally lists all profiles, including zero-point members.
+- Tapping another member's row does not add a UI privacy gate; hidden picks stay
+  hidden because the database RLS policy filters the breakdown query.
+
 ## 2026-06-16 — Clearer prediction saved confirmation
 **Plan item:** 3.2 polish   **Status:** done
 

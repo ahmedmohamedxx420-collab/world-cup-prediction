@@ -3,7 +3,7 @@
 > **Single source of truth.** Read this before writing any code. If something here
 > is wrong or out of date, fix it here first, then build to match.
 >
-> **Last updated:** 2026-06-16 (rev 10) · **Status:** Phase 3 built (member fixtures + predictions UI) — owner live-apply / end-to-end DB verification pending
+> **Last updated:** 2026-06-17 (rev 13) · **Status:** Phase 5.2 repo-side deploy prep done; owner production activation / smoke pending
 
 ---
 
@@ -27,9 +27,9 @@ One sentence: **Predict the score, earn points by accuracy, climb one shared boa
 - World Cup only. No other competitions.
 - **In scope:** email-code login, score predictions (editable until kickoff),
   prediction privacy before kickoff, simple accuracy-based scoring, one
-  leaderboard, manual score entry, Arabic + English.
+  leaderboard, manual score entry plus openfootball result sync, Arabic + English.
 - **Out of scope (for now):** reminders/notifications, multiple groups, advanced
-  leaderboard analytics, automated API result sync.
+  leaderboard analytics.
 
 ---
 
@@ -60,8 +60,14 @@ These were confirmed with the owner. Change them *here* if they change.
    tabs. **No key and no paid/season plan** — the feed covers all 104 matches of
    WC2026 today and updates scores live. (It replaced an earlier API-Football design
    on 2026-06-14: that provider's free tier excludes season 2026, so it couldn't pull
-   real data.) Result pulls are **capped at 30/day**. Final scores from the sync flow
-   through the scoring trigger (§5) and auto-score predictions.
+   real data.) Result pulls are **capped at 30/day**. Production scheduling is a
+   repo-committed GitHub Actions external cron that calls `POST /api/sync` with
+   `SYNC_URL` + `CRON_SECRET` twice per fixture: kickoff +55m for a half-time
+   check, then kickoff +125m for group matches or +170m for knockouts so extra
+   time/penalties can finish. The current WC2026 schedule peaks at 12 calls/day.
+   Vercel Cron is not used on Hobby because its once/day limit is too coarse.
+   Final scores from the sync flow through the scoring trigger (§5) and
+   auto-score predictions.
 3. **Registration = open.** Anyone with the link can register (email + full name).
    - *Implication:* the leaderboard is only as private as the URL. A shared
      invite-code gate is a documented, low-effort future enhancement (see §10) if
@@ -209,8 +215,18 @@ One row per sync run (`kind` `schedule`|`results`, `ran_at`, `ok`,
 server-side ≤30/day cap. Admin-readable; written by the service-role sync job.
 
 ### Leaderboard (view)
-`SUM(points_awarded)` per user, plus `COUNT(*)` of exact hits and predictions
-made. Order: total **desc**, then exact-count **desc**, then `full_name`.
+Implemented by `public.get_leaderboard()` in `0008_leaderboard.sql`: a
+`SECURITY DEFINER` function with a pinned `search_path` that bypasses prediction
+RLS only to compute aggregate totals across all users. It returns aggregates only:
+total points, predictions made, scored count, exact / goal-difference / winner /
+miss counts, and shared `rank()` values. Tier classification reads
+`app_settings`, the same source as `score_match()`. Order: total **desc**, then
+exact-count **desc**, then `full_name`.
+
+Per-member result breakdowns are intentionally **not** returned by the aggregate
+function. The app reads `predictions` normally for a selected `user_id`, so RLS
+continues to hide another member's pre-kickoff picks while the current user can
+see their own full history.
 
 ---
 
@@ -246,6 +262,11 @@ not just in the UI, so the API can never leak a hidden prediction.
   then scale up to desktop. Expect a bottom nav on mobile.
 - "Clean sports app" aesthetic via shadcn/ui components (green primary accent).
 - UI font: **Tajawal** (Arabic + Latin), loaded via `next/font/google`.
+- **Feedback UX:** discrete successful writes use RTL-aware Sonner toasts mounted
+  `top-center` so they clear the mobile bottom nav. Redirecting server actions
+  pass success via `?toast=...` flash params that are stripped after display.
+  Contextual validation errors stay inline beside the form fields, and prediction
+  autosave keeps its inline `role="status"` instead of showing a toast per change.
 
 ---
 
@@ -268,7 +289,14 @@ Documented defaults (change here if the owner decides otherwise):
 - **Timezones:** kickoff stored in UTC; the gate (`now() >= kickoff_at`) is
   timezone-agnostic. Times are **displayed in the user's device-local timezone**.
 - **Reminders / notifications:** not built.
-- **API result sync:** not built; schema is API-ready for a later add.
+- **Automated result scheduler:** repo artifact built in
+  `.github/workflows/sync.yml` as a GitHub Actions external cron calling
+  `POST /api/sync` with `SYNC_URL` + `CRON_SECRET`; it is match-aware, with one
+  half-time check at kickoff +55m and one post-match check (+125m for group
+  matches, +170m for knockouts). Current peak is 12 calls/day, under the 30/day
+  server cap. Owner still needs to add the Actions secrets after Vercel assigns
+  the production URL and trigger the workflow once. cron-job.org remains the more
+  punctual fallback if GitHub schedule drift is a problem.
 - **Invite-code registration gate:** not built (registration is open per decision
   §4.3). Low-effort future enhancement if privacy needs tightening.
 - **Account deletion / admin user removal:** not in v1 unless requested.
@@ -279,6 +307,13 @@ Documented defaults (change here if the owner decides otherwise):
 - **Mid-tournament launch:** matches whose kickoff has already passed are
   results-only — the kickoff rule auto-closes predictions, so there's no
   retroactive predicting or back-crediting. Late joiners start at 0.
+- **Leaderboard membership:** the board lists all registered profiles, including
+  members with zero predictions / zero points. For a small family group, zeros are
+  visible by default rather than hiding non-predictors.
+- **Leaderboard breakdowns:** tapping any leaderboard row opens that member's
+  RLS-filtered results. Others' pre-kickoff predictions stay absent because the
+  database policy filters them; the current user's "My results" tab and Profile
+  card link show their full visible history.
 - **Seed data:** as of 2026-06-14, teams/fixtures/results are populated by the
   **openfootball worldcup.json sync** (§4.2), which writes UTC kickoff times
   directly; the manual admin CRUD remains a fallback. (The earlier hand-seed /

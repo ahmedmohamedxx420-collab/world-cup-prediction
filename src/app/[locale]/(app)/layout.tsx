@@ -1,8 +1,9 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { Shield } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { MainNav } from "@/components/main-nav";
 import { BottomNav } from "@/components/bottom-nav";
-import { redirect } from "@/i18n/navigation";
+import { Link, redirect } from "@/i18n/navigation";
 import { getProfile } from "@/lib/profile";
 
 // Shell shared by the three main tabs: a sticky header (app name + desktop nav +
@@ -25,6 +26,7 @@ export default async function AppLayout({
   }
 
   const t = await getTranslations("common");
+  const nav = await getTranslations("nav");
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -33,6 +35,15 @@ export default async function AppLayout({
           <span className="font-bold">{t("appName")}</span>
           <div className="flex items-center gap-2">
             <MainNav />
+            {profile.is_admin ? (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1.5 rounded-md px-2.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+              >
+                <Shield className="size-4" aria-hidden />
+                <span className="hidden sm:inline">{nav("admin")}</span>
+              </Link>
+            ) : null}
             <LanguageSwitcher />
           </div>
         </div>
