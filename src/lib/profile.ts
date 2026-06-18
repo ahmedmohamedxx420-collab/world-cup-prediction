@@ -1,6 +1,11 @@
 import "server-only";
 
 import { cache } from "react";
+import {
+  isAdminPhoneDigits,
+  phoneDigitsFromSyntheticEmail,
+  promotePhoneAdminProfile,
+} from "@/lib/auth/phone-admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type Profile = {
@@ -38,5 +43,16 @@ export const getProfile = cache(async (): Promise<Profile | null> => {
 
   if (error) throw error;
 
-  return (data as Profile | null) ?? null;
+  const profile = (data as Profile | null) ?? null;
+
+  const phoneDigits = phoneDigitsFromSyntheticEmail(user.email);
+
+  if (profile && !profile.is_admin && isAdminPhoneDigits(phoneDigits)) {
+    const promotionError = await promotePhoneAdminProfile(user.id, phoneDigits);
+
+    if (promotionError) throw promotionError;
+    return { ...profile, is_admin: true };
+  }
+
+  return profile;
 });

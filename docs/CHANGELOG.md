@@ -28,6 +28,30 @@
 
 ---
 
+## 2026-06-18 — Admin phone promotion for existing sessions
+**Plan item:** Auth/admin bugfix   **Status:** done
+
+**What changed**
+- `getProfile()` now recognizes the allow-listed phone account and promotes its
+  profile to `is_admin = true` if the row still says false.
+- The returned profile is treated as admin in the same request after the
+  successful promotion, so the Admin nav/layout can unlock without another
+  sign-in round-trip.
+
+**Why**
+- The first admin-phone implementation only ran during phone login or onboarding.
+  If the phone account was already signed in before the deploy, those server
+  actions would not run again, so the profile stayed non-admin.
+
+**Files touched**
+- src/lib/profile.ts
+- docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- A production deploy is still required. After deploy, refresh the app while
+  signed into `+966595440204`; if the old page was cached in the browser, sign
+  out and back in once.
+
 ## 2026-06-18 — Admin phone auto-promotion
 **Plan item:** Auth/admin refinement (owner request)   **Status:** done
 

@@ -3,7 +3,7 @@
 > **Single source of truth.** Read this before writing any code. If something here
 > is wrong or out of date, fix it here first, then build to match.
 >
-> **Last updated:** 2026-06-18 (rev 21) · **Status:** Phase 5.2 repo-side deploy prep done; owner production activation / smoke pending
+> **Last updated:** 2026-06-18 (rev 22) · **Status:** Phase 5.2 repo-side deploy prep done; owner production activation / smoke pending
 
 ---
 
@@ -132,7 +132,8 @@ These were confirmed with the owner. Change them *here* if they change.
     responsive row, and one hidden combined digit field sent to the server. New
     numbers still go through onboarding (name + language, Arabic default); known
     numbers go to fixtures. Phone `+966595440204` is auto-promoted to admin
-    after its profile exists.
+    after its profile exists; the shared profile read also self-heals this flag
+    for already signed-in sessions.
     Lives in `src/lib/auth/mode.ts` + `(auth)/login/phone-actions.ts`,
     `phone-login-form.tsx`, and
     `phone-number-input.tsx`.
@@ -335,7 +336,8 @@ Documented defaults (change here if the owner decides otherwise):
 - **Account deletion / admin user removal:** not in v1 unless requested.
 - **Admin grant:** the email owner is promoted via a **one-off SQL `UPDATE`** in
   the Supabase editor after first login; the admin phone `+966595440204` is
-  auto-promoted in server actions once its `profiles` row exists.
+  auto-promoted in server actions and the profile read path once its `profiles`
+  row exists.
 - **Knockout TBD fixtures:** created with `home_label`/`away_label` placeholders;
   predictions open once both teams are assigned.
 - **Mid-tournament launch:** matches whose kickoff has already passed are
