@@ -28,6 +28,30 @@
 
 ---
 
+## 2026-06-18 — Admin phone live profile promotion + variants
+**Plan item:** Auth/admin bugfix   **Status:** done
+
+**What changed**
+- Hardened admin-phone matching to recognize the same Saudi number as
+  `966595440204`, `9660595440204`, `0595440204`, or `595440204`.
+- Checked the live Supabase project using the service-role key and found
+  `966595440204@phone.local` with an existing profile that was not admin.
+- Updated that live profile to `is_admin = true`.
+
+**Why**
+- The phone account existed before the latest promotion path ran, so the profile
+  remained non-admin. Older login UI variants could also create different
+  synthetic accounts for the same real phone number.
+
+**Files touched**
+- src/lib/auth/phone-admin.ts
+- docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Live data was changed intentionally: `966595440204@phone.local` was promoted.
+- After production deploy, the variant matching prevents the same issue for
+  common local-number forms of this Saudi number.
+
 ## 2026-06-18 — Admin phone promotion for existing sessions
 **Plan item:** Auth/admin bugfix   **Status:** done
 

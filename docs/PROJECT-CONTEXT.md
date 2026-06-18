@@ -3,7 +3,7 @@
 > **Single source of truth.** Read this before writing any code. If something here
 > is wrong or out of date, fix it here first, then build to match.
 >
-> **Last updated:** 2026-06-18 (rev 22) · **Status:** Phase 5.2 repo-side deploy prep done; owner production activation / smoke pending
+> **Last updated:** 2026-06-18 (rev 23) · **Status:** Phase 5.2 repo-side deploy prep done; owner production activation / smoke pending
 
 ---
 
@@ -133,7 +133,8 @@ These were confirmed with the owner. Change them *here* if they change.
     numbers still go through onboarding (name + language, Arabic default); known
     numbers go to fixtures. Phone `+966595440204` is auto-promoted to admin
     after its profile exists; the shared profile read also self-heals this flag
-    for already signed-in sessions.
+    for already signed-in sessions. Matching also tolerates common Saudi local
+    variants for the same number (`059...`, national-only, and `9660...`).
     Lives in `src/lib/auth/mode.ts` + `(auth)/login/phone-actions.ts`,
     `phone-login-form.tsx`, and
     `phone-number-input.tsx`.
