@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, CircleAlert, Loader2, Lock, Minus, Plus } from "lucide-react";
+import { Check, CircleAlert, Lock, Minus, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
+import { BallLoader } from "@/components/ball-loader";
 import { cn } from "@/lib/utils";
 import { savePrediction, type PredictionFormState } from "./actions";
 
@@ -34,8 +35,10 @@ function ScoreStepper({
   onChange: (nextValue: number) => void;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="truncate text-center text-sm font-semibold">{label}</div>
+    <div className="wc-fixture-card rounded-2xl border bg-card/95 p-4 shadow-sm">
+      <div className="truncate text-center text-sm font-black tracking-normal">
+        {label}
+      </div>
       <div className="mt-4 flex items-center justify-center gap-3">
         <Button
           type="button"
@@ -47,13 +50,13 @@ function ScoreStepper({
         >
           <Minus aria-hidden />
         </Button>
-        <output className="min-w-16 text-center text-4xl font-semibold tabular-nums">
+        <output className="min-w-16 text-center text-4xl font-black tabular-nums text-foreground">
           {value}
         </output>
         <Button
           type="button"
           size="icon-lg"
-          variant="outline"
+          variant="lime"
           aria-label={increaseLabel}
           disabled={disabled || value >= 99}
           onClick={() => onChange(clampScore(value + 1))}
@@ -190,14 +193,14 @@ export function PredictForm({
       className: "bg-muted/50 text-muted-foreground",
     },
     saving: {
-      icon: <Loader2 className="size-4 animate-spin" aria-hidden />,
+      icon: <BallLoader variant="inline" />,
       text: t("saving"),
       className: "bg-muted text-muted-foreground",
     },
     saved: {
       icon: <Check className="size-4" aria-hidden />,
       text: t("saved"),
-      className: "bg-primary/15 text-primary ring-1 ring-primary/25",
+      className: "bg-lime/25 text-lime-foreground ring-1 ring-lime/50",
     },
     locked: {
       icon: <Lock className="size-4" aria-hidden />,

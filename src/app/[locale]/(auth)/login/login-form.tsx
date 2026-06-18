@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { BallLoader } from "@/components/ball-loader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -139,7 +140,13 @@ export function LoginForm() {
           </p>
         ) : null}
 
-        <Button className="w-full" type="submit" disabled={isLoading}>
+        <Button
+          className="w-full"
+          type="submit"
+          variant="lime"
+          disabled={isLoading}
+        >
+          {isLoading ? <BallLoader variant="inline" /> : null}
           {isLoading ? t("sending") : t("sendCode")}
         </Button>
       </form>
@@ -181,8 +188,10 @@ export function LoginForm() {
       <Button
         className="w-full"
         type="submit"
+        variant="lime"
         disabled={isLoading || code.length !== 6}
       >
+        {isLoading ? <BallLoader variant="inline" /> : null}
         {isLoading ? t("verifying") : t("verify")}
       </Button>
 

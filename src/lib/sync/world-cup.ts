@@ -60,6 +60,39 @@ const TEAMS: Record<string, { code: string; name_ar: string; flag: string }> = {
 };
 
 type TeamRef = { id: number; group_letter: string | null };
+type MatchSyncRow = {
+  api_fixture_id: number;
+  match_number: number | null;
+  stage: MatchStage;
+  group_letter: string | null;
+  home_team_id: number | null;
+  away_team_id: number | null;
+  home_label: string | null;
+  away_label: string | null;
+  kickoff_at: string;
+  venue: string | null;
+  status: "scheduled" | "finished";
+  home_score: number | null;
+  away_score: number | null;
+  shootout_winner_team_id: number | null;
+};
+
+const MATCH_SYNC_SELECT = `
+  api_fixture_id,
+  match_number,
+  stage,
+  group_letter,
+  home_team_id,
+  away_team_id,
+  home_label,
+  away_label,
+  kickoff_at,
+  venue,
+  status,
+  home_score,
+  away_score,
+  shootout_winner_team_id
+`;
 
 function stageOf(m: OfMatch): MatchStage {
   if (m.group) return "group"; // group matches always carry "Group X"
@@ -139,7 +172,7 @@ async function teamRefByCode(
 // its name is a known finalist; otherwise it stays TBD with an Arabic label.
 // Scores are written ONLY when full-time exists, so the 0006 trigger scores
 // predictions on finals (not while a match is still scheduled/in progress).
-function matchRow(m: OfMatch, teams: Map<string, TeamRef>) {
+function matchRow(m: OfMatch, teams: Map<string, TeamRef>): MatchSyncRow {
   const homeCode = TEAMS[m.team1]?.code;
   const awayCode = TEAMS[m.team2]?.code;
   const home = homeCode ? teams.get(homeCode) : undefined;
@@ -170,6 +203,54 @@ function matchRow(m: OfMatch, teams: Map<string, TeamRef>) {
     away_score: finished ? ft![1] : null,
     shootout_winner_team_id: shootoutWinner,
   };
+}
+
+function sameInstant(left: string, right: string): boolean {
+  return new Date(left).getTime() === new Date(right).getTime();
+}
+
+function sameMatchRow(current: MatchSyncRow, next: MatchSyncRow): boolean {
+  return (
+    current.match_number === next.match_number &&
+    current.stage === next.stage &&
+    current.group_letter === next.group_letter &&
+    current.home_team_id === next.home_team_id &&
+    current.away_team_id === next.away_team_id &&
+    current.home_label === next.home_label &&
+    current.away_label === next.away_label &&
+    sameInstant(current.kickoff_at, next.kickoff_at) &&
+    current.venue === next.venue &&
+    current.status === next.status &&
+    current.home_score === next.home_score &&
+    current.away_score === next.away_score &&
+    current.shootout_winner_team_id === next.shootout_winner_team_id
+  );
+}
+
+async function changedMatchRows(
+  admin: ReturnType<typeof createAdminClient>,
+  rows: MatchSyncRow[],
+): Promise<MatchSyncRow[]> {
+  if (rows.length === 0) return [];
+
+  const { data, error } = await admin
+    .from("matches")
+    .select(MATCH_SYNC_SELECT)
+    .in(
+      "api_fixture_id",
+      rows.map((row) => row.api_fixture_id),
+    );
+  if (error) throw error;
+
+  const currentByApiId = new Map<number, MatchSyncRow>();
+  for (const row of (data ?? []) as MatchSyncRow[]) {
+    currentByApiId.set(row.api_fixture_id, row);
+  }
+
+  return rows.filter((row) => {
+    const current = currentByApiId.get(row.api_fixture_id);
+    return !current || !sameMatchRow(current, row);
+  });
 }
 
 // Full sync: seed/refresh the 48 teams (with group letters) + every match. Run
@@ -222,11 +303,16 @@ export async function syncResults(): Promise<{ fixtures: number }> {
   const teams = await teamRefByCode(admin);
   const matches = await fetchWorldCup();
   const rows = matches.map((m) => matchRow(m, teams));
+  const changedRows = await changedMatchRows(admin, rows);
+
+  if (changedRows.length === 0) {
+    return { fixtures: 0 };
+  }
 
   const { error } = await admin
     .from("matches")
-    .upsert(rows, { onConflict: "api_fixture_id" });
+    .upsert(changedRows, { onConflict: "api_fixture_id" });
   if (error) throw error;
 
-  return { fixtures: rows.length };
+  return { fixtures: changedRows.length };
 }

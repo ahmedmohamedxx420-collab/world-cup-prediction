@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-18 (rev 23)
+> **Last updated:** 2026-06-19 (rev 30)
 
 ---
 
@@ -18,12 +18,32 @@
 
 ## Current Position
 
-➡️ **Phase 5.2 repo-side deploy prep remains owner-bound; admin phone profile promoted live and variant matching hardened; then 5.3 QA dry-run.**
-Local pre-flight is clean (`npm run build` + `npm run lint`), `.env.example`
-still covers every production env var, and the match-aware GitHub Actions
-scheduler is committed. The remaining 5.2 work is dashboard-bound: create the Vercel
-project, add the production URL to Supabase Auth settings, set GitHub Actions
-secrets, trigger the workflow once, and run the production smoke test.
+➡️ **UI refresh shipped (rev 30): the design-tab football language is now live
+across all real screens. Still open: apply `0009_member_stats.sql` +
+`0010_avatars_storage.sql`, resume 5.2 production activation / 5.3 QA, and run an
+authed mobile/RTL visual pass over the new UI.**
+Local verification is clean (`npm run lint` + `npm run build`); login renders in
+`ar`/`en`. The next session should do a logged-in walk of fixtures → match detail
+(banner, live "family lean" bar, exact-score `GoalBurst`, steppers/reveal) →
+leaderboard (medals, stat colors) → Hall of Fame → profile, on a phone viewport
+and with OS reduce-motion on. See CHANGELOG 2026-06-19 (rev 30).
+
+➡️ **Phase 4.4 Hall of Fame stats and profile avatars are repo-implemented; owner must apply `0009_member_stats.sql` and `0010_avatars_storage.sql`, then resume 5.2 production activation / 5.3 QA.**
+Local verification is clean (`npm run lint` + `npm run build`). The new leaderboard tab uses aggregate-only member stats from
+`public.get_member_stats()` and the per-player card uses already RLS-filtered
+visible result rows. The remaining 4.4 work is live Supabase apply + smoke:
+`select * from get_member_stats();`, non-admin RPC execute, privacy sanity, and
+mobile/RTL visual QA.
+
+The new avatar work adds a public `avatars` storage bucket with RLS-constrained
+member writes, in-browser 512px square compression, onboarding/profile upload and
+remove controls, and shared image/initials display on leaderboard, Hall of Fame,
+result breakdown, and fixture-reveal member rows. Uploads require live migration
+`0010_avatars_storage.sql`.
+
+Phase 5.2 is still dashboard-bound after this: create the Vercel project, add the
+production URL to Supabase Auth settings, set GitHub Actions secrets, trigger the
+workflow once, and run the production smoke test.
 
 Out-of-band fix (rev 14): login showed a false error after a correct OTP code
 because the post-verify profile lookup selected from `profiles` unfiltered — and
@@ -78,6 +98,63 @@ Admin fix (rev 23): the live `966595440204@phone.local` profile was found with
 `is_admin = false` and promoted directly. The allow-list now also recognizes
 common Saudi local-number variants (`059...`, national-only, and `9660...`). See
 CHANGELOG 2026-06-18.
+
+Leaderboard enhancement (rev 24): added a Hall of Fame tab with 8 aggregate award
+badges plus a compact per-player stats strip on result breakdowns. New migration
+`0009_member_stats.sql` adds the aggregate-only `get_member_stats()` RPC; owner
+must apply it before the tab works against the live database. See CHANGELOG
+2026-06-18.
+
+Profile avatar enhancement (rev 25): added optional profile-photo upload during
+onboarding and profile editing, stable-path storage replacement at
+`avatars/{user_id}/avatar.webp`, removal back to initials, and app-wide avatar
+display wherever members appear. New migration `0010_avatars_storage.sql` must be
+applied before uploads work live. See CHANGELOG 2026-06-18.
+
+Avatar save fix (rev 26): profile/onboarding Save buttons now stay disabled while
+the browser-side avatar upload is still running, preventing the old/empty hidden
+`avatarUrl` value from being submitted before the new public URL is ready. See
+CHANGELOG 2026-06-18.
+
+Design-tab addition (rev 27): added a "World Cup Patterns" section to the
+standalone `/design-system` route that recreates app-specific patterns (fixture
+state rows, score steppers + status pills, revealed predictions, leaderboard
+rows, stat chips / form dots, result tiles, Hall of Fame award cards, avatar
+upload + phone sign-in + admin form mocks, sync log) in the existing emerald/lime
+`ds.css` theme. Sample data only; no production screens, APIs, schema, or
+translations changed. See CHANGELOG 2026-06-18.
+
+Design-tab addition (rev 28): added a second design-only section "Atmosphere &
+Motion" (`sections/football-motion.tsx`) with self-contained CSS/SVG football
+visuals — a living stadium banner (grass stripes, floodlight, net, floating
+spinning ball), spinning/bouncing/rolling ball loaders, an animated live-momentum
+bar + commentary ticker, GOAL! and champion-trophy moment cards with CSS confetti
+(gold accent nods to the real WC2026 brand), a penalty-shootout tracker, and SVG
+team-kit swatches. Includes a `prefers-reduced-motion` off-switch. Sample data
+only; no production screens, APIs, schema, or translations changed. See CHANGELOG
+2026-06-18.
+
+Design-tab addition (rev 29): retuned the design-tab palette into a meaning-based
+dual-accent system (token-only, no layout change) — a slightly deepened emerald
+"pitch" base, **neon lime kept as the energy/live spark** (buttons, hero, charts,
+live badge, momentum), and a **new championship-gold achievement accent**
+(`--ds-gold-*` + `--ds-gold-gradient`) applied to trophy/champion, Hall of Fame
+awards, winning result tile, rank-#1 medal, points-earned, and leading shootout
+score. Added a `gold` badge tone and refreshed the Colors section. Gold nods to
+the real WC2026 brand. Design-tab only. See CHANGELOG 2026-06-18.
+
+UI refresh (rev 30): brought the design-tab language into the **real app** (not
+just `/design-system`). `globals.css` now carries the emerald/lime/gold tokens
+(`--lime`/`--gold` registered in `@theme inline`), pitch/lime/gold gradients,
+colored glows, a lime stadium-wash background, and the `wc-*` CSS keyframes (all
+reduced-motion gated). New shared components — `SoccerBall`, `BallLoader` (replaces
+`Loader2` everywhere), `GoalBurst`, `MomentumBar`, `MatchBanner` — plus a `lime`
+button variant. Every screen restyled: fixtures cards + "next match" hero,
+match-detail banner + live "family lean" bar + exact-score celebration + lime
+steppers + gold reveal points, leaderboard medals + colored stat pills, Hall of
+Fame gold/shine, results pitch band + gold tiles, lime CTAs + ball loaders on
+profile/onboarding/login/avatar/sync. No schema/RLS/API changes; privacy gating
+untouched. See CHANGELOG 2026-06-19.
 
 ---
 
@@ -148,7 +225,10 @@ CHANGELOG 2026-06-18.
 ### 1.2 Profile setup ☑
 
 - ☑ Step 1 — `profiles` row creation on first login (full name required)
-- ⊘ Step 2 — Optional avatar upload deferred; `avatar_url` exists but is unused
+- ☑ Step 2 — Optional avatar upload delivered: `0010_avatars_storage.sql` creates
+  the `avatars` bucket/RLS, onboarding/profile forms persist `avatar_url`, and
+  member UI falls back to initials when no photo is set. Live upload requires
+  applying `0010` in Supabase.
 - ☑ Step 3 — Edit profile (name, locale)
 
 ### 1.3 Sessions & route protection ☑
@@ -322,6 +402,22 @@ results-only (no prediction input)
 ### 4.3 My results ☑
 
 - ☑ Step 1 — Shared per-user breakdown component: prediction vs actual + points earned, reused by the Leaderboard "My results" tab, member pages, and Profile link
+
+### 4.4 Hall of Fame stats + player cards ◐
+
+- ☑ Step 1 — `0009_member_stats.sql`: aggregate-only `get_member_stats()` RPC
+  returns per-profile totals, tier counts, exact-points setting, streak, last-5,
+  average predicted goals, and average prediction lead time. Function mirrors
+  `get_leaderboard()` (`SECURITY DEFINER`, pinned `search_path`, grant execute to
+  `authenticated`) and returns no individual prediction rows.
+- ☑ Step 2 — Pure TypeScript helpers compute the 8 named Hall of Fame badge
+  winners and per-player form/streak/favourite/best-match stats.
+- ☑ Step 3 — Leaderboard gains the third tab (Board / Hall of Fame / My results);
+  member breakdowns and the current user's results tab show the compact stats
+  strip. Arabic and English messages are key-for-key.
+- ◐ Step 4 — Owner/live verification pending: apply migration `0009`, sanity
+  `select * from get_member_stats();`, confirm non-admin authenticated RPC access,
+  spot-check badge winners, and run mobile RTL/LTR smoke.
 
 ---
 

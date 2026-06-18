@@ -17,6 +17,30 @@ export type LeaderboardRow = {
   rank: number;
 };
 
+export type MemberStatsRow = {
+  user_id: string;
+  full_name: string;
+  avatar_url: string | null;
+  total_points: number;
+  scored_count: number;
+  exact_count: number;
+  gd_count: number;
+  winner_count: number;
+  miss_count: number;
+  exact_points: number;
+  longest_scoring_streak: number;
+  last5_points: number;
+  avg_goals_x100: number | null;
+  avg_lead_seconds: number | null;
+};
+
+export class MemberStatsUnavailableError extends Error {
+  constructor() {
+    super("get_member_stats is not available in the database schema.");
+    this.name = "MemberStatsUnavailableError";
+  }
+}
+
 export type MemberProfile = {
   id: string;
   full_name: string;
@@ -93,6 +117,21 @@ export async function getLeaderboard(): Promise<LeaderboardRow[]> {
   if (error) throw error;
 
   return (data ?? []) as LeaderboardRow[];
+}
+
+export async function getMemberStats(): Promise<MemberStatsRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("get_member_stats");
+
+  if (error) {
+    if (error.code === "PGRST202") {
+      throw new MemberStatsUnavailableError();
+    }
+
+    throw error;
+  }
+
+  return (data ?? []) as MemberStatsRow[];
 }
 
 export async function getUserResults(userId: string): Promise<UserResult[]> {

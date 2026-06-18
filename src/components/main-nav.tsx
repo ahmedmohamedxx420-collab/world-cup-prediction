@@ -11,7 +11,7 @@ export function MainNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="hidden items-center gap-1 md:flex">
+    <nav className="hidden items-center gap-1 rounded-full border bg-card/80 p-1 shadow-sm md:flex">
       {navItems.map(({ key, href, icon: Icon }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
         return (
@@ -20,9 +20,9 @@ export function MainNav() {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+              "flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold transition-colors",
               active
-                ? "bg-accent text-accent-foreground"
+                ? "bg-lime text-lime-foreground shadow-lime"
                 : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
             )}
           >

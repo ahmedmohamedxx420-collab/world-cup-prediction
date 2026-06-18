@@ -2,6 +2,8 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { ResultsBreakdown } from "@/components/results-breakdown";
 import { BackLink } from "@/components/back-link";
+import { getAppSettings } from "@/lib/app-settings";
+import { computePlayerStats } from "@/lib/hall-of-fame";
 import {
   getLeaderboard,
   getMemberProfile,
@@ -23,17 +25,20 @@ export default async function MemberResultsPage({
 
   if (!UUID_RE.test(userId)) notFound();
 
-  const [profile, leaderboard, results, teams, user, t] = await Promise.all([
+  const [profile, leaderboard, results, teams, user, settings, t] = await Promise.all([
     getMemberProfile(userId),
     getLeaderboard(),
     getUserResults(userId),
     listTeams(),
     getCurrentUser(),
+    getAppSettings(),
     getTranslations("leaderboard"),
   ]);
   const stats = leaderboard.find((row) => row.user_id === userId);
 
   if (!profile || !stats) notFound();
+
+  const playerStats = computePlayerStats(results, settings.exact_points);
 
   return (
     <div className="space-y-5">
@@ -45,6 +50,8 @@ export default async function MemberResultsPage({
         results={results}
         teams={teams}
         locale={locale}
+        playerStats={playerStats}
+        exactPoints={settings.exact_points}
         isCurrentUser={user?.id === userId}
       />
     </div>

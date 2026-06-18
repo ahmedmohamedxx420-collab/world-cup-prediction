@@ -1,8 +1,9 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Clock3, Goal, MapPin, Trophy } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { LiveBadge } from "@/components/live-badge";
 import { LocalKickoff } from "@/components/local-kickoff";
+import { MatchBanner } from "@/components/match-banner";
 import { Link } from "@/i18n/navigation";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,7 +32,17 @@ function isTbd(match: Match) {
 function isFinished(match: Match) {
   return (
     match.status === "finished" ||
-    (match.home_score != null && match.away_score != null)
+    (match.status !== "live" &&
+      match.home_score != null &&
+      match.away_score != null)
+  );
+}
+
+function isLiveMatch(match: Match, now: number) {
+  return (
+    !isTbd(match) &&
+    !isFinished(match) &&
+    (match.status === "live" || isLocked(match, now))
   );
 }
 
@@ -54,6 +65,23 @@ function formatDateKey(key: string, locale: string) {
     day: "numeric",
     timeZone: "UTC",
   }).format(date);
+}
+
+function dateKeyFromTime(time: number) {
+  return new Date(time).toISOString().slice(0, 10);
+}
+
+function formatRelativeDayLabel(
+  key: string,
+  todayKey: string,
+  tomorrowKey: string,
+  locale: string,
+) {
+  const formatter = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+
+  if (key === todayKey) return formatter.format(0, "day");
+  if (key === tomorrowKey) return formatter.format(1, "day");
+  return null;
 }
 
 function groupByDate(matches: Match[], locale: string): MatchGroup[] {
@@ -95,9 +123,9 @@ function TabLink({
       href={tabHref(tab)}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "rounded-md px-3 py-2 text-center text-sm font-medium transition-colors",
+        "rounded-full px-3 py-2 text-center text-sm font-semibold transition-colors",
         active
-          ? "bg-background text-foreground shadow-sm"
+          ? "bg-lime text-lime-foreground shadow-sm"
           : "text-muted-foreground hover:text-foreground",
       )}
     >
@@ -214,13 +242,17 @@ export default async function FixturesPage({
   const teamMap = new Map(teams.map((team) => [team.id, team]));
   const now = await getServerNow();
   const DAY_MS = 24 * 60 * 60 * 1000;
+  const todayKey = dateKeyFromTime(now);
+  const tomorrowKey = dateKeyFromTime(now + DAY_MS);
 
   // Finished = has a final score (or is flagged finished). A match that has
   // kicked off but isn't finished yet is "in progress" and stays in Upcoming.
   const finished = matches.filter((match) => isFinished(match));
   const notFinished = matches.filter((match) => !isFinished(match));
-  const live = notFinished.filter((match) => isLocked(match, now));
-  const notStarted = notFinished.filter((match) => !isLocked(match, now));
+  const live = notFinished.filter((match) => isLiveMatch(match, now));
+  const notStarted = notFinished.filter(
+    (match) => !isLiveMatch(match, now) && !isLocked(match, now),
+  );
 
   // Upcoming shows only the next "batch": everything in progress now, plus the
   // not-yet-started matches that fall within 24h of the earliest upcoming one
@@ -241,15 +273,47 @@ export default async function FixturesPage({
       : [...finished].reverse();
   const groups = groupByDate(visibleMatches, locale);
 
+  // Featured match banners are now reserved for live fixtures only. Upcoming
+  // matches stay in the regular list so the hero treatment means "watch now".
+  const liveHeroMatches = activeTab === "upcoming" ? live : [];
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+        <div className="space-y-3">
+          <span className="wc-page-kicker">
+            <Trophy className="size-4" aria-hidden />
+            {t("title")}
+          </span>
+          <h1 className="text-3xl font-black tracking-normal sm:text-4xl">
+            {t("title")}
+          </h1>
+        </div>
+        <div className="flex flex-wrap gap-2 md:justify-end">
+          {live.length > 0 ? (
+            <span className="wc-field-chip text-primary">
+              <Goal className="size-3.5" aria-hidden />
+              <span className="tabular-nums">{live.length}</span>
+              {t("inProgress")}
+            </span>
+          ) : null}
+          <span className="wc-field-chip">
+            <CalendarDays className="size-3.5" aria-hidden />
+            <span className="tabular-nums">{nextBatch.length}</span>
+            {t("upcoming")}
+          </span>
+          <span className="wc-field-chip">
+            <Trophy className="size-3.5" aria-hidden />
+            <span className="tabular-nums">{finished.length}</span>
+            {t("finished")}
+          </span>
+        </div>
+      </div>
+
       <div className="space-y-3">
-        <h1 className="text-2xl font-semibold tracking-normal">
-          {t("title")}
-        </h1>
         <nav
           aria-label={t("tabsLabel")}
-          className="grid grid-cols-2 rounded-lg border bg-muted/40 p-1"
+          className="grid grid-cols-2 rounded-full border bg-card/85 p-1 shadow-sm"
         >
           <TabLink
             tab="upcoming"
@@ -264,6 +328,61 @@ export default async function FixturesPage({
         </nav>
       </div>
 
+      {liveHeroMatches.length > 0 ? (
+        <div className="grid gap-3 lg:grid-cols-2">
+          {liveHeroMatches.map((match) => {
+            const result = scoreText(match.home_score, match.away_score);
+
+            return (
+              <MatchBanner
+                key={match.id}
+                homeName={sideName(
+                  teamMap,
+                  match.home_team_id,
+                  match.home_label,
+                  t("tbd"),
+                )}
+                awayName={sideName(
+                  teamMap,
+                  match.away_team_id,
+                  match.away_label,
+                  t("tbd"),
+                )}
+                homeFlag={teamMap.get(match.home_team_id ?? -1)?.flag}
+                awayFlag={teamMap.get(match.away_team_id ?? -1)?.flag}
+                centerLabel={result ?? t("vs")}
+                venue={match.venue}
+                topStart={
+                  <>
+                    {match.match_number != null ? (
+                      <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold">
+                        {t("matchNumber", { number: match.match_number })}
+                      </span>
+                    ) : null}
+                    <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold">
+                      {stagesT(match.stage)}
+                    </span>
+                    {match.group_letter ? (
+                      <span className="rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold">
+                        {t("group", { group: match.group_letter })}
+                      </span>
+                    ) : null}
+                  </>
+                }
+                topEnd={<LiveBadge label={t("inProgress")} />}
+              >
+                <Link
+                  href={`/fixtures/${match.id}`}
+                  className={buttonVariants({ variant: "lime", size: "lg" })}
+                >
+                  {t("view")}
+                </Link>
+              </MatchBanner>
+            );
+          })}
+        </div>
+      ) : null}
+
       {groups.length === 0 ? (
         <EmptyState
           icon={<CalendarDays className="size-8" aria-hidden />}
@@ -271,90 +390,161 @@ export default async function FixturesPage({
           description={t("emptyDescription")}
         />
       ) : (
-        groups.map((group) => (
-          <section key={group.key} className="space-y-2">
-            <h2 className="px-1 text-sm font-semibold text-muted-foreground">
-              {group.label}
-            </h2>
-            <ul className="divide-y overflow-hidden rounded-lg border bg-card">
-              {group.items.map((match) => {
-                const prediction = myPredictions.get(match.id);
-                const locked = isLocked(match, now);
-                const tbd = isTbd(match);
-                const inProgress = locked && !isFinished(match) && !tbd;
-                const result = scoreText(match.home_score, match.away_score);
+        groups.map((group) => {
+          const relativeLabel = formatRelativeDayLabel(
+            group.key,
+            todayKey,
+            tomorrowKey,
+            locale,
+          );
+          const dayTone =
+            group.key === todayKey
+              ? "is-today"
+              : group.key === tomorrowKey
+                ? "is-tomorrow"
+                : undefined;
 
-                return (
-                  <li key={match.id}>
-                    <Link
-                      href={`/fixtures/${match.id}`}
-                      className="grid gap-3 px-4 py-4 transition-colors hover:bg-accent/50 sm:grid-cols-[1fr_auto] sm:items-center"
-                    >
-                      <span className="min-w-0 space-y-2">
-                        <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          {match.match_number != null ? (
-                            <span className="tabular-nums">
-                              {t("matchNumber", {
-                                number: match.match_number,
-                              })}
+          return (
+            <section
+              key={group.key}
+              className={cn("wc-match-day space-y-3", dayTone)}
+            >
+              <div className="wc-match-day__header">
+                <span className="wc-match-day__marker" aria-hidden />
+                <span className="min-w-0">
+                  <h2 className="wc-match-day__title">
+                    {relativeLabel ?? group.label}
+                  </h2>
+                  {relativeLabel ? (
+                    <span className="wc-match-day__date">{group.label}</span>
+                  ) : null}
+                </span>
+                <span className="wc-match-day__count tabular-nums" aria-hidden>
+                  {group.items.length}
+                </span>
+              </div>
+              <ul className="space-y-2">
+                {group.items.map((match) => {
+                  const prediction = myPredictions.get(match.id);
+                  const locked = isLocked(match, now);
+                  const tbd = isTbd(match);
+                  const inProgress = isLiveMatch(match, now);
+                  const result = scoreText(match.home_score, match.away_score);
+
+                  return (
+                    <li key={match.id}>
+                      <Link
+                        href={`/fixtures/${match.id}`}
+                        className={cn(
+                          "wc-fixture-card grid gap-4 rounded-2xl border bg-card/95 p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md sm:grid-cols-[1fr_auto] sm:items-center",
+                          inProgress && "is-live border-primary/30",
+                        )}
+                      >
+                        <span className="min-w-0 space-y-2">
+                          <span className="flex flex-wrap items-center gap-1.5">
+                            {match.match_number != null ? (
+                              <span className="wc-field-chip tabular-nums">
+                                {t("matchNumber", {
+                                  number: match.match_number,
+                                })}
+                              </span>
+                            ) : null}
+                            <span className="wc-field-chip">
+                              {stagesT(match.stage)}
                             </span>
-                          ) : null}
-                          <span>{stagesT(match.stage)}</span>
-                          {match.group_letter ? (
-                            <span>{t("group", { group: match.group_letter })}</span>
-                          ) : null}
+                            {match.group_letter ? (
+                              <span className="wc-field-chip">
+                                {t("group", { group: match.group_letter })}
+                              </span>
+                            ) : null}
+                          </span>
+
+                          <span className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+                            <span className="flex min-w-0 items-center gap-1.5">
+                              {teamMap.get(match.home_team_id ?? -1)?.flag ? (
+                                <span
+                                  aria-hidden
+                                  className="text-xl leading-none drop-shadow-sm"
+                                >
+                                  {teamMap.get(match.home_team_id ?? -1)?.flag}
+                                </span>
+                              ) : null}
+                              <span className="truncate text-start text-base font-black tracking-normal">
+                                {sideName(
+                                  teamMap,
+                                  match.home_team_id,
+                                  match.home_label,
+                                  t("tbd"),
+                                )}
+                              </span>
+                            </span>
+                            <span
+                              className={cn(
+                                "rounded-full px-3 py-1.5 text-xs font-black tabular-nums shadow-sm",
+                                result
+                                  ? "bg-gold-grad text-gold-foreground"
+                                  : "bg-muted text-muted-foreground",
+                              )}
+                            >
+                              {result ?? t("vs")}
+                            </span>
+                            <span className="flex min-w-0 items-center gap-1.5">
+                              {teamMap.get(match.away_team_id ?? -1)?.flag ? (
+                                <span
+                                  aria-hidden
+                                  className="text-xl leading-none drop-shadow-sm"
+                                >
+                                  {teamMap.get(match.away_team_id ?? -1)?.flag}
+                                </span>
+                              ) : null}
+                              <span className="truncate text-start text-base font-black tracking-normal">
+                                {sideName(
+                                  teamMap,
+                                  match.away_team_id,
+                                  match.away_label,
+                                  t("tbd"),
+                                )}
+                              </span>
+                            </span>
+                          </span>
+
+                          <span className="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
+                            <span className="inline-flex items-center gap-1.5">
+                              <Clock3 className="size-3.5" aria-hidden />
+                              <LocalKickoff
+                                iso={match.kickoff_at}
+                                locale={locale}
+                                closesLabel={t("closesAtKickoff")}
+                                lockedLabel={t("locked")}
+                              />
+                            </span>
+                            {match.venue ? (
+                              <span className="inline-flex items-center gap-1.5">
+                                <MapPin className="size-3.5" aria-hidden />
+                                {match.venue}
+                              </span>
+                            ) : null}
+                          </span>
                         </span>
 
-                        <span className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                          <span className="truncate text-start text-sm font-semibold">
-                            {sideName(
-                              teamMap,
-                              match.home_team_id,
-                              match.home_label,
-                              t("tbd"),
-                            )}
-                          </span>
-                          <span className="rounded-md bg-muted px-2 py-1 text-xs font-semibold tabular-nums text-muted-foreground">
-                            {result ?? t("vs")}
-                          </span>
-                          <span className="truncate text-start text-sm font-semibold">
-                            {sideName(
-                              teamMap,
-                              match.away_team_id,
-                              match.away_label,
-                              t("tbd"),
-                            )}
-                          </span>
-                        </span>
-
-                        <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                          <LocalKickoff
-                            iso={match.kickoff_at}
-                            locale={locale}
-                            closesLabel={t("closesAtKickoff")}
-                            lockedLabel={t("locked")}
+                        <span className="flex items-center justify-between gap-3 sm:justify-end">
+                          <RowCta
+                            match={match}
+                            locked={locked}
+                            inProgress={inProgress}
+                            prediction={prediction}
+                            tbd={tbd}
+                            t={t}
                           />
-                          {match.venue ? <span>{match.venue}</span> : null}
                         </span>
-                      </span>
-
-                      <span className="flex items-center justify-between gap-3 sm:justify-end">
-                        <RowCta
-                          match={match}
-                          locked={locked}
-                          inProgress={inProgress}
-                          prediction={prediction}
-                          tbd={tbd}
-                          t={t}
-                        />
-                      </span>
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
-        ))
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          );
+        })
       )}
     </div>
   );

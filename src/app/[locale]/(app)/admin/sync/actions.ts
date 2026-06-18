@@ -29,8 +29,9 @@ async function recordRun(
   kind: "schedule" | "results",
   run: () => Promise<{ fixtures: number }>,
 ): Promise<SyncActionState> {
-  const admin = createAdminClient();
+  let admin: ReturnType<typeof createAdminClient> | null = null;
   try {
+    admin = createAdminClient();
     const result = await run();
     await admin
       .from("sync_runs")
@@ -38,7 +39,15 @@ async function recordRun(
     return { ok: true, count: result.fixtures, toastId: `${kind}-${Date.now()}` };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await admin.from("sync_runs").insert({ kind, ok: false, error: message });
+    console.error(`Admin ${kind} sync failed`, error);
+    if (admin) {
+      const { error: logError } = await admin
+        .from("sync_runs")
+        .insert({ kind, ok: false, error: message });
+      if (logError) {
+        console.error(`Failed to record ${kind} sync failure`, logError);
+      }
+    }
     return { ok: false, error: "generic", toastId: `${kind}-${Date.now()}` };
   }
 }

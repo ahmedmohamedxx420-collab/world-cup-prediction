@@ -3,7 +3,7 @@
 > **Single source of truth.** Read this before writing any code. If something here
 > is wrong or out of date, fix it here first, then build to match.
 >
-> **Last updated:** 2026-06-18 (rev 23) · **Status:** Phase 5.2 repo-side deploy prep done; owner production activation / smoke pending
+> **Last updated:** 2026-06-18 (rev 24) · **Status:** Phase 4.4 Hall of Fame stats repo-implemented; owner `0009` apply / live smoke pending, then Phase 5.2 production activation
 
 ---
 
@@ -27,9 +27,10 @@ One sentence: **Predict the score, earn points by accuracy, climb one shared boa
 - World Cup only. No other competitions.
 - **In scope:** email-code login, score predictions (editable until kickoff),
   prediction privacy before kickoff, simple accuracy-based scoring, one
-  leaderboard, manual score entry plus openfootball result sync, Arabic + English.
-- **Out of scope (for now):** reminders/notifications, multiple groups, advanced
-  leaderboard analytics.
+  leaderboard, Hall of Fame aggregate award badges, per-player stats cards,
+  manual score entry plus openfootball result sync, Arabic + English.
+- **Out of scope (for now):** reminders/notifications, multiple groups, deeper
+  analytics beyond the current Hall of Fame badge set.
 
 ---
 
@@ -138,6 +139,13 @@ These were confirmed with the owner. Change them *here* if they change.
     Lives in `src/lib/auth/mode.ts` + `(auth)/login/phone-actions.ts`,
     `phone-login-form.tsx`, and
     `phone-number-input.tsx`.
+12. **Leaderboard personality stats = Hall of Fame cards.** The leaderboard stays
+    on one bottom-nav item, with three tabs: Board, Hall of Fame, and My results.
+    Hall of Fame shows 8 named aggregate badges: Sniper, Hot Streak, On Form,
+    Sharpshooter, Last-Minute Larry, Goal Machine, The Wall, and So Close. Badge
+    winners are selected in TypeScript from aggregate per-user rows; ties use
+    higher total points, then `full_name` ascending. Per-player breakdowns also
+    show form dots, current/best streak, favourite scoreline, and best match.
 
 ---
 
@@ -262,6 +270,20 @@ function. The app reads `predictions` normally for a selected `user_id`, so RLS
 continues to hide another member's pre-kickoff picks while the current user can
 see their own full history.
 
+### Member stats (aggregate)
+Implemented by `public.get_member_stats()` in `0009_member_stats.sql`: a
+`SECURITY DEFINER` function with pinned `search_path`, same privacy posture as
+`get_leaderboard()`. It returns one aggregate row per profile:
+total/scored/exact/GD/winner/miss counts, `exact_points`, longest scoring streak,
+last-5 scored points, average predicted goals (`avg_goals_x100`), and average
+lead time before kickoff (`avg_lead_seconds`). It never returns prediction ids,
+match ids, individual scorelines, or individual timestamps.
+
+The Hall of Fame tab computes winners from those aggregate rows in
+`src/lib/hall-of-fame.ts`. A badge is only awarded when a holder qualifies (for
+example, Sharpshooter needs at least 5 scored predictions); otherwise its card
+renders a muted "not yet awarded" state.
+
 ---
 
 ## 7. Security & Privacy Model (RLS — non-negotiable)
@@ -280,6 +302,11 @@ not just in the UI, so the API can never leak a hidden prediction.
 - **`teams` / `matches` / `app_settings`:** read for all authenticated users;
   write only for admins (`is_admin = true`, checked via a `SECURITY DEFINER`
   helper to avoid RLS recursion).
+- **Aggregate leaderboard RPCs:** `get_leaderboard()` and `get_member_stats()`
+  are `SECURITY DEFINER` functions that bypass prediction RLS only to compute
+  cross-user aggregates. They expose no individual prediction rows, no match ids,
+  and no per-match scorelines; member breakdown pages still read `predictions`
+  through normal RLS-bound selects.
 - **App routes:** the Next.js proxy refreshes Supabase auth cookies and redirects
   unauthenticated app requests to login. The app layout redirects authenticated
   users without a `profiles` row to onboarding.
@@ -351,6 +378,9 @@ Documented defaults (change here if the owner decides otherwise):
   RLS-filtered results. Others' pre-kickoff predictions stay absent because the
   database policy filters them; the current user's "My results" tab and Profile
   card link show their full visible history.
+- **Hall of Fame analytics:** the current badge set is intentionally small and
+  card-based, not a full analytics table. Future advanced breakdowns remain
+  deferred unless the owner asks for them.
 - **Seed data:** as of 2026-06-14, teams/fixtures/results are populated by the
   **openfootball worldcup.json sync** (§4.2), which writes UTC kickoff times
   directly; the manual admin CRUD remains a fallback. (The earlier hand-seed /

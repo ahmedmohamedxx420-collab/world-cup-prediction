@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
+import { AvatarUpload } from "@/components/avatar-upload";
+import { BallLoader } from "@/components/ball-loader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,13 +15,19 @@ import {
 
 const initialState: OnboardingState = {};
 
-function SubmitButton() {
+function SubmitButton({ disabled = false }: { disabled?: boolean }) {
   const { pending } = useFormStatus();
   const t = useTranslations("onboarding");
 
   return (
-    <Button className="w-full" type="submit" disabled={pending}>
-      {pending ? t("saving") : t("save")}
+    <Button
+      className="w-full"
+      type="submit"
+      variant="lime"
+      disabled={pending || disabled}
+    >
+      {pending ? <BallLoader variant="inline" /> : null}
+      {pending ? t("saving") : disabled ? t("photoUploading") : t("save")}
     </Button>
   );
 }
@@ -31,6 +39,8 @@ export function OnboardingForm({ locale }: { locale: string }) {
   );
   const t = useTranslations("onboarding");
   const language = useTranslations("language");
+  const [fullName, setFullName] = useState("");
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   return (
     <form action={formAction} className="space-y-4">
@@ -44,9 +54,16 @@ export function OnboardingForm({ locale }: { locale: string }) {
           placeholder={t("namePlaceholder")}
           aria-invalid={Boolean(state.error)}
           maxLength={100}
+          value={fullName}
+          onChange={(event) => setFullName(event.target.value)}
           required
         />
       </div>
+
+      <AvatarUpload
+        fullName={fullName}
+        onUploadingChange={setAvatarUploading}
+      />
 
       <div className="space-y-2">
         <Label htmlFor="locale">{t("localeLabel")}</Label>
@@ -67,7 +84,7 @@ export function OnboardingForm({ locale }: { locale: string }) {
         </p>
       ) : null}
 
-      <SubmitButton />
+      <SubmitButton disabled={avatarUploading} />
     </form>
   );
 }

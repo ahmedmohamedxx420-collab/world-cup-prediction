@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import { BackLink } from "@/components/back-link";
 import { LiveBadge } from "@/components/live-badge";
 import { LocalKickoff } from "@/components/local-kickoff";
+import { MatchBanner } from "@/components/match-banner";
+import { MomentumBar } from "@/components/momentum-bar";
+import { GoalBurst } from "@/components/goal-burst";
+import { Avatar } from "@/components/ui/avatar";
 import { getMatch } from "@/lib/matches";
 import type { Match } from "@/lib/match-types";
 import { sideName } from "@/lib/match-format";
@@ -25,6 +29,18 @@ function isTbd(match: Match) {
   return match.home_team_id == null || match.away_team_id == null;
 }
 
+function isFinished(match: Match) {
+  return match.status === "finished" || (match.status !== "live" && scoreText(match) != null);
+}
+
+function isLiveMatch(match: Match, now: number) {
+  return (
+    !isTbd(match) &&
+    !isFinished(match) &&
+    (match.status === "live" || Date.parse(match.kickoff_at) <= now)
+  );
+}
+
 async function getServerNow() {
   return Date.now();
 }
@@ -41,7 +57,7 @@ function RevealList({
   t: Awaited<ReturnType<typeof getTranslations>>;
 }) {
   return (
-    <section className="space-y-3 rounded-lg border bg-card p-4">
+    <section className="space-y-3 rounded-2xl border bg-card/95 p-4 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-base font-semibold">{t("revealTitle")}</h2>
         <span className="text-sm font-medium text-muted-foreground tabular-nums">
@@ -54,27 +70,40 @@ function RevealList({
       <ul className="space-y-2">
         {predictions.map((prediction) => {
           const mine = prediction.user_id === myUserId;
+          const displayName =
+            prediction.profile?.full_name ?? t("unknownMember");
 
           return (
             <li
               key={prediction.id}
               className={cn(
-                "flex items-center justify-between gap-3 rounded-lg px-3 py-2",
-                mine ? "bg-accent text-accent-foreground" : "bg-muted/50",
+                "wc-fixture-card flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5",
+                mine ? "border-primary/30 bg-primary/5" : "bg-card",
               )}
             >
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold">
-                  {prediction.profile?.full_name ?? t("unknownMember")}
-                  {mine ? ` ${t("you")}` : ""}
-                </span>
-                <span className="block text-xs text-muted-foreground">
-                  {prediction.points_awarded == null
-                    ? t("pointsPending")
-                    : t("points", { points: prediction.points_awarded })}
+              <span className="flex min-w-0 items-center gap-2.5">
+                <Avatar
+                  src={prediction.profile?.avatar_url}
+                  name={displayName}
+                  className="size-9"
+                />
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold">
+                    {displayName}
+                    {mine ? ` ${t("you")}` : ""}
+                  </span>
+                  {prediction.points_awarded == null ? (
+                    <span className="block text-xs text-muted-foreground">
+                      {t("pointsPending")}
+                    </span>
+                  ) : (
+                    <span className="mt-0.5 inline-flex items-center rounded-full bg-gold/20 px-2 py-0.5 text-xs font-bold tabular-nums text-gold-foreground">
+                      {t("points", { points: prediction.points_awarded })}
+                    </span>
+                  )}
                 </span>
               </span>
-              <span className="shrink-0 text-lg font-semibold tabular-nums">
+              <span className="shrink-0 text-lg font-bold tabular-nums">
                 {prediction.home_score}-{prediction.away_score}
               </span>
             </li>
@@ -130,61 +159,101 @@ export default async function FixtureDetailPage({
   const lockedHint = Date.parse(match.kickoff_at) <= now;
   const tbd = isTbd(match);
   const result = scoreText(match);
-  const finishedMatch = match.status === "finished" || result != null;
-  const inProgress = lockedHint && !finishedMatch && !tbd;
+  const finishedMatch = isFinished(match);
+  const inProgress = isLiveMatch(match, now);
   const hasOtherVisiblePrediction = visiblePredictions.some(
     (prediction) => prediction.user_id !== user?.id,
   );
   const showReveal =
-    visiblePredictions.length > 0 && (lockedHint || hasOtherVisiblePrediction);
+    visiblePredictions.length > 0 &&
+    (lockedHint || inProgress || hasOtherVisiblePrediction);
+
+  // Live "family lean": real, privacy-safe split of who members backed to win,
+  // computed only from already-visible (post-kickoff) predictions.
+  const leanHome = visiblePredictions.filter(
+    (p) => p.home_score > p.away_score,
+  ).length;
+  const leanAway = visiblePredictions.filter(
+    (p) => p.away_score > p.home_score,
+  ).length;
+  const leanDecisive = leanHome + leanAway;
+  const homePct = leanDecisive ? Math.round((leanHome / leanDecisive) * 100) : 50;
+  const showLean = inProgress && leanDecisive > 0;
+
+  // Celebrate when the viewer's own saved prediction matched the exact result.
+  const exactHit =
+    finishedMatch &&
+    result != null &&
+    myPrediction != null &&
+    myPrediction.home_score === match.home_score &&
+    myPrediction.away_score === match.away_score;
+
+  const pills =
+    "rounded-full bg-white/15 px-2.5 py-1 text-xs font-semibold tabular-nums";
 
   return (
     <div className="space-y-6">
       <BackLink href="/fixtures" label={t("back")} />
 
-      <section className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            {inProgress ? (
-              <LiveBadge label={fixturesT("inProgress")} />
-            ) : null}
+      <MatchBanner
+        homeName={homeName}
+        awayName={awayName}
+        homeFlag={teamMap.get(match.home_team_id ?? -1)?.flag}
+        awayFlag={teamMap.get(match.away_team_id ?? -1)?.flag}
+        centerLabel={result ?? fixturesT("vs")}
+        venue={match.venue}
+        topStart={
+          <>
             {match.match_number != null ? (
-              <span className="tabular-nums">
+              <span className={pills}>
                 {fixturesT("matchNumber", { number: match.match_number })}
               </span>
             ) : null}
-            <span>{stagesT(match.stage)}</span>
+            <span className={pills}>{stagesT(match.stage)}</span>
             {match.group_letter ? (
-              <span>{fixturesT("group", { group: match.group_letter })}</span>
+              <span className={pills}>
+                {fixturesT("group", { group: match.group_letter })}
+              </span>
             ) : null}
-          </div>
-
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-            <h1 className="truncate text-start text-lg font-semibold sm:text-2xl">
-              {homeName}
-            </h1>
-            <span className="rounded-lg bg-muted px-3 py-2 text-sm font-semibold tabular-nums text-muted-foreground">
-              {result ?? fixturesT("vs")}
+          </>
+        }
+        topEnd={
+          inProgress ? (
+            <LiveBadge label={fixturesT("inProgress")} />
+          ) : (
+            <span className="text-xs font-semibold text-white/90">
+              <LocalKickoff
+                iso={match.kickoff_at}
+                locale={locale}
+                closesLabel={fixturesT("closesAtKickoff")}
+                lockedLabel={fixturesT("locked")}
+              />
             </span>
-            <h2 className="truncate text-start text-lg font-semibold sm:text-2xl">
-              {awayName}
-            </h2>
-          </div>
-        </div>
+          )
+        }
+      />
 
-        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-          <LocalKickoff
-            iso={match.kickoff_at}
-            locale={locale}
-            closesLabel={fixturesT("closesAtKickoff")}
-            lockedLabel={fixturesT("locked")}
+      {showLean ? (
+        <section className="wc-fixture-card space-y-2 rounded-2xl border bg-card/95 p-4 shadow-sm">
+          <h2 className="text-sm font-semibold text-muted-foreground">
+            {t("leanTitle")}
+          </h2>
+          <MomentumBar
+            startLabel={homeName}
+            endLabel={awayName}
+            startValue={homePct}
+            endValue={100 - homePct}
+            caption={t("leanCaption")}
           />
-          {match.venue ? <span>{match.venue}</span> : null}
-        </div>
-      </section>
+        </section>
+      ) : null}
+
+      {exactHit ? (
+        <GoalBurst word={t("celebrateWord")} subtitle={t("celebrateExact")} />
+      ) : null}
 
       {tbd ? (
-        <p className="rounded-lg border bg-muted/40 px-4 py-3 text-sm font-medium text-muted-foreground">
+        <p className="rounded-2xl border bg-muted/40 px-4 py-3 text-sm font-medium text-muted-foreground">
           {t("tbdLocked")}
         </p>
       ) : (

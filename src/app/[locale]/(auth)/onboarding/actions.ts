@@ -7,6 +7,7 @@ import {
   phoneDigitsFromSyntheticEmail,
   promotePhoneAdminProfile,
 } from "@/lib/auth/phone-admin";
+import { normalizeOwnAvatarUrl } from "@/lib/avatar-url";
 import { createClient } from "@/lib/supabase/server";
 
 export type OnboardingState = {
@@ -35,9 +36,13 @@ export async function completeOnboarding(
     return {};
   }
 
+  const avatar = normalizeOwnAvatarUrl(formData.get("avatarUrl"), user.id);
+  if (!avatar.ok) return { error: "generic" };
+
   const { error } = await supabase.from("profiles").insert({
     id: user.id,
     full_name: fullName,
+    avatar_url: avatar.avatarUrl,
     locale,
   });
 

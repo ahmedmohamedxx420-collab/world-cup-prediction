@@ -44,11 +44,11 @@ export default async function ProfilePage({
   const myStats = leaderboard.find((row) => row.user_id === user.id);
 
   return (
-    <div className="mx-auto w-full max-w-md space-y-4">
+    <div className="mx-auto w-full max-w-xl space-y-4">
       <ToastFlash />
 
       {myStats ? (
-        <Card size="sm">
+        <Card size="sm" className="wc-fixture-card bg-card/95 shadow-sm">
           <CardHeader>
             <CardTitle>{leaderboardT("profileStatsTitle")}</CardTitle>
             <CardDescription>
@@ -57,27 +57,27 @@ export default async function ProfilePage({
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-2 text-center">
-              <div className="rounded-lg bg-muted/40 px-3 py-2">
+              <div className="rounded-xl bg-muted/40 px-3 py-2">
                 <span className="block text-xs text-muted-foreground">
                   {leaderboardT("rank")}
                 </span>
-                <span className="text-xl font-semibold tabular-nums">
+                <span className="text-xl font-black tabular-nums">
                   {myStats.rank}
                 </span>
               </div>
-              <div className="rounded-lg bg-muted/40 px-3 py-2">
+              <div className="rounded-xl bg-gold/15 px-3 py-2">
                 <span className="block text-xs text-muted-foreground">
                   {leaderboardT("points")}
                 </span>
-                <span className="text-xl font-semibold tabular-nums">
+                <span className="text-xl font-black tabular-nums">
                   {myStats.total_points}
                 </span>
               </div>
-              <div className="rounded-lg bg-muted/40 px-3 py-2">
+              <div className="rounded-xl bg-lime/15 px-3 py-2">
                 <span className="block text-xs text-muted-foreground">
                   {leaderboardT("exact")}
                 </span>
-                <span className="text-xl font-semibold tabular-nums">
+                <span className="text-xl font-black tabular-nums">
                   {myStats.exact_count}
                 </span>
               </div>
@@ -94,13 +94,17 @@ export default async function ProfilePage({
         </Card>
       ) : null}
 
-      <Card>
+      <Card className="wc-fixture-card bg-card/95 shadow-sm">
         <CardHeader>
           <CardTitle>{t("title")}</CardTitle>
           <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <ProfileForm fullName={profile.full_name} locale={profile.locale} />
+          <ProfileForm
+            fullName={profile.full_name}
+            avatarUrl={profile.avatar_url}
+            locale={profile.locale}
+          />
         </CardContent>
         <CardFooter>
           <form action={signOut} className="w-full">

@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { createClient } from "@/lib/supabase/server";
+import { cn } from "@/lib/utils";
 import { formatKickoffUtc } from "@/lib/match-format";
 import { EmptyState } from "@/components/empty-state";
 import {
@@ -10,6 +11,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { SyncButtons } from "./sync-buttons";
+
+export const maxDuration = 60;
 
 type SyncRun = {
   id: string;
@@ -58,14 +61,26 @@ export default async function AdminSyncPage({
         {runs.length === 0 ? (
           <EmptyState title={t("never")} className="py-10" />
         ) : (
-          <ul className="divide-y rounded-lg border">
+          <ul className="divide-y overflow-hidden rounded-xl border bg-card">
             {runs.map((run) => (
               <li
                 key={run.id}
                 className="flex items-center justify-between gap-3 px-4 py-3 text-sm"
               >
                 <span className="flex items-center gap-2">
-                  <span className={run.ok ? "text-primary" : "text-destructive"}>
+                  <span
+                    className={cn(
+                      "size-2 shrink-0 rounded-full",
+                      run.ok ? "bg-primary" : "bg-destructive",
+                    )}
+                    aria-hidden
+                  />
+                  <span
+                    className={cn(
+                      "font-semibold",
+                      run.ok ? "text-primary" : "text-destructive",
+                    )}
+                  >
                     {run.ok ? t("ok") : t("failed")}
                   </span>
                   <span className="text-muted-foreground">

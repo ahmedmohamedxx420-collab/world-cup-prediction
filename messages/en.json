@@ -131,6 +131,7 @@
     "localeLabel": "Preferred language",
     "save": "Finish setup",
     "saving": "Saving…",
+    "photoUploading": "Uploading photo…",
     "errors": {
       "nameRequired": "Enter your name to continue.",
       "generic": "We couldn't save your profile. Please try again."
@@ -143,11 +144,26 @@
     "localeLabel": "Preferred language",
     "save": "Save changes",
     "saving": "Saving…",
+    "photoUploading": "Uploading photo…",
     "saved": "Profile saved.",
     "signOut": "Sign out",
     "errors": {
       "nameRequired": "Enter your name to continue.",
       "generic": "We couldn't save your changes. Please try again."
+    }
+  },
+  "avatar": {
+    "label": "Profile photo",
+    "choose": "Choose photo",
+    "change": "Change photo",
+    "remove": "Remove",
+    "uploading": "Uploading...",
+    "ready": "Photo ready. Save changes to keep it.",
+    "previewAlt": "{name} profile photo",
+    "errors": {
+      "image": "Choose an image file.",
+      "upload": "We couldn't upload that photo. Try another image.",
+      "generic": "We couldn't update the photo. Please try again."
     }
   },
   "comingSoon": {
@@ -158,6 +174,7 @@
     "title": "Leaderboard",
     "tabsLabel": "Leaderboard tabs",
     "boardTab": "Board",
+    "hallOfFameTab": "Hall of Fame",
     "myResultsTab": "My results",
     "rank": "Rank",
     "points": "Points",
@@ -183,7 +200,47 @@
     "rankWithPoints": "Rank {rank} · {points} pts",
     "profileStatsTitle": "Your leaderboard",
     "profileStatsDescription": "A quick look at your current standing.",
-    "viewMyResults": "View my results"
+    "viewMyResults": "View my results",
+    "form": "Form",
+    "formExact": "Exact",
+    "formPartial": "Points",
+    "formMiss": "Miss",
+    "currentStreak": "Current streak",
+    "bestStreak": "Best streak",
+    "favouriteScore": "Favourite score",
+    "bestMatch": "Best match",
+    "bestMatchValue": "{match}, {points} pts",
+    "hallOfFame": {
+      "title": "Hall of Fame",
+      "emptyTitle": "No awards yet",
+      "emptyDescription": "Awards will appear once there are enough predictions or scored matches.",
+      "setupPendingTitle": "Awards are being set up",
+      "setupPendingDescription": "The Hall of Fame stats are not available yet. Try again after the latest database update is applied.",
+      "notYetAwarded": "Not yet awarded",
+      "sniperTitle": "Sniper",
+      "sniperDesc": "Most exact-score hits.",
+      "hotStreakTitle": "Hot Streak",
+      "hotStreakDesc": "Longest run of scoring predictions.",
+      "onFormTitle": "On Form",
+      "onFormDesc": "Most points from the last five scored matches.",
+      "sharpshooterTitle": "Sharpshooter",
+      "sharpshooterDesc": "Best hit rate after five scored matches.",
+      "lastMinuteLarryTitle": "Last-Minute Larry",
+      "lastMinuteLarryDesc": "Smallest average lead time before kickoff.",
+      "goalMachineTitle": "Goal Machine",
+      "goalMachineDesc": "Highest average predicted total goals.",
+      "theWallTitle": "The Wall",
+      "theWallDesc": "Lowest average predicted total goals.",
+      "soCloseTitle": "So Close",
+      "soCloseDesc": "Most correct margins without the exact score.",
+      "exactHits": "{count} exact",
+      "streakMatches": "{count} matches",
+      "pointsLast5": "{points} pts",
+      "hitRatePercent": "{percent}%",
+      "leadTimeMinutes": "{minutes} min lead",
+      "averageGoals": "{goals} goals/match",
+      "marginHits": "{count} margins"
+    }
   },
   "fixtures": {
     "title": "Fixtures",
@@ -222,6 +279,10 @@
     "you": "(you)",
     "pointsPending": "Points pending",
     "points": "{points} pts",
+    "leanTitle": "Where the family leans",
+    "leanCaption": "Predicted winner",
+    "celebrateWord": "GOAL!",
+    "celebrateExact": "You nailed the exact score!",
     "errors": {
       "validation": "Enter scores from 0 to 99.",
       "locked": "This match is locked. Predictions close at kickoff.",

@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useLocale, useTranslations } from "next-intl";
+import { BallLoader } from "@/components/ball-loader";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { PhoneNumberInput } from "./phone-number-input";
@@ -15,7 +16,13 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
   const t = useTranslations("auth");
 
   return (
-    <Button className="w-full" type="submit" disabled={pending || disabled}>
+    <Button
+      className="w-full"
+      type="submit"
+      variant="lime"
+      disabled={pending || disabled}
+    >
+      {pending ? <BallLoader variant="inline" /> : null}
       {pending ? t("phoneSending") : t("phoneSubmit")}
     </Button>
   );

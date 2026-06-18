@@ -28,6 +28,313 @@
 
 ---
 
+## 2026-06-18 — Adopt the design-tab football language app-wide (UI refresh)
+**Plan item:** 5.1 UX polish (follow-up)   **Status:** done (local verify clean)
+
+**What changed**
+- **Tokens (`globals.css`):** promoted the design-tab palette into the real shadcn
+  tokens. `--primary` deepened toward pitch-emerald; added named `--lime`
+  (energy / primary-CTA / live / active, charcoal text) and `--gold` (points /
+  achievements, charcoal text) registered in `@theme inline` so `bg-lime`,
+  `text-gold`, etc. generate. Added `--gradient-pitch/-lime/-gold`,
+  `--shadow-lime/-gold`, a faint lime stadium-wash `body` background (light +
+  dark), and bumped `--radius` to `0.75rem`.
+- **Motion (CSS-only, no new dependency):** ported the kit keyframes (ball spin/
+  bounce/shadow, float, grass, floodlight, momentum sweep, confetti, goal ring,
+  trophy halo/shine) into `globals.css` as `wc-*`, all behind one
+  `prefers-reduced-motion` guard (confetti + ring render nothing, not just paused).
+- **New shared components:** `ui/soccer-ball.tsx` (SVG), `ball-loader.tsx`
+  (replaces `Loader2` in predict form, avatar upload, sync, and all auth/profile
+  submit buttons), `goal-burst.tsx`, `momentum-bar.tsx`, `match-banner.tsx`.
+  Added a `lime` variant to `ui/button.tsx`.
+- **Screens:** fixtures list → elevated cards + flag chips + gold result chip +
+  segmented tabs + a pitch-gradient "next match" hero with a lime Predict CTA;
+  match detail → `MatchBanner` hero, a real privacy-safe "family lean" momentum
+  bar for live matches (home-win vs away-win share of already-revealed picks), a
+  one-off `GoalBurst` when the viewer's exact score was correct, restyled steppers
+  (lime `+`) and gold points in the reveal; leaderboard → top-3 medal ranks,
+  category-colored stat pills, segmented tabs; Hall of Fame → gold value badges +
+  shine on awarded icons; results breakdown → pitch-gradient profile band, lime/
+  gold form dots, gold points tiles; profile/onboarding/login/avatar/admin-sync →
+  lime CTAs + ball loaders + status dots.
+- Added i18n keys `predict.leanTitle/leanCaption/celebrateWord/celebrateExact`
+  (en + ar).
+
+**Why**
+- The design tab (`/design-system`) was a polished but isolated visual language;
+  the live app was much plainer. Owner asked to bring that identity + tasteful
+  motion into the real screens (full re-theme, all screens, CSS-only motion).
+
+**Files touched**
+- `src/app/globals.css`, `src/components/ui/button.tsx`
+- new: `src/components/ui/soccer-ball.tsx`, `src/components/ball-loader.tsx`,
+  `src/components/goal-burst.tsx`, `src/components/momentum-bar.tsx`,
+  `src/components/match-banner.tsx`
+- `src/components/{bottom-nav,hall-of-fame,results-breakdown,avatar-upload}.tsx`
+- `src/app/[locale]/(app)/layout.tsx`, `.../fixtures/page.tsx`,
+  `.../fixtures/[id]/page.tsx`, `.../fixtures/[id]/predict-form.tsx`,
+  `.../leaderboard/page.tsx`, `.../profile/page.tsx`, `.../profile/profile-form.tsx`,
+  `.../admin/sync/page.tsx`, `.../admin/sync/sync-buttons.tsx`
+- `src/app/[locale]/(auth)/onboarding/onboarding-form.tsx`,
+  `.../(auth)/login/login-form.tsx`, `.../(auth)/login/phone-login-form.tsx`
+- `messages/en.json`, `messages/ar.json`
+
+**Notes / gotchas**
+- No DB/RLS/API/schema changes; privacy gating untouched — the live "family lean"
+  bar and reveal only restyle already-visible (post-kickoff) prediction rows.
+- Decided **not** to build the SVG team-kit/jersey component: teams have a `flag`
+  emoji + `code` but no per-team colours in the DB, so inventing colours would be
+  fake data. Flag emojis are used in banners/rows instead.
+- `LiveBadge` kept red (universal "live" cue) so lime stays reserved for
+  energy/active/CTA.
+- Verified: `npm run lint` + `npm run build` clean; dev server renders `/en/login`
+  and `/ar/login` (dir="rtl") at HTTP 200; all `wc-*` keyframes, gradient/shadow
+  utilities, and the `prefers-reduced-motion` block confirmed present in the
+  production CSS. An authed mobile walk of fixtures/leaderboard still needs a real
+  login session.
+
+## 2026-06-18 — Dual-accent palette for the design tab (green / gold + lime spark)
+**Plan item:** Design-tab addition (rev 29)   **Status:** done
+
+**What changed**
+- Reworked the design-tab palette into a meaning-based dual-accent system, all
+  via the `.ds-root` token block in `ds.css` (no structural/layout changes):
+  - **Base** — slightly deepened emerald "pitch" green (`--ds-emerald-950/850/700`
+    → `#0a3a2b / #14533c / #1d6f50`; `--ds-gradient` end → `#2c7a48`).
+  - **Energy accent (kept)** — neon lime stays the signature spark and is left in
+    place everywhere it already was: buttons, hero, charts, live badge, momentum
+    fill/sweep, goal-burst ring, ticker.
+  - **Achievement accent (new)** — championship gold tokens `--ds-gold-400 #f4c54a`,
+    `--ds-gold-500 #e0a92e`, `--ds-gold-700 #8a6512`, `--ds-gold-gradient`, and
+    `--ds-shadow-gold`.
+- Routed only genuine "achievement" surfaces to gold: the champion trophy card
+  (icon now tokenized) + its badge, Hall of Fame award icon + value badges, the
+  knockout `ds-champion` block, the winning result tile, the leaderboard rank-#1
+  medal (new `is-gold` modifier), the points-earned goal badge, and the leading
+  shootout score (`is-lead`).
+- Added a `gold` `DsBadge` tone (`components.tsx` + `.ds-badge--gold`).
+- Updated the Colors section to document the emerald/lime/gold roles accurately.
+
+**Why**
+- Owner asked how to make the palette fitting for the football/World Cup theme
+  while keeping the unique style. Chosen direction (via prompt): "Green / Gold +
+  lime spark" — keep the emerald pitch base and lime energy signature, add gold
+  for trophy/winner/achievement states. Gold also nods to the real WC2026
+  black/white/gold brand identity. Lime was deliberately NOT globally replaced, so
+  the existing personality is preserved.
+
+**Files touched**
+- src/app/[locale]/design-system/ds.css
+- src/app/[locale]/design-system/components.tsx
+- src/app/[locale]/design-system/sections/colors.tsx
+- src/app/[locale]/design-system/sections/world-cup.tsx
+- src/app/[locale]/design-system/sections/football-motion.tsx
+- docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Design-tab only; no production screens, APIs, schema, or translations changed.
+- Verified with `npm run lint` + `npm run build` (both clean).
+- The semantic split is the contract going forward: **lime = live/energy**,
+  **gold = achievement/winner**. Reuse the tokens, don't reintroduce raw hexes.
+
+## 2026-06-18 — Atmosphere & Motion section in the design tab
+**Plan item:** Design-tab addition (rev 28)   **Status:** done
+
+**What changed**
+- Added `src/app/[locale]/design-system/sections/football-motion.tsx`, a new
+  design-system-only section ("Atmosphere & Motion") with football-themed motion
+  and imagery, all self-contained CSS/SVG (no external image files):
+  - a living **stadium banner** (drifting mowed-grass stripes, sweeping
+    floodlight glow, goal-net mesh, floating + spinning ball, live score);
+  - **ball loaders** — an inline SVG black-and-white panel ball with spin,
+    bounce (with shadow), inline, and a rolling-progress-strip variant;
+  - **live momentum** — an animated possession bar with a moving sheen and a
+    scrolling commentary ticker;
+  - **moment cards** — a GOAL! burst with an expanding ring + CSS confetti, and a
+    champion **trophy** card with a gold halo/shine sweep + confetti (gold nods to
+    the real WC2026 black/white/gold brand identity);
+  - a **penalty-shootout tracker** (pop-in goal/miss/pending marks) and **SVG
+    team-kit swatches** derived from each team's colours.
+- Appended ~620 lines of matching styles + keyframes to `ds.css`, all under the
+  existing `.ds-root` scope and emerald/lime tokens, with a
+  `prefers-reduced-motion` block that disables every new animation.
+- Wired the section into `design-system.tsx` (sidebar link "Atmosphere" + render
+  after the World Cup section).
+
+**Why**
+- The owner asked to expand the design tab with football/World Cup design
+  elements — animations and imagery. Built as self-contained CSS/SVG (rather than
+  fetched binary assets) to keep the kit offline, dependency-free, and
+  theme-consistent with the rest of the design tab, which uses zero external
+  images. Web research informed the visual cues (WC2026 trophy + gold accent).
+
+**Files touched**
+- src/app/[locale]/design-system/sections/football-motion.tsx (new)
+- src/app/[locale]/design-system/design-system.tsx
+- src/app/[locale]/design-system/ds.css
+- docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Sample data only; no production screens, APIs, schema, or translations changed.
+- Verified with `npm run lint` + `npm run build` (both clean).
+- The inline `SoccerBall` SVG reuses fixed `defs` ids (`dsBallShine`,
+  `dsBallClip`) across instances; renders fine (all refs resolve to the first def)
+  but if these visuals are ever promoted into a production screen, scope the ids.
+
+## 2026-06-18 — World Cup patterns in the design tab
+**Plan item:** Design-tab addition (rev 27)   **Status:** done
+
+**What changed**
+- Added `src/app/[locale]/design-system/sections/world-cup.tsx`, a new
+  design-system-only section ("World Cup Patterns") rebuilding the app's
+  football-specific UI in the standalone design-tab theme: fixture rows for
+  upcoming / live / finished / TBD states, score-prediction steppers with
+  saved/saving/locked/error status pills, a revealed-prediction list with the
+  current user highlighted, leaderboard rows, stat chips + form dots, result
+  breakdown tiles, Hall of Fame award cards, and avatar-upload / phone sign-in /
+  admin-result / admin-fixture / sync-log mocks.
+- Wired the section into `design-system.tsx` (sidebar link + render after Layouts).
+- Updated the Icons section to football-relevant Lucide icons (Trophy, Goal,
+  Target, Shield, Flame, CalendarDays, ListChecks, Clock3, TrendingUp, ...).
+- Added scoped `ds-*` classes (all under `.ds-root`) to `ds.css` for the new
+  patterns, plus a 4-up award grid at the wide breakpoint.
+- Added stronger World Cup identity to the same section: a "Matchday" hero card
+  with a CSS football-pitch motif (centre line + centre circle), team flags, a
+  glassy kickoff countdown, and a Predict CTA; a Group H standings table with
+  qualification highlighting; a knockout bracket (QF -> SF -> Final) ending in a
+  lime champion chip; and flag emoji on the fixture rows (TBD sides show a neutral
+  "?" token). All emoji/CSS only — no image assets.
+
+**Why**
+- The design tab lacked the app-specific patterns, so it couldn't be used as a
+  visual reference for the real product surfaces. This recreates them with sample
+  data without touching any live screen.
+
+**Files touched**
+- src/app/[locale]/design-system/sections/world-cup.tsx (new)
+- src/app/[locale]/design-system/design-system.tsx
+- src/app/[locale]/design-system/sections/icons.tsx
+- src/app/[locale]/design-system/ds.css
+
+**Notes / gotchas**
+- Sample-data only and deliberately not labelled as a real World Cup 2026
+  schedule/venues/results. No production APIs, DB schema, routes, translations,
+  or shared app components changed.
+- Verified with `npm run lint` and `npm run build` (both clean); `/design-system`
+  still prerenders for `/en` and `/ar`.
+
+## 2026-06-18 — Avatar save race fix
+**Plan item:** 1.2 Step 2 avatar upload follow-up   **Status:** done
+
+**What changed**
+- Profile and onboarding forms now track whether the avatar upload is still
+  running and disable their Save/Finish button until the upload completes.
+- The submit button text switches to "Uploading photo..." while waiting, and the
+  uploader shows a small "Photo ready. Save changes to keep it." hint after a
+  newly uploaded image.
+- Confirmed the live Supabase project has the `avatars` bucket configured.
+
+**Why**
+- A member could pick a photo and click Save before the upload finished. That
+  submitted the previous hidden `avatarUrl` value, so the visible preview changed
+  but `profiles.avatar_url` did not persist the new photo.
+
+**Files touched**
+- src/components/avatar-upload.tsx
+- src/app/[locale]/(app)/profile/profile-form.tsx
+- src/app/[locale]/(auth)/onboarding/onboarding-form.tsx
+- messages/ar.json, messages/en.json
+- docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Verification: message JSON parse, `npm run lint`, and `npm run build` pass.
+
+## 2026-06-18 — Profile avatars
+**Plan item:** 1.2 Step 2 avatar upload follow-up   **Status:** repo code done; live `0010` apply pending
+
+**What changed**
+- Added `0010_avatars_storage.sql`, creating a public `avatars` bucket with
+  authenticated reads and own-folder insert/update/delete policies.
+- Added a reusable `Avatar` primitive and `AvatarUpload` client component. The
+  uploader crops/compresses images in-browser to a 512px square, uploads to the
+  stable object path `{user_id}/avatar.webp`, and cache-busts the saved public
+  URL.
+- Wired onboarding and profile forms to submit `avatar_url`; server actions
+  validate that the submitted URL belongs to the signed-in user's own avatar
+  object. Profile removal clears `profiles.avatar_url` and attempts to delete the
+  stable storage object.
+- Replaced initials-only bubbles with image + initials fallback across
+  leaderboard rows, Hall of Fame holders, result breakdown player headers, and
+  fixture prediction reveals.
+- Added Arabic/English uploader strings.
+
+**Why**
+- Members should be able to optionally personalize their profile during setup or
+  later from Profile, and that identity should follow them wherever members
+  appear while still falling back cleanly to initials.
+
+**Files touched**
+- supabase/migrations/0010_avatars_storage.sql
+- src/components/avatar-upload.tsx, src/components/ui/avatar.tsx
+- src/lib/avatar-url.ts, src/lib/hall-of-fame.ts
+- src/app/[locale]/(auth)/onboarding/actions.ts
+- src/app/[locale]/(auth)/onboarding/onboarding-form.tsx
+- src/app/[locale]/(app)/profile/actions.ts
+- src/app/[locale]/(app)/profile/profile-form.tsx
+- src/app/[locale]/(app)/profile/page.tsx
+- src/app/[locale]/(app)/leaderboard/page.tsx
+- src/app/[locale]/(app)/fixtures/[id]/page.tsx
+- src/components/hall-of-fame.tsx, src/components/results-breakdown.tsx
+- messages/ar.json, messages/en.json
+- docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Owner must apply `supabase/migrations/0010_avatars_storage.sql` in Supabase
+  before live uploads work.
+- Existing aggregate RPCs already return `avatar_url`, so no leaderboard/member
+  stats migration changes were needed.
+- Verification: message JSON parse, `npm run lint`, and `npm run build` pass.
+
+## 2026-06-18 — Leaderboard Hall of Fame stats
+**Plan item:** 4.4 Hall of Fame stats + player cards   **Status:** in progress (repo code done; live `0009` apply pending)
+
+**What changed**
+- Added `0009_member_stats.sql`, an aggregate-only `get_member_stats()` RPC for
+  per-profile totals, tier counts, exact-points setting, streaks, last-5 points,
+  average predicted goals, and average prediction lead time.
+- Added pure Hall of Fame and player-stat helpers, plus an `app_settings` reader
+  so exact-score thresholds still come from the database.
+- Added the Leaderboard third tab (Board / Hall of Fame / My results), 8 award
+  cards, and a compact per-player stats strip on result breakdown pages.
+- Added the shadcn Badge primitive and synchronized Arabic/English messages.
+- Updated project docs to move this out of deferred advanced analytics and record
+  the aggregate privacy stance.
+- Added a friendly setup-pending state when the app is running before `0009` has
+  been applied, instead of surfacing the raw `PGRST202` server error.
+
+**Why**
+- The owner wanted playful family engagement without exposing hidden pre-kickoff
+  prediction rows. Public cross-user data stays aggregate-only; selected member
+  breakdowns still use normal RLS-filtered prediction reads.
+
+**Files touched**
+- supabase/migrations/0009_member_stats.sql
+- src/lib/leaderboard.ts, src/lib/hall-of-fame.ts, src/lib/app-settings.ts
+- src/components/hall-of-fame.tsx, src/components/results-breakdown.tsx
+- src/components/ui/badge.tsx
+- src/app/[locale]/(app)/leaderboard/page.tsx
+- src/app/[locale]/(app)/leaderboard/[userId]/page.tsx
+- messages/ar.json, messages/en.json
+- docs/BUILD-PLAN.md, docs/PROJECT-CONTEXT.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Owner must apply `supabase/migrations/0009_member_stats.sql` in Supabase before
+  the Hall of Fame tab can fetch live data.
+- Privacy check: `get_member_stats()` returns aggregate rows only. It has no
+  prediction ids, match ids, individual scorelines, or row-level timestamps.
+- Verification: message JSON parse, `npm run lint`, and `npm run build` pass.
+  Live-smoke the migration after applying `0009`.
+
 ## 2026-06-18 — Admin phone live profile promotion + variants
 **Plan item:** Auth/admin bugfix   **Status:** done
 

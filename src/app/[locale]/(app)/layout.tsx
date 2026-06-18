@@ -3,6 +3,7 @@ import { Shield } from "lucide-react";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { MainNav } from "@/components/main-nav";
 import { BottomNav } from "@/components/bottom-nav";
+import { SoccerBall } from "@/components/ui/soccer-ball";
 import { Link, redirect } from "@/i18n/navigation";
 import { getProfile } from "@/lib/profile";
 
@@ -29,16 +30,24 @@ export default async function AppLayout({
   const nav = await getTranslations("nav");
 
   return (
-    <div className="flex min-h-full flex-1 flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-        <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-4 px-4">
-          <span className="font-bold">{t("appName")}</span>
+    <div className="wc-app-shell flex min-h-full flex-1 flex-col">
+      <header className="sticky top-0 z-40 border-b border-border/70 bg-background/85 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/75">
+        <div className="mx-auto flex h-16 w-full max-w-5xl items-center justify-between gap-4 px-4">
+          <Link
+            href="/fixtures"
+            className="flex min-w-0 items-center gap-2 font-black tracking-normal"
+          >
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-lime-grad p-1.5 shadow-lime ring-1 ring-black/5">
+              <SoccerBall className="size-full" />
+            </span>
+            <span className="truncate">{t("appName")}</span>
+          </Link>
           <div className="flex items-center gap-2">
             <MainNav />
             {profile.is_admin ? (
               <Link
                 href="/admin"
-                className="flex items-center gap-1.5 rounded-md px-2.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent/50 hover:text-foreground"
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
               >
                 <Shield className="size-4" aria-hidden />
                 <span className="hidden sm:inline">{nav("admin")}</span>
@@ -50,7 +59,7 @@ export default async function AppLayout({
       </header>
 
       {/* pb-20 clears the fixed bottom nav on mobile; restored at md+. */}
-      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 pb-20 md:pb-6">
+      <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-7 pb-24 md:pb-8">
         {children}
       </main>
 

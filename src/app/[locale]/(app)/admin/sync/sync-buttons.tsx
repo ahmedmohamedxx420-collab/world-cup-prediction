@@ -4,6 +4,7 @@ import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { BallLoader } from "@/components/ball-loader";
 import { Button } from "@/components/ui/button";
 import {
   runFullSync,
@@ -24,6 +25,7 @@ function SubmitButton({
   const t = useTranslations("admin.sync");
   return (
     <Button type="submit" variant={variant} disabled={pending}>
+      {pending ? <BallLoader variant="inline" /> : null}
       {pending ? t("running") : label}
     </Button>
   );

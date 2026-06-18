@@ -3,6 +3,7 @@
 import { hasLocale } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { redirect } from "@/i18n/navigation";
+import { avatarObjectPath, normalizeOwnAvatarUrl } from "@/lib/avatar-url";
 import { routing } from "@/i18n/routing";
 import { createClient } from "@/lib/supabase/server";
 
@@ -32,12 +33,19 @@ export async function updateProfile(
     return {};
   }
 
+  const avatar = normalizeOwnAvatarUrl(formData.get("avatarUrl"), user.id);
+  if (!avatar.ok) return { error: "generic" };
+
   const { error } = await supabase
     .from("profiles")
-    .update({ full_name: fullName, locale })
+    .update({ full_name: fullName, avatar_url: avatar.avatarUrl, locale })
     .eq("id", user.id);
 
   if (error) return { error: "generic" };
+
+  if (!avatar.avatarUrl) {
+    await supabase.storage.from("avatars").remove([avatarObjectPath(user.id)]);
+  }
 
   redirect({ href: "/profile?toast=profileSaved", locale });
   return {};

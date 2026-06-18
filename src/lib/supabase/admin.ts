@@ -5,9 +5,19 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 // code (Route Handlers, Server Actions, admin tasks). `server-only` makes the
 // build fail if it is ever pulled into a client bundle.
 export function createAdminClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL is not configured");
+  }
+  if (!serviceRoleKey) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured");
+  }
+
   return createSupabaseClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    supabaseUrl,
+    serviceRoleKey,
     {
       auth: { autoRefreshToken: false, persistSession: false },
     },
