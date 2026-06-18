@@ -1,9 +1,8 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { useRouter } from "@/i18n/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,7 @@ const RESEND_COOLDOWN_SECONDS = 30;
 export function LoginForm() {
   const t = useTranslations("auth");
   const toastT = useTranslations("toasts");
-  const router = useRouter();
+  const locale = useLocale();
   const supabase = useMemo(() => createClient(), []);
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState("");
@@ -66,7 +65,7 @@ export function LoginForm() {
     setError(null);
     setIsLoading(true);
 
-    const { error: authError } = await supabase.auth.verifyOtp({
+    const { data: verifyData, error: authError } = await supabase.auth.verifyOtp({
       email,
       token: code,
       type: "email",
@@ -84,9 +83,15 @@ export function LoginForm() {
       return;
     }
 
+    // Profiles are readable by every authenticated user (leaderboard RLS), so
+    // we must filter to the signed-in user — otherwise maybeSingle() errors on
+    // multiple rows once more than one family member has registered.
+    const userId = verifyData.user?.id;
+
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("id")
+      .eq("id", userId ?? "")
       .maybeSingle();
 
     if (profileError) {
@@ -95,8 +100,12 @@ export function LoginForm() {
       return;
     }
 
-    router.replace(profile ? "/fixtures" : "/onboarding");
-    router.refresh();
+    // Full-document navigation (not a soft router push) so the server re-reads
+    // the auth cookies that verifyOtp just set; a client-side push can race the
+    // cookie write and land the user back on login. We keep isLoading true so
+    // the button stays disabled through the reload.
+    const destination = profile ? "/fixtures" : "/onboarding";
+    window.location.assign(`/${locale}${destination}`);
   }
 
   function changeEmail() {

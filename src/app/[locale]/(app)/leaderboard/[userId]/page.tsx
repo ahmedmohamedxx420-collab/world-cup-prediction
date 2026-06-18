@@ -1,7 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { ResultsBreakdown } from "@/components/results-breakdown";
-import { Link } from "@/i18n/navigation";
+import { BackLink } from "@/components/back-link";
 import {
   getLeaderboard,
   getMemberProfile,
@@ -37,12 +37,7 @@ export default async function MemberResultsPage({
 
   return (
     <div className="space-y-5">
-      <Link
-        href="/leaderboard"
-        className="inline-flex text-sm font-medium text-muted-foreground hover:text-foreground"
-      >
-        {t("backToBoard")}
-      </Link>
+      <BackLink href="/leaderboard" label={t("backToBoard")} />
 
       <ResultsBreakdown
         profile={profile}

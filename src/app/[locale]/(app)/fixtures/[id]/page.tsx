@@ -1,7 +1,8 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
+import { BackLink } from "@/components/back-link";
+import { LiveBadge } from "@/components/live-badge";
 import { LocalKickoff } from "@/components/local-kickoff";
-import { Link } from "@/i18n/navigation";
 import { getMatch } from "@/lib/matches";
 import type { Match } from "@/lib/match-types";
 import { sideName } from "@/lib/match-format";
@@ -129,6 +130,8 @@ export default async function FixtureDetailPage({
   const lockedHint = Date.parse(match.kickoff_at) <= now;
   const tbd = isTbd(match);
   const result = scoreText(match);
+  const finishedMatch = match.status === "finished" || result != null;
+  const inProgress = lockedHint && !finishedMatch && !tbd;
   const hasOtherVisiblePrediction = visiblePredictions.some(
     (prediction) => prediction.user_id !== user?.id,
   );
@@ -137,16 +140,14 @@ export default async function FixtureDetailPage({
 
   return (
     <div className="space-y-6">
-      <Link
-        href="/fixtures"
-        className="inline-flex text-sm font-medium text-muted-foreground hover:text-foreground"
-      >
-        {t("back")}
-      </Link>
+      <BackLink href="/fixtures" label={t("back")} />
 
       <section className="space-y-4">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            {inProgress ? (
+              <LiveBadge label={fixturesT("inProgress")} />
+            ) : null}
             {match.match_number != null ? (
               <span className="tabular-nums">
                 {fixturesT("matchNumber", { number: match.match_number })}

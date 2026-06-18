@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Minus, Plus } from "lucide-react";
+import { Check, CircleAlert, Loader2, Lock, Minus, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -97,6 +97,9 @@ export function PredictForm({
   );
   const [error, setError] =
     useState<PredictionFormState["error"]>(undefined);
+  // Bumped on every successful save so the "saved" pill re-mounts and replays
+  // its pop animation even when two saves land back-to-back.
+  const [savedTick, setSavedTick] = useState(0);
   const saveIdRef = useRef(0);
 
   useEffect(() => {
@@ -128,6 +131,7 @@ export function PredictForm({
         if (result.saved) {
           setHasSavedPrediction(true);
           setStatus("saved");
+          setSavedTick((tick) => tick + 1);
           return;
         }
 
@@ -178,16 +182,34 @@ export function PredictForm({
   }
 
   const effectiveStatus = locked ? "locked" : status;
-  const statusText =
-    effectiveStatus === "saving"
-      ? t("saving")
-      : effectiveStatus === "saved"
-        ? t("saved")
-        : effectiveStatus === "locked"
-          ? t("locked")
-          : effectiveStatus === "error"
-            ? t(`errors.${error ?? "generic"}`)
-            : t("closesAtKickoff");
+
+  const indicator = {
+    idle: {
+      icon: null,
+      text: t("closesAtKickoff"),
+      className: "bg-muted/50 text-muted-foreground",
+    },
+    saving: {
+      icon: <Loader2 className="size-4 animate-spin" aria-hidden />,
+      text: t("saving"),
+      className: "bg-muted text-muted-foreground",
+    },
+    saved: {
+      icon: <Check className="size-4" aria-hidden />,
+      text: t("saved"),
+      className: "bg-primary/15 text-primary ring-1 ring-primary/25",
+    },
+    locked: {
+      icon: <Lock className="size-4" aria-hidden />,
+      text: t("locked"),
+      className: "bg-muted text-muted-foreground",
+    },
+    error: {
+      icon: <CircleAlert className="size-4" aria-hidden />,
+      text: t(`errors.${error ?? "generic"}`),
+      className: "bg-destructive/10 text-destructive",
+    },
+  }[effectiveStatus];
 
   return (
     <div className="space-y-4">
@@ -210,19 +232,23 @@ export function PredictForm({
         />
       </div>
 
-      <p
-        role="status"
-        aria-live="polite"
-        className={cn(
-          "text-sm font-medium",
-          effectiveStatus === "error" || effectiveStatus === "locked"
-            ? "text-destructive"
-            : "text-muted-foreground",
-          effectiveStatus === "saved" ? "text-primary" : null,
-        )}
-      >
-        {statusText}
-      </p>
+      <div role="status" aria-live="polite" className="flex justify-center">
+        <span
+          key={
+            effectiveStatus === "saved" ? `saved-${savedTick}` : effectiveStatus
+          }
+          className={cn(
+            "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors",
+            indicator.className,
+            effectiveStatus === "saved"
+              ? "duration-300 animate-in fade-in zoom-in-50"
+              : null,
+          )}
+        >
+          {indicator.icon}
+          <span>{indicator.text}</span>
+        </span>
+      </div>
     </div>
   );
 }

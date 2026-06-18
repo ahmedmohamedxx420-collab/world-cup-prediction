@@ -1,6 +1,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CalendarDays } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
+import { LiveBadge } from "@/components/live-badge";
 import { LocalKickoff } from "@/components/local-kickoff";
 import { Link } from "@/i18n/navigation";
 import { buttonVariants } from "@/components/ui/button";
@@ -25,6 +26,13 @@ function isLocked(match: Match, now: number) {
 
 function isTbd(match: Match) {
   return match.home_team_id == null || match.away_team_id == null;
+}
+
+function isFinished(match: Match) {
+  return (
+    match.status === "finished" ||
+    (match.home_score != null && match.away_score != null)
+  );
 }
 
 function scoreText(home: number | null, away: number | null) {
@@ -101,12 +109,14 @@ function TabLink({
 function RowCta({
   match,
   locked,
+  inProgress,
   prediction,
   tbd,
   t,
 }: {
   match: Match;
   locked: boolean;
+  inProgress: boolean;
   prediction: Prediction | undefined;
   tbd: boolean;
   t: Awaited<ReturnType<typeof getTranslations>>;
@@ -117,6 +127,22 @@ function RowCta({
     return (
       <span className="text-xs font-medium text-muted-foreground">
         {t("tbdLocked")}
+      </span>
+    );
+  }
+
+  if (inProgress) {
+    return (
+      <span className="flex items-center gap-2">
+        <LiveBadge label={t("inProgress")} />
+        <span
+          className={cn(
+            buttonVariants({ variant: "outline", size: "sm" }),
+            "pointer-events-none",
+          )}
+        >
+          {t("view")}
+        </span>
       </span>
     );
   }
@@ -187,9 +213,32 @@ export default async function FixturesPage({
   const stagesT = await getTranslations("admin.fixtures.stages");
   const teamMap = new Map(teams.map((team) => [team.id, team]));
   const now = await getServerNow();
-  const upcoming = matches.filter((match) => !isLocked(match, now));
-  const finished = matches.filter((match) => isLocked(match, now)).reverse();
-  const visibleMatches = activeTab === "upcoming" ? upcoming : finished;
+  const DAY_MS = 24 * 60 * 60 * 1000;
+
+  // Finished = has a final score (or is flagged finished). A match that has
+  // kicked off but isn't finished yet is "in progress" and stays in Upcoming.
+  const finished = matches.filter((match) => isFinished(match));
+  const notFinished = matches.filter((match) => !isFinished(match));
+  const live = notFinished.filter((match) => isLocked(match, now));
+  const notStarted = notFinished.filter((match) => !isLocked(match, now));
+
+  // Upcoming shows only the next "batch": everything in progress now, plus the
+  // not-yet-started matches that fall within 24h of the earliest upcoming one
+  // (listMatches() pre-sorts by kickoff ascending, so notStarted[0] is next).
+  const batchAnchor = notStarted[0]
+    ? Date.parse(notStarted[0].kickoff_at)
+    : null;
+  const nextBatch =
+    batchAnchor == null
+      ? notStarted
+      : notStarted.filter(
+          (match) => Date.parse(match.kickoff_at) < batchAnchor + DAY_MS,
+        );
+
+  const visibleMatches =
+    activeTab === "upcoming"
+      ? [...live, ...nextBatch]
+      : [...finished].reverse();
   const groups = groupByDate(visibleMatches, locale);
 
   return (
@@ -232,6 +281,7 @@ export default async function FixturesPage({
                 const prediction = myPredictions.get(match.id);
                 const locked = isLocked(match, now);
                 const tbd = isTbd(match);
+                const inProgress = locked && !isFinished(match) && !tbd;
                 const result = scoreText(match.home_score, match.away_score);
 
                 return (
@@ -292,6 +342,7 @@ export default async function FixturesPage({
                         <RowCta
                           match={match}
                           locked={locked}
+                          inProgress={inProgress}
                           prediction={prediction}
                           tbd={tbd}
                           t={t}

@@ -28,6 +28,245 @@
 
 ---
 
+## 2026-06-18 — Phone number boxes stay on one line
+**Plan item:** Auth enhancement refinement (owner request)   **Status:** done
+
+**What changed**
+- Changed the national-number boxes from chunked wrapping groups to one
+  responsive grid row.
+- Kept the locked country key on the same line while letting the number boxes
+  divide the remaining width evenly on mobile and desktop.
+
+**Why**
+- Owner wanted the number boxes in a straight line without breaking the phone UI.
+
+**Files touched**
+- src/app/[locale]/(auth)/login/phone-number-input.tsx
+- docs/BUILD-PLAN.md, docs/PROJECT-CONTEXT.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- No backend, i18n, or migration change.
+
+## 2026-06-18 — Country picker with locked phone key
+**Plan item:** Auth enhancement refinement (owner request)   **Status:** done
+
+**What changed**
+- Replaced editable country-key digit boxes with a country picker. The picker
+  opens a searchable list; Sudan and Saudi Arabia appear first, followed by Gulf
+  and Middle East countries before common international countries.
+- Selecting a country auto-populates a locked `+<dial key>` display and resets
+  the national-number boxes for that country's configured length.
+- The hidden `name="phone"` field still submits the combined dial key +
+  national-number digits to the unchanged `signInWithPhone` server action.
+- Added localized picker/search/locked-key labels.
+
+**Why**
+- Owner wants members to select the country instead of typing the country key, so
+  the key cannot be mistyped and the rest-of-number boxes match the selected
+  country.
+
+**Files touched**
+- src/lib/phone/dialing-codes.ts
+- src/app/[locale]/(auth)/login/phone-number-input.tsx
+- messages/en.json, messages/ar.json
+- docs/BUILD-PLAN.md, docs/PROJECT-CONTEXT.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Rev 18's fixed "country key + 9 digits" UI is superseded by this picker:
+  Saudi Arabia still has 9 national boxes, while countries like Kuwait/Qatar use
+  8 and Egypt/Iraq/Turkey use 10.
+- No migration and no backend change.
+
+## 2026-06-17 — Phone input limited to country key + 9 digits
+**Plan item:** Auth enhancement refinement (owner request)   **Status:** done
+
+**What changed**
+- Reduced the national-number portion of the segmented phone input from 11 boxes
+  to exactly 9 boxes, shown as three groups of three.
+- Changed the form readiness rule: Continue is enabled only when there is a
+  nonempty country key and all 9 national-number boxes are filled.
+- The hidden `name="phone"` field and `signInWithPhone` server action remain
+  unchanged.
+
+**Why**
+- Owner clarified the intended phone shape should be just a country key plus 9
+  numbers.
+
+**Files touched**
+- src/app/[locale]/(auth)/login/phone-number-input.tsx
+- src/app/[locale]/(auth)/login/phone-login-form.tsx
+- docs/BUILD-PLAN.md, docs/PROJECT-CONTEXT.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- No migration and no backend change.
+
+## 2026-06-17 — Segmented phone-number sign-in UI
+**Plan item:** Auth enhancement (owner request)   **Status:** done (build + lint clean)
+
+**What changed**
+- Replaced the phone login's single visible tel input with a segmented
+  country-code + national-number input. It pre-fills +966, focuses the first
+  national-number box on load, auto-advances while typing, supports arrow keys,
+  backspace, and paste distribution, and keeps the number reading LTR in both
+  locales.
+- Added a curated dialing-code lookup with longest-prefix matching and generated
+  flag emoji. Known codes animate in a localized flag/name above the boxes.
+- The server contract stays unchanged: the visible boxes feed one hidden
+  `name="phone"` field, and `signInWithPhone` still normalizes that combined
+  digit string.
+- Added English and Arabic labels for the grouped controls, per-box aria labels,
+  and the curated country names.
+
+**Why**
+- Phone mode is meant to be fast and friendly for a private mobile-first family
+  app. The segmented UI makes the international number explicit while preserving
+  the synthetic Supabase account mapping and existing RLS behavior.
+
+**Files touched**
+- src/app/[locale]/(auth)/login/phone-number-input.tsx (new)
+- src/lib/phone/dialing-codes.ts (new)
+- src/app/[locale]/(auth)/login/phone-login-form.tsx
+- messages/en.json, messages/ar.json
+- docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Behavior change: submitted phone identities now always include an explicit
+  country code. A bare local number from the old single-input UI would map to a
+  different synthetic account than the same number submitted as `966...`; this is
+  acceptable because the app has no established production users yet.
+- Flag emoji render as flags on iOS/Android, the target devices. Windows desktop
+  typically shows regional-indicator letter pairs instead of flag glyphs.
+- No migration and no `phone-actions.ts` change.
+- Verification: `npm run lint`, message JSON parse, `npm run build`, and a dev
+  route smoke for `/ar/login` + `/en/login` pass.
+
+## 2026-06-17 — Phone-number sign-in mode (switchable)
+**Plan item:** Auth enhancement (owner request)   **Status:** done
+
+**What changed**
+- Added an `AUTH_MODE` switch (`src/lib/auth/mode.ts`, read from
+  `NEXT_PUBLIC_AUTH_MODE`, default `"phone"`). The login page renders the new
+  phone form in phone mode and the original email-OTP form when set to `"otp"`.
+- New passwordless phone sign-in: `phone-login-form.tsx` (one phone field) +
+  `phone-actions.ts` server action `signInWithPhone`. New numbers go to
+  onboarding (name + language); known numbers go straight to fixtures —
+  mirroring the OTP flow.
+- Added `auth.phone*` strings + `errors.invalidPhone` to `messages/en.json` and
+  `messages/ar.json`.
+- Documented `NEXT_PUBLIC_AUTH_MODE` and `PHONE_AUTH_SECRET` in `.env.example`.
+
+**Why**
+- The owner wants frictionless login for a small trusted friend group: typing a
+  phone number is the entire login (no SMS, no verification). The original OTP
+  code is kept intact so it can be reused as-is in another project by flipping
+  the flag.
+
+**How the fake phone auth still respects RLS**
+- All RLS keys off `auth.uid()`, so a real session is still required. A phone
+  number maps to a synthetic Supabase account: email `<digits>@phone.local`,
+  password = HMAC(digits, `PHONE_AUTH_SECRET`) derived server-side only. First
+  sign-in creates the user via the service-role admin client with
+  `email_confirm: true` (no confirmation email needed), then signs in with the
+  cookie-bound server client. The browser only ever sends the phone number.
+
+**Files touched**
+- src/lib/auth/mode.ts (new)
+- src/app/[locale]/(auth)/login/phone-actions.ts (new)
+- src/app/[locale]/(auth)/login/phone-login-form.tsx (new)
+- src/app/[locale]/(auth)/login/page.tsx
+- messages/en.json, messages/ar.json
+- .env.example
+
+**Notes / gotchas**
+- This is intentionally insecure: anyone who knows a number can sign in as it.
+  Acceptable for the private family group; do **not** reuse phone mode for
+  anything needing real auth — use `otp` mode there.
+- No DB migration. Synthetic users live in `auth.users` with `@phone.local`
+  emails; their `profiles` row is still created in onboarding as before.
+- Set `PHONE_AUTH_SECRET` in production (it has a dev fallback). Changing it
+  later would orphan existing phone accounts (passwords no longer match).
+- `npm run build` passes.
+
+## 2026-06-17 — Fixtures UX pass: live matches, next-batch list, clearer back + save
+**Plan item:** 5.1 UX polish (follow-up)   **Status:** done (build + lint clean)
+
+**What changed**
+- **Back control:** new reusable `BackLink` (outlined button + a direction-aware
+  arrow that flips for RTL) replaces the faint muted-text back links on the
+  match-detail and member-results pages.
+- **Autosave indicator:** the prediction form's small status line is now an
+  animated status *pill* — a spinner while saving and a green check that pops in
+  (`animate-in zoom-in`) on save, re-triggered per save via a `savedTick` key.
+  Still inline `role="status"` (no per-change toast, per §8).
+- **Login navigation:** after a correct OTP, the form now does a full-document
+  navigation (`window.location.assign`) to `/fixtures` (or `/onboarding`) instead
+  of a soft `router.replace` + `router.refresh`.
+- **In-progress matches:** Fixtures now treat "finished" as *has a final score /
+  status finished*. A match that has kicked off but isn't finished is **in
+  progress** — it stays in the **Upcoming** tab with a pulsing "live" badge
+  (`LiveBadge`) instead of being dumped into Finished. Badge also shows on the
+  detail page header.
+- **Next batch only:** the Upcoming tab shows everything in progress plus only the
+  not-yet-started matches within 24h of the earliest upcoming one (the next
+  "match-day" cluster), not the whole future schedule.
+- i18n: added `fixtures.inProgress` (ar/en); shortened `predict.saved` (the check
+  icon now carries the ✓).
+
+**Why**
+- Owner feedback: the back link was easy to miss; the tiny "saved" text wasn't a
+  satisfying confirmation; login didn't switch to the app until a manual reload;
+  locked-but-unfinished games looked "finished"; and the Upcoming list was too
+  long. A soft client push can race the `verifyOtp` cookie write, so the server
+  RSC render still saw no session — a hard navigation guarantees the freshly set
+  auth cookies are sent.
+
+**Files touched**
+- src/components/back-link.tsx (new)
+- src/components/live-badge.tsx (new)
+- src/app/[locale]/(auth)/login/login-form.tsx
+- src/app/[locale]/(app)/fixtures/page.tsx
+- src/app/[locale]/(app)/fixtures/[id]/page.tsx
+- src/app/[locale]/(app)/fixtures/[id]/predict-form.tsx
+- src/app/[locale]/(app)/leaderboard/[userId]/page.tsx
+- messages/ar.json, messages/en.json
+
+**Notes / gotchas**
+- "Finished" = `status === "finished" || (home_score != null && away_score != null)`.
+  In this app scores are only written when a match finishes, so score-presence is
+  a safe finished signal; the explicit status is also honored.
+- Next-batch window is a rolling 24h anchored on the earliest *not-started* match
+  (matches are pre-sorted by kickoff asc), not a calendar day. Far-future matches
+  simply aren't listed until they enter the window — by design.
+- `LiveBadge`/`BackLink` are pure markup (server-component safe). The live badge
+  uses red (`bg-red-500`/ping) as the universal "live now" cue.
+
+---
+
+## 2026-06-17 — Fix false error on login after OTP verify
+**Plan item:** auth bugfix   **Status:** done
+
+**What changed**
+- Scoped the post-`verifyOtp` profile lookup in the login form to the signed-in
+  user (`.eq("id", userId)`) instead of selecting from `profiles` unfiltered.
+
+**Why**
+- The `profiles` SELECT policy is `using (true)` (every authenticated user can
+  read all profiles for the leaderboard). The unfiltered `.maybeSingle()`
+  therefore returned every profile row and errored ("multiple rows returned")
+  once more than one family member had registered. That set the "generic" error
+  even though `verifyOtp` had already succeeded and persisted the session — so
+  the user saw an error on entering a correct code but was logged in after a
+  reload (middleware picked up the valid session).
+
+**Files touched**
+- src/app/[locale]/(auth)/login/login-form.tsx
+
+**Notes / gotchas**
+- No migration/env change. `verifyData.user.id` from `verifyOtp` is used as the
+  filter so we don't need a second `getUser()` round-trip.
+
+---
+
 ## 2026-06-17 - Match-aware result sync schedule
 **Plan item:** 5.2 scheduler refinement   **Status:** done (repo artifact updated; production secrets still owner-bound)
 

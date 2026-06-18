@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-17 (rev 13)
+> **Last updated:** 2026-06-18 (rev 20)
 
 ---
 
@@ -18,12 +18,53 @@
 
 ## Current Position
 
-➡️ **Phase 5.2 repo-side deploy prep done → owner production activation next; then 5.3 QA dry-run.**
+➡️ **Phase 5.2 repo-side deploy prep remains owner-bound; phone sign-in now uses a country selector with locked dial key and one-line number boxes; then 5.3 QA dry-run.**
 Local pre-flight is clean (`npm run build` + `npm run lint`), `.env.example`
 still covers every production env var, and the match-aware GitHub Actions
 scheduler is committed. The remaining 5.2 work is dashboard-bound: create the Vercel
 project, add the production URL to Supabase Auth settings, set GitHub Actions
 secrets, trigger the workflow once, and run the production smoke test.
+
+Out-of-band fix (rev 14): login showed a false error after a correct OTP code
+because the post-verify profile lookup selected from `profiles` unfiltered — and
+the leaderboard RLS (`using (true)`) makes every profile readable, so
+`.maybeSingle()` errored once more than one member existed. Now scoped to the
+signed-in user's id. See CHANGELOG 2026-06-17.
+
+Out-of-band UX pass (rev 15): clearer `BackLink` (outlined + arrow), animated
+autosave status pill, login now hard-navigates after OTP verify so the app loads
+without a manual refresh, in-progress (kicked-off but unscored) matches stay in
+**Upcoming** with a "live" badge instead of falling into Finished, and Upcoming
+shows only the next 24h batch of fixtures. See CHANGELOG 2026-06-17 and
+PROJECT-CONTEXT §4.10.
+
+Owner enhancement (rev 16): added a switchable auth mode. Default is a
+passwordless **phone-number** sign-in for the friend group (no SMS / no
+verification — typing the number is the whole login); set
+`NEXT_PUBLIC_AUTH_MODE=otp` to fall back to the original email-OTP flow, which
+is kept intact for reuse. Phone numbers map to synthetic Supabase accounts so
+RLS still works. See CHANGELOG 2026-06-17 and PROJECT-CONTEXT §4.11.
+
+Owner enhancement (rev 17): upgraded phone mode from one plain tel input to a
+segmented country-code + national-number input. It pre-fills +966, focuses the
+first national-number digit, auto-advances across boxes, supports backspace,
+arrow keys, and paste distribution, and animates a localized flag/name when a
+known dialing code is entered. The backend action still receives one hidden
+`phone` field. See CHANGELOG 2026-06-17.
+
+Owner refinement (rev 18): narrowed the segmented phone input to exactly a
+country key plus 9 national-number digits. The national-number area is now three
+groups of three boxes, and Continue is disabled until all 9 are filled. See
+CHANGELOG 2026-06-17.
+
+Owner refinement (rev 19): replaced editable country-key boxes with a searchable
+country picker. Sudan and Saudi Arabia are pinned first, followed by Gulf and
+Middle East countries; selecting a country locks/autopopulates the dial key and
+renders the appropriate count of national-number boxes. See CHANGELOG 2026-06-18.
+
+Owner refinement (rev 20): national-number boxes now stay in one straight,
+responsive row beside the locked dial key on both phone and desktop widths. See
+CHANGELOG 2026-06-18.
 
 ---
 

@@ -3,7 +3,7 @@
 > **Single source of truth.** Read this before writing any code. If something here
 > is wrong or out of date, fix it here first, then build to match.
 >
-> **Last updated:** 2026-06-17 (rev 13) · **Status:** Phase 5.2 repo-side deploy prep done; owner production activation / smoke pending
+> **Last updated:** 2026-06-18 (rev 20) · **Status:** Phase 5.2 repo-side deploy prep done; owner production activation / smoke pending
 
 ---
 
@@ -40,7 +40,7 @@ One sentence: **Predict the score, earn points by accuracy, climb one shared boa
 | Framework | **Next.js (App Router) + TypeScript** | Deployed on Vercel, zero-config |
 | Styling | **Tailwind CSS + shadcn/ui** | Mobile-first; clean sports-app look |
 | Backend / DB | **Supabase** | Postgres + Auth (email OTP) + Storage + RLS |
-| Auth | **Supabase email OTP** | `signInWithOtp` → enter email → receive code |
+| Auth | **Switchable (§4.11)** | Default phone-number sign-in (no SMS); `"otp"` mode = Supabase email OTP (`signInWithOtp` → enter email → receive code) |
 | i18n | **next-intl** | Arabic default + RTL, English secondary |
 | Hosting | **Vercel** | One-click Next.js deploys |
 
@@ -97,13 +97,43 @@ These were confirmed with the owner. Change them *here* if they change.
    template must display `{{ .Token }}`; a confirmation-link-only template does
    not support the app's two-step code form.
 10. **Prediction UX = detail-page loop.** The member Fixtures page is grouped by
-    date with **Upcoming** and **Finished** tabs. Each row links to a per-match
-    detail page; open matches use +/- score steppers that autosave after the
-    user's first interaction (no accidental 0-0 write on page load). Kickoff is
-    rendered in the browser's local timezone. TBD knockout slots are read-only
-    until both teams are assigned. After kickoff, the detail page renders the
-    prediction rows returned by RLS and highlights the current user's row; the UI
-    does not act as the privacy gate.
+    date with **Upcoming** and **Finished** tabs. **Upcoming** shows only the next
+    *batch* — any match in progress now, plus the not-yet-started matches within
+    24h of the earliest upcoming one — so the list stays focused on what to predict
+    next (far-future fixtures appear once they enter that window). A match that has
+    kicked off but has **no final score yet is "in progress"**: it stays in
+    Upcoming with a pulsing "live" badge (never in Finished). **Finished** lists
+    only matches with a final score (`status = finished` or both scores set). Each
+    row links to a per-match detail page; open matches use +/- score steppers that
+    autosave after the user's first interaction (no accidental 0-0 write on page
+    load) and confirm with an animated inline status pill. Kickoff is rendered in
+    the browser's local timezone. TBD knockout slots are read-only until both teams
+    are assigned. After kickoff, the detail page renders the prediction rows
+    returned by RLS and highlights the current user's row; the UI does not act as
+    the privacy gate. (Login hard-navigates after OTP verify so the app loads
+    without a manual refresh.)
+11. **Auth mode is switchable (`NEXT_PUBLIC_AUTH_MODE`).** Default `"phone"`: a
+    passwordless **phone-number** sign-in for the trusted friend group — typing a
+    phone number is the *entire* login (no SMS, no verification code). It is
+    intentionally not secure; acceptable because the group is private and the
+    leaderboard is only as private as the URL (§4.3). Set the flag to `"otp"` to
+    restore the original Supabase email six-digit-code flow, which is kept intact
+    in the codebase for reuse in other projects. **How it preserves RLS:** all
+    policies key off `auth.uid()`, so a real session is still required. A phone
+    number maps to a synthetic Supabase account — email `<digits>@phone.local`,
+    password `HMAC(digits, PHONE_AUTH_SECRET)` derived server-side only. The
+    first sign-in creates the user via the service-role admin client with
+    `email_confirm: true`, then signs in with the cookie-bound server client; the
+    browser only ever sends the phone number. The default UI collects that phone
+    as an explicit international number: a searchable country picker (Sudan and
+    Saudi Arabia pinned first, then Gulf/Middle East countries), a locked
+    auto-populated dial key, country-specific national-number boxes kept in one
+    responsive row, and one hidden combined digit field sent to the server. New
+    numbers still go through onboarding (name + language, Arabic default); known
+    numbers go to fixtures.
+    Lives in `src/lib/auth/mode.ts` + `(auth)/login/phone-actions.ts`,
+    `phone-login-form.tsx`, and
+    `phone-number-input.tsx`.
 
 ---
 
@@ -266,7 +296,8 @@ not just in the UI, so the API can never leak a hidden prediction.
   `top-center` so they clear the mobile bottom nav. Redirecting server actions
   pass success via `?toast=...` flash params that are stripped after display.
   Contextual validation errors stay inline beside the form fields, and prediction
-  autosave keeps its inline `role="status"` instead of showing a toast per change.
+  autosave keeps its inline `role="status"` (an animated saving/saved status pill)
+  instead of showing a toast per change.
 
 ---
 

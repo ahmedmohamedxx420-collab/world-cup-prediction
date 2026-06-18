@@ -6,7 +6,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { AUTH_MODE } from "@/lib/auth/mode";
 import { LoginForm } from "./login-form";
+import { PhoneLoginForm } from "./phone-login-form";
 
 export default async function LoginPage({
   params,
@@ -17,15 +19,17 @@ export default async function LoginPage({
   setRequestLocale(locale);
   const t = await getTranslations("auth");
 
+  const isPhone = AUTH_MODE === "phone";
+
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>{t("description")}</CardDescription>
+        <CardDescription>
+          {t(isPhone ? "phoneDescription" : "description")}
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <LoginForm />
-      </CardContent>
+      <CardContent>{isPhone ? <PhoneLoginForm /> : <LoginForm />}</CardContent>
     </Card>
   );
 }
