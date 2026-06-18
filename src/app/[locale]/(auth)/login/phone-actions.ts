@@ -4,6 +4,7 @@ import { createHmac } from "node:crypto";
 import { hasLocale } from "next-intl";
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import { promotePhoneAdminProfile } from "@/lib/auth/phone-admin";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -90,15 +91,23 @@ export async function signInWithPhone(
     if (error) return { error: "generic" };
   }
 
+  const userId = data.user?.id;
+  if (!userId) return { error: "generic" };
+
   // Send brand-new users to onboarding (name + language); returning users with
   // a profile go straight to fixtures. Mirrors the email-OTP flow.
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id")
-    .eq("id", data.user?.id ?? "")
+    .eq("id", userId)
     .maybeSingle();
 
   if (profileError) return { error: "generic" };
+
+  if (profile) {
+    const promotionError = await promotePhoneAdminProfile(userId, digits);
+    if (promotionError) return { error: "generic" };
+  }
 
   redirect({ href: profile ? "/fixtures" : "/onboarding", locale });
   return {};

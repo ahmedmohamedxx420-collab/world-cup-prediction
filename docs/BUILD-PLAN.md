@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-18 (rev 20)
+> **Last updated:** 2026-06-18 (rev 21)
 
 ---
 
@@ -18,7 +18,7 @@
 
 ## Current Position
 
-➡️ **Phase 5.2 repo-side deploy prep remains owner-bound; phone sign-in now uses a country selector with locked dial key and one-line number boxes; then 5.3 QA dry-run.**
+➡️ **Phase 5.2 repo-side deploy prep remains owner-bound; admin phone auto-promotion added; then 5.3 QA dry-run.**
 Local pre-flight is clean (`npm run build` + `npm run lint`), `.env.example`
 still covers every production env var, and the match-aware GitHub Actions
 scheduler is committed. The remaining 5.2 work is dashboard-bound: create the Vercel
@@ -65,6 +65,10 @@ renders the appropriate count of national-number boxes. See CHANGELOG 2026-06-18
 Owner refinement (rev 20): national-number boxes now stay in one straight,
 responsive row beside the locked dial key on both phone and desktop widths. See
 CHANGELOG 2026-06-18.
+
+Owner refinement (rev 21): phone `+966595440204` now auto-promotes its profile to
+admin via server actions, both after first onboarding and on later phone logins.
+See CHANGELOG 2026-06-18.
 
 ---
 

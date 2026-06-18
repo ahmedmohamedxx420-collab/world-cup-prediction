@@ -28,6 +28,34 @@
 
 ---
 
+## 2026-06-18 — Admin phone auto-promotion
+**Plan item:** Auth/admin refinement (owner request)   **Status:** done
+
+**What changed**
+- Added a server-only admin-phone allow-list containing `+966595440204`
+  (`966595440204` after normalization).
+- Phone login now promotes that number's existing profile to `is_admin = true`
+  before redirecting to Fixtures.
+- Onboarding now promotes that number immediately after its `profiles` row is
+  inserted, so first-time phone setup also becomes admin without manual SQL.
+
+**Why**
+- Owner requested `+966595440204` to be an admin account in addition to the email
+  admin account.
+
+**Files touched**
+- src/lib/auth/phone-admin.ts
+- src/app/[locale]/(auth)/login/phone-actions.ts
+- src/app/[locale]/(auth)/onboarding/actions.ts
+- docs/BUILD-PLAN.md, docs/PROJECT-CONTEXT.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- No migration. The existing `profiles.is_admin` flag is still the source of
+  truth; server actions use the service-role client only for this allow-listed
+  promotion.
+- Phone mode has no SMS verification by design, so anyone who can sign in with
+  this number can become admin.
+
 ## 2026-06-18 — Phone number boxes stay on one line
 **Plan item:** Auth enhancement refinement (owner request)   **Status:** done
 

@@ -3,6 +3,10 @@
 import { hasLocale } from "next-intl";
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
+import {
+  phoneDigitsFromSyntheticEmail,
+  promotePhoneAdminProfile,
+} from "@/lib/auth/phone-admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type OnboardingState = {
@@ -38,6 +42,13 @@ export async function completeOnboarding(
   });
 
   if (error && error.code !== "23505") return { error: "generic" };
+
+  const promotionError = await promotePhoneAdminProfile(
+    user.id,
+    phoneDigitsFromSyntheticEmail(user.email),
+  );
+
+  if (promotionError) return { error: "generic" };
 
   redirect({ href: "/fixtures", locale });
   return {};

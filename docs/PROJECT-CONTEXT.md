@@ -3,7 +3,7 @@
 > **Single source of truth.** Read this before writing any code. If something here
 > is wrong or out of date, fix it here first, then build to match.
 >
-> **Last updated:** 2026-06-18 (rev 20) · **Status:** Phase 5.2 repo-side deploy prep done; owner production activation / smoke pending
+> **Last updated:** 2026-06-18 (rev 21) · **Status:** Phase 5.2 repo-side deploy prep done; owner production activation / smoke pending
 
 ---
 
@@ -77,8 +77,9 @@ These were confirmed with the owner. Change them *here* if they change.
    extra time. (So a user who predicts 1-1 on a match that finished 1-1 a.e.t. and
    went to penalties still gets the exact-score points; who advanced on penalties
    does not affect points.)
-5. **Admin account = `ahmed.mohamed.xx420@gmail.com`.** Exactly one admin/owner.
-   The admin also competes (submits predictions and appears on the leaderboard).
+5. **Admin accounts = `ahmed.mohamed.xx420@gmail.com` and phone
+   `+966595440204`.** Admins also compete (submit predictions and appear on the
+   leaderboard).
 6. **Tournament data is synced.** All 48 teams (groups A–L) and the full
    **104-match** schedule (real fixtures + kickoff times) load via the openfootball
    sync (§4.2); the admin can hand-edit and enters/syncs results going forward.
@@ -130,7 +131,8 @@ These were confirmed with the owner. Change them *here* if they change.
     auto-populated dial key, country-specific national-number boxes kept in one
     responsive row, and one hidden combined digit field sent to the server. New
     numbers still go through onboarding (name + language, Arabic default); known
-    numbers go to fixtures.
+    numbers go to fixtures. Phone `+966595440204` is auto-promoted to admin
+    after its profile exists.
     Lives in `src/lib/auth/mode.ts` + `(auth)/login/phone-actions.ts`,
     `phone-login-form.tsx`, and
     `phone-number-input.tsx`.
@@ -305,11 +307,11 @@ not just in the UI, so the API can never leak a hidden prediction.
 
 - **Member:** register, set profile, predict, view leaderboard, view others'
   predictions after kickoff.
-- **Admin (single owner — `ahmed.mohamed.xx420@gmail.com`):** everything a member
-  can do (so the admin also predicts and appears on the leaderboard), plus manage
-  fixtures/teams and enter final scores (which triggers scoring), plus a **Sync**
-  tab to pull teams/fixtures/results from the openfootball feed. Admin UI is
-  intentionally minimal in v1.
+- **Admin (`ahmed.mohamed.xx420@gmail.com` and phone `+966595440204`):**
+  everything a member can do (so admins also predict and appear on the
+  leaderboard), plus manage fixtures/teams and enter final scores (which
+  triggers scoring), plus a **Sync** tab to pull teams/fixtures/results from the
+  openfootball feed. Admin UI is intentionally minimal in v1.
 
 ---
 
@@ -331,8 +333,9 @@ Documented defaults (change here if the owner decides otherwise):
 - **Invite-code registration gate:** not built (registration is open per decision
   §4.3). Low-effort future enhancement if privacy needs tightening.
 - **Account deletion / admin user removal:** not in v1 unless requested.
-- **Admin grant:** the single owner is promoted via a **one-off SQL `UPDATE`** in
-  the Supabase editor after first login; no owner email is baked into the schema.
+- **Admin grant:** the email owner is promoted via a **one-off SQL `UPDATE`** in
+  the Supabase editor after first login; the admin phone `+966595440204` is
+  auto-promoted in server actions once its `profiles` row exists.
 - **Knockout TBD fixtures:** created with `home_label`/`away_label` placeholders;
   predictions open once both teams are assigned.
 - **Mid-tournament launch:** matches whose kickoff has already passed are
