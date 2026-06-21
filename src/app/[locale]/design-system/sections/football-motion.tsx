@@ -425,7 +425,7 @@ export function FootballMotionSection() {
       aria-labelledby="atmosphere-title"
     >
       <div className="ds-section__header">
-        <span className="ds-kicker">13</span>
+        <span className="ds-kicker">14</span>
         <h2 id="atmosphere-title">Atmosphere &amp; Motion</h2>
         <p>
           Football-flavoured motion and imagery — a living stadium banner,

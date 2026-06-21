@@ -15,6 +15,7 @@ import { IconsSection } from "./sections/icons";
 import { InputsSection } from "./sections/inputs";
 import { NavigationSection } from "./sections/navigation";
 import { PreviewsSection } from "./sections/previews";
+import { ScoringSection } from "./sections/scoring";
 import { TypographySection } from "./sections/typography";
 import { WorldCupSection } from "./sections/world-cup";
 
@@ -47,6 +48,7 @@ const sectionLinks = [
   ["icons", "Icons"],
   ["previews", "Layouts"],
   ["world-cup", "World Cup"],
+  ["scoring", "Scoring"],
   ["atmosphere", "Atmosphere"],
 ] as const;
 
@@ -141,6 +143,7 @@ export function DesignSystem() {
           <IconsSection />
           <PreviewsSection interactions={interactions} />
           <WorldCupSection />
+          <ScoringSection />
           <FootballMotionSection />
         </main>
       </div>

@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const SYNTHETIC_EMAIL_DOMAIN = "phone.local";
 const ADMIN_PHONE_CANONICAL_DIGITS = "966595440204";
+export const ADMIN_EMAIL = "ahmed.mohamed.xx420@gmail.com";
 
 const ADMIN_PHONE_DIGITS = new Set([
   ADMIN_PHONE_CANONICAL_DIGITS,
@@ -40,11 +41,30 @@ export function isAdminPhoneDigits(digits: string | null | undefined) {
   return false;
 }
 
+export function isAdminEmail(email: string | null | undefined) {
+  return email?.trim().toLowerCase() === ADMIN_EMAIL;
+}
+
 export async function promotePhoneAdminProfile(
   userId: string,
   phoneDigits: string | null | undefined,
 ) {
   if (!userId || !isAdminPhoneDigits(phoneDigits)) return null;
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("profiles")
+    .update({ is_admin: true })
+    .eq("id", userId);
+
+  return error;
+}
+
+export async function promoteEmailAdminProfile(
+  userId: string,
+  email: string | null | undefined,
+) {
+  if (!userId || !isAdminEmail(email)) return null;
 
   const admin = createAdminClient();
   const { error } = await admin

@@ -2,8 +2,10 @@ import "server-only";
 
 import { cache } from "react";
 import {
+  isAdminEmail,
   isAdminPhoneDigits,
   phoneDigitsFromSyntheticEmail,
+  promoteEmailAdminProfile,
   promotePhoneAdminProfile,
 } from "@/lib/auth/phone-admin";
 import { createClient } from "@/lib/supabase/server";
@@ -49,6 +51,13 @@ export const getProfile = cache(async (): Promise<Profile | null> => {
 
   if (profile && !profile.is_admin && isAdminPhoneDigits(phoneDigits)) {
     const promotionError = await promotePhoneAdminProfile(user.id, phoneDigits);
+
+    if (promotionError) throw promotionError;
+    return { ...profile, is_admin: true };
+  }
+
+  if (profile && !profile.is_admin && isAdminEmail(user.email)) {
+    const promotionError = await promoteEmailAdminProfile(user.id, user.email);
 
     if (promotionError) throw promotionError;
     return { ...profile, is_admin: true };

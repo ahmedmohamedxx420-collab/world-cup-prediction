@@ -51,7 +51,7 @@ export default async function MemberResultsPage({
         teams={teams}
         locale={locale}
         playerStats={playerStats}
-        exactPoints={settings.exact_points}
+        settings={settings}
         isCurrentUser={user?.id === userId}
       />
     </div>

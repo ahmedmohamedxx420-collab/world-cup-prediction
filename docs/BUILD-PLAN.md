@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-19 (rev 30)
+> **Last updated:** 2026-06-20 (rev 35)
 
 ---
 
@@ -18,15 +18,59 @@
 
 ## Current Position
 
-➡️ **UI refresh shipped (rev 30): the design-tab football language is now live
-across all real screens. Still open: apply `0009_member_stats.sql` +
-`0010_avatars_storage.sql`, resume 5.2 production activation / 5.3 QA, and run an
-authed mobile/RTL visual pass over the new UI.**
-Local verification is clean (`npm run lint` + `npm run build`); login renders in
-`ar`/`en`. The next session should do a logged-in walk of fixtures → match detail
-(banner, live "family lean" bar, exact-score `GoalBurst`, steppers/reveal) →
-leaderboard (medals, stat colors) → Hall of Fame → profile, on a phone viewport
-and with OS reduce-motion on. See CHANGELOG 2026-06-19 (rev 30).
+➡️ **Login and signup now hand off by account existence (rev 36).** Unknown
+emails at `/login` redirect to `/signup?email=…`; already-registered emails at
+`/signup` redirect to `/login?email=…` (both prefill the email). User lookup is
+shared in `src/lib/auth/users.ts`. This removes the confusing "email already has
+an account" error on signup. Local verification is clean (`npm run lint` +
+`npm run build`). See CHANGELOG 2026-06-21 (rev 36).
+
+➡️ **Email + password auth is now the default (rev 35).** Added `/signup`,
+email-first `/login`, admin-driven reset from `/admin/users`, migration
+`0011_password_reset.sql`, and owner email auto-promotion. Legacy phone and OTP
+flows remain behind `NEXT_PUBLIC_AUTH_MODE=phone|otp`; unset/default now resolves
+to password. Local verification is clean (`npm run lint` + `npm run build`).
+**Next:** apply `0011` live, then run the explicitly-approved fresh-start wipe
+(`delete from auth.users;`) if the owner still wants accounts/predictions cleared.
+See CHANGELOG 2026-06-20 (rev 35).
+
+➡️ **Leaderboard now carries the scoring explainer (rev 34).** A "How points work"
+card sits at the top of `/leaderboard` (above the tabs, so it shows on every tab),
+pairing the `<ScoringStrip>` icon visual (7 / 4 / 2 / 0) with the `scoring.footnote`
+top-to-bottom rule. `getAppSettings()` was lifted into the page's top-level fetch and
+the `my-results` branch reuses it. Reused the existing component + `scoring` strings —
+no new component. Local verify clean (`npm run lint` + `npm run build`). **Next:** the
+authed mobile/RTL visual pass of the predict page + a member's results, then resume the
+still-open items below. See CHANGELOG 2026-06-20 (rev 34).
+
+➡️ **Scoring explainers are now live in the member UI (rev 33).** The owner picked
+the **disclosure + strip** options. A reusable `<ScoringDisclosure>` ("How points
+work", collapsible) sits under the predict form, and `<ScoringStrip>` (the 7/4/2/0
+key) plus per-match **tier badges** (Exact / Right margin / Right winner / Miss,
+colour-coded) are on the results breakdown so it's clear *how* each player earned
+their points. Values come from `app_settings`; tier derivation in `src/lib/scoring.ts`
+mirrors §5. `ar`/`en` strings added under the `scoring` namespace. Local verify clean
+(`npm run lint` + `npm run build`). **Next:** authed mobile/RTL visual pass of the
+predict page + a member's results, then resume the still-open items below. See
+CHANGELOG 2026-06-20 (rev 33).
+
+➡️ **Scoring-explainer exploration shipped to the design tab (rev 32):** a new
+**Scoring** section at `/design-system` (`#scoring`) shows five ways to teach the
+exact 7 / right-margin 4 / right-winner 2 / miss 0 rules — tiered ladder, by-example,
+collapsible disclosure, stat cards, and a compact strip. Sample-data only; no
+member-facing UI changed yet. **Next:** owner picks a favourite, then promote it to
+a single reusable `<ScoringLegend>` that reads values from `app_settings` and place
+it on the predict page (and reuse it as the results-breakdown legend). Local
+verification clean (`npm run lint` + `npm run build`). See CHANGELOG 2026-06-20 (rev 32).
+
+➡️ **Fixtures UI cleanup shipped (rev 31): live matches now live in an Ongoing
+tab, Upcoming is not-yet-started only, and member-facing flags render once. Still
+open: apply `0009_member_stats.sql` + `0010_avatars_storage.sql`, resume 5.2
+production activation / 5.3 QA, and run an authed mobile/RTL visual pass.**
+Local verification is clean (`npm run lint` + `npm run build`). The next session
+should do a logged-in walk of fixtures with and without live matches:
+`/fixtures`, `/fixtures?tab=ongoing`, match detail banners, admin fixtures/results,
+results breakdown, Arabic RTL and English LTR. See CHANGELOG 2026-06-20 (rev 31).
 
 ➡️ **Phase 4.4 Hall of Fame stats and profile avatars are repo-implemented; owner must apply `0009_member_stats.sql` and `0010_avatars_storage.sql`, then resume 5.2 production activation / 5.3 QA.**
 Local verification is clean (`npm run lint` + `npm run build`). The new leaderboard tab uses aggregate-only member stats from
@@ -156,6 +200,20 @@ Fame gold/shine, results pitch band + gold tiles, lime CTAs + ball loaders on
 profile/onboarding/login/avatar/sync. No schema/RLS/API changes; privacy gating
 untouched. See CHANGELOG 2026-06-19.
 
+Fixtures UI cleanup (rev 31): added an **Ongoing** tab that appears only when
+live matches exist, keeps the default landing tab on Upcoming, renders live
+matches as the existing hero banners only, and removes live matches from the
+Upcoming grouped list. Added `sideLabel()` beside `sideName()` so member views
+that already render a separate flag show a single flag; admin/results views keep
+using `sideName()`. See CHANGELOG 2026-06-20.
+
+Owner auth rework (rev 35): default auth is now email + password with no OTP.
+Signup creates confirmed Supabase accounts server-side and sends users through
+onboarding; login is email-first and routes pending admin resets to a "set new
+password" form. `/admin/users` lets admins mark resets and scramble old
+passwords. Owner email auto-promotes after profile creation/read. See CHANGELOG
+2026-06-20.
+
 ---
 
 ## Phase 0 — Foundation
@@ -205,8 +263,8 @@ untouched. See CHANGELOG 2026-06-19.
 
 ## Phase 1 — Authentication
 
-> Goal: a family member can register and log in with an email code, and has a
-> profile. Registration is **open** (per decision §4.3).
+> Goal: a family member can register and log in, then complete a profile.
+> Registration is **open** (per decision §4.3).
 
 ### 1.0 Profiles table + RLS ☑
 
@@ -237,6 +295,23 @@ untouched. See CHANGELOG 2026-06-19.
 - ☑ Step 2 — Sign-out
 - ☑ Step 3 — Redirect logic (unauth → login, incomplete profile → setup)
 
+### 1.4 Email + password auth and admin reset ☑
+
+- ☑ Step 1 — `0011_password_reset.sql` adds `profiles.password_reset_pending`
+  and explicitly keeps it out of member column grants.
+- ☑ Step 2 — `/signup` creates confirmed Supabase auth users with email +
+  password, signs them in, and sends them to existing onboarding. An email that
+  already has an account redirects to `/login?email=…` instead of erroring
+  (rev 36).
+- ☑ Step 3 — `/login` defaults to email-first password auth; normal accounts ask
+  for the password, pending-reset accounts set a new password, unknown emails
+  redirect to `/signup?email=…` (rev 36). `phone` and `otp` modes still render
+  behind `NEXT_PUBLIC_AUTH_MODE`.
+- ☑ Step 4 — `/admin/users` lists auth users joined to profiles and lets admins
+  mark a manual reset, scrambling the old password.
+- ☑ Step 5 — Owner email auto-promotion replaces the old email one-off SQL grant;
+  phone admin promotion remains for legacy phone mode.
+
 ---
 
 ## Phase 2 — Data model & admin entry
@@ -247,9 +322,8 @@ untouched. See CHANGELOG 2026-06-19.
 > **Decisions locked 2026-06-13:** seed data is **web-fetched** from the official
 > FIFA 2026 schedule and **owner-verified before commit**; already-kicked-off
 > matches are seeded with their **real final scores as display-only** results (not
-> scored); the owner gets admin via a **manual one-off SQL `UPDATE`** after first
-> login (no email baked into the schema). Phase 1 is live, so **each migration /
-> policy is verified against the live DB** as it lands. Migrations continue the
+> scored). Admin grant is now handled by owner email/phone auto-promotion (rev 35).
+> Phase 1 is live, so **each migration / policy is verified against the live DB** as it lands. Migrations continue the
 > `000N_*.sql` series (paste into the SQL editor, in order).
 
 ### 2.1 Schema migrations — `0002_core_schema.sql` ☑
@@ -262,8 +336,8 @@ they stay locked until `0003` adds policies. `matches` keeps stored `status` +
 `stage`/`status` `CHECK`s) + indexes (`predictions(match_id)`,
 `matches(kickoff_at)`, `matches(stage)`).
 - ☑ Step 3 — `app_settings` singleton (`id = 1`) seeded with 7 / 4 / 2.
-- ☑ Step 4 — **Admin grant** one-off `UPDATE` documented in `supabase/README.md`
-and applied live; admin confirmed.
+- ☑ Step 4 — **Admin grant** originally applied live by one-off `UPDATE`; rev 35
+  replaces that setup path with owner email/phone auto-promotion for fresh starts.
 
 ### 2.2 RLS policies — `0003_core_rls.sql` ☑
 
@@ -365,10 +439,12 @@ Vercel URL exists and run it once.
 
 ### 3.1 Fixtures list ☑
 
-- ☑ Step 1 — Fixtures grouped by date, localized, with Upcoming / Finished tabs
+- ☑ Step 1 — Fixtures grouped by date, localized, with Upcoming / Ongoing /
+  Finished tabs (Ongoing appears only when live matches exist)
 - ☑ Step 2 — Kickoff shown in device-local time; clear "closes at kickoff" state
-- ☑ Step 3 — Upcoming matches are predictable; past/locked matches render as
-results-only (no prediction input)
+- ☑ Step 3 — Upcoming matches are predictable and not-yet-started only; Ongoing
+  renders live matches as hero banners; past/locked matches render as results-only
+  (no prediction input)
 
 ### 3.2 Predict / edit ☑
 
@@ -435,7 +511,8 @@ results-only (no prediction input)
   deploy, and record `https://<app>.vercel.app`.
 - ◐ Step 2 — Supabase prod settings: reuse the existing project; owner to set Site
   URL to `https://<app>.vercel.app`, add redirect URL
-  `https://<app>.vercel.app/**`, and confirm Email/Magic Link settings.
+  `https://<app>.vercel.app/**`, and confirm Email provider settings. Magic Link
+  token copy only matters if `NEXT_PUBLIC_AUTH_MODE=otp`.
 - ◐ Step 3 — Production smoke test: checklist ready; owner to run after deploy
   (ar/en, mobile/desktop, OTP, profile toast, fixtures/predictions/privacy,
   leaderboard, admin Sync, scheduled Action log).

@@ -3,7 +3,7 @@
 > **Single source of truth.** Read this before writing any code. If something here
 > is wrong or out of date, fix it here first, then build to match.
 >
-> **Last updated:** 2026-06-18 (rev 24) · **Status:** Phase 4.4 Hall of Fame stats repo-implemented; owner `0009` apply / live smoke pending, then Phase 5.2 production activation
+> **Last updated:** 2026-06-20 (rev 26) · **Status:** Email + password auth is the default; admin-driven password reset is repo-implemented, live `0011` apply/fresh-start wipe still pending
 
 ---
 
@@ -25,7 +25,7 @@ One sentence: **Predict the score, earn points by accuracy, climb one shared boa
 - **One shared leaderboard** for everyone.
 - **One admin** (the site owner) who enters fixtures and final scores.
 - World Cup only. No other competitions.
-- **In scope:** email-code login, score predictions (editable until kickoff),
+- **In scope:** email + password login, admin-driven password reset, score predictions (editable until kickoff),
   prediction privacy before kickoff, simple accuracy-based scoring, one
   leaderboard, Hall of Fame aggregate award badges, per-player stats cards,
   manual score entry plus openfootball result sync, Arabic + English.
@@ -40,8 +40,8 @@ One sentence: **Predict the score, earn points by accuracy, climb one shared boa
 |---|---|---|
 | Framework | **Next.js (App Router) + TypeScript** | Deployed on Vercel, zero-config |
 | Styling | **Tailwind CSS + shadcn/ui** | Mobile-first; clean sports-app look |
-| Backend / DB | **Supabase** | Postgres + Auth (email OTP) + Storage + RLS |
-| Auth | **Switchable (§4.11)** | Default phone-number sign-in (no SMS); `"otp"` mode = Supabase email OTP (`signInWithOtp` → enter email → receive code) |
+| Backend / DB | **Supabase** | Postgres + Auth + Storage + RLS |
+| Auth | **Switchable (§4.11)** | Default email + password; `"phone"` = legacy no-verification phone sign-in, `"otp"` = legacy Supabase email OTP |
 | i18n | **next-intl** | Arabic default + RTL, English secondary |
 | Hosting | **Vercel** | One-click Next.js deploys |
 
@@ -69,7 +69,7 @@ These were confirmed with the owner. Change them *here* if they change.
    Vercel Cron is not used on Hobby because its once/day limit is too coarse.
    Final scores from the sync flow through the scoring trigger (§5) and
    auto-score predictions.
-3. **Registration = open.** Anyone with the link can register (email + full name).
+3. **Registration = open.** Anyone with the link can register (email + password, then full name/profile photo/locale).
    - *Implication:* the leaderboard is only as private as the URL. A shared
      invite-code gate is a documented, low-effort future enhancement (see §10) if
      the owner later wants to lock it down.
@@ -95,50 +95,52 @@ These were confirmed with the owner. Change them *here* if they change.
    correctly; those matches are never scored.
 8. **No tournament-long bonus picks in v1.** Per-match score predictions only. A
    "predict the champion" / top-scorer bonus is explicitly deferred.
-9. **Email OTP is a typed six-digit code.** The Supabase **Magic Link** email
-   template must display `{{ .Token }}`; a confirmation-link-only template does
-   not support the app's two-step code form.
+9. **Legacy email OTP is a typed six-digit code.** Only when
+   `NEXT_PUBLIC_AUTH_MODE=otp`, the Supabase **Magic Link** email template must
+   display `{{ .Token }}`; a confirmation-link-only template does not support the
+   app's two-step code form. The default password flow sends no email code.
 10. **Prediction UX = detail-page loop.** The member Fixtures page is grouped by
-    date with **Upcoming** and **Finished** tabs. **Upcoming** shows only the next
-    *batch* — any match in progress now, plus the not-yet-started matches within
-    24h of the earliest upcoming one — so the list stays focused on what to predict
-    next (far-future fixtures appear once they enter that window). A match that has
-    kicked off but has **no final score yet is "in progress"**: it stays in
-    Upcoming with a pulsing "live" badge (never in Finished). **Finished** lists
-    only matches with a final score (`status = finished` or both scores set). Each
-    row links to a per-match detail page; open matches use +/- score steppers that
-    autosave after the user's first interaction (no accidental 0-0 write on page
-    load) and confirm with an animated inline status pill. Kickoff is rendered in
-    the browser's local timezone. TBD knockout slots are read-only until both teams
-    are assigned. After kickoff, the detail page renders the prediction rows
-    returned by RLS and highlights the current user's row; the UI does not act as
-    the privacy gate. (Login hard-navigates after OTP verify so the app loads
-    without a manual refresh.)
-11. **Auth mode is switchable (`NEXT_PUBLIC_AUTH_MODE`).** Default `"phone"`: a
-    passwordless **phone-number** sign-in for the trusted friend group — typing a
-    phone number is the *entire* login (no SMS, no verification code). It is
-    intentionally not secure; acceptable because the group is private and the
-    leaderboard is only as private as the URL (§4.3). Set the flag to `"otp"` to
-    restore the original Supabase email six-digit-code flow, which is kept intact
-    in the codebase for reuse in other projects. **How it preserves RLS:** all
-    policies key off `auth.uid()`, so a real session is still required. A phone
-    number maps to a synthetic Supabase account — email `<digits>@phone.local`,
-    password `HMAC(digits, PHONE_AUTH_SECRET)` derived server-side only. The
-    first sign-in creates the user via the service-role admin client with
-    `email_confirm: true`, then signs in with the cookie-bound server client; the
-    browser only ever sends the phone number. The default UI collects that phone
-    as an explicit international number: a searchable country picker (Sudan and
-    Saudi Arabia pinned first, then Gulf/Middle East countries), a locked
-    auto-populated dial key, country-specific national-number boxes kept in one
-    responsive row, and one hidden combined digit field sent to the server. New
-    numbers still go through onboarding (name + language, Arabic default); known
-    numbers go to fixtures. Phone `+966595440204` is auto-promoted to admin
-    after its profile exists; the shared profile read also self-heals this flag
-    for already signed-in sessions. Matching also tolerates common Saudi local
-    variants for the same number (`059...`, national-only, and `9660...`).
-    Lives in `src/lib/auth/mode.ts` + `(auth)/login/phone-actions.ts`,
-    `phone-login-form.tsx`, and
-    `phone-number-input.tsx`.
+    date with **Upcoming** and **Finished** tabs, plus an **Ongoing** tab that is
+    shown only while live matches exist. The default landing tab remains
+    **Upcoming**, even when Ongoing is available. **Upcoming** shows only the next
+    not-yet-started *batch* — matches within 24h of the earliest upcoming one —
+    so the list stays focused on what to predict next (far-future fixtures appear
+    once they enter that window). A match that has kicked off but has **no final
+    score yet is "in progress"**: it appears in Ongoing as the prominent
+    stadium-style banner (never duplicated in Upcoming, never in Finished).
+    Opening `/fixtures?tab=ongoing` when there are no live matches falls back to
+    Upcoming. **Finished** lists only matches with a final score
+    (`status = finished` or both scores set). Each row links to a per-match detail
+    page; open matches use +/- score steppers that autosave after the user's first
+    interaction (no accidental 0-0 write on page load) and confirm with an
+    animated inline status pill. Kickoff is rendered in the browser's local
+    timezone. TBD knockout slots are read-only until both teams are assigned.
+    After kickoff, the detail page renders the prediction rows returned by RLS and
+    highlights the current user's row; the UI does not act as the privacy gate.
+    (Login hard-navigates after OTP verify so the app loads without a manual
+    refresh.)
+11. **Auth mode is switchable (`NEXT_PUBLIC_AUTH_MODE`).** Default/unset
+    `"password"`: email + password, no OTP and no confirmation email. Signup uses
+    the service-role admin client to create a confirmed Supabase auth user, signs
+    in with the cookie-bound server client, then sends the new user to onboarding
+    (name + optional avatar + locale). Login is email-first: an unknown email
+    redirects to `/signup?email=…` (prefilled); normal accounts ask for the
+    password; accounts with `profiles.password_reset_pending = true` ask for a
+    new password instead of the old one. Symmetrically, signing up with an email
+    that already has an account redirects to `/login?email=…` rather than
+    erroring. The shared lookup lives in `src/lib/auth/users.ts`. Admin reset is intentionally manual for this private app:
+    `/admin/users` lets the admin mark a profile pending and scramble the old
+    password; the next login sets a new one. The pending-claim window is accepted
+    as part of the app's trusted-family security posture. Set the flag to
+    `"phone"` to restore the legacy no-verification phone sign-in, or `"otp"` to
+    restore the original Supabase email six-digit-code flow. **How every mode
+    preserves RLS:** all policies key off `auth.uid()`, so every successful path
+    still mints a real Supabase session. Owner email
+    `ahmed.mohamed.xx420@gmail.com` and legacy phone `+966595440204` are
+    auto-promoted after their profile exists; the shared profile read also
+    self-heals those flags for already signed-in sessions. Lives in
+    `src/lib/auth/mode.ts`, `(auth)/signup/*`, `(auth)/login/password-*`, and the
+    legacy phone/OTP login files.
 12. **Leaderboard personality stats = Hall of Fame cards.** The leaderboard stays
     on one bottom-nav item, with three tabs: Board, Hall of Fame, and My results.
     Hall of Fame shows 8 named aggregate badges: Sniper, Hot Streak, On Form,
@@ -199,12 +201,16 @@ API-ready, manual-entry-first. Names are the working spec; finalize in migration
 | `full_name` | text, not null | required at signup |
 | `avatar_url` | text, null | optional; Supabase Storage |
 | `is_admin` | bool, default false | single owner = true |
+| `password_reset_pending` | bool, default false | admin-set manual reset flag |
 | `locale` | text, default `'ar'` | UI preference |
 | `created_at` | timestamptz | |
 
-Created in Phase 1 by `supabase/migrations/0001_profiles.sql`. The app inserts
-the row during onboarding; an authenticated user with no row has an incomplete
-profile. Avatar upload is deferred, so `avatar_url` exists but is unused.
+Created in Phase 1 by `supabase/migrations/0001_profiles.sql`; `0011` adds
+`password_reset_pending`. The app inserts the row during onboarding; an
+authenticated user with no row has an incomplete profile. Avatar upload writes
+`avatar_url` through the profile forms. Members can update only
+`full_name`/`avatar_url`/`locale`; `is_admin` and `password_reset_pending` are
+service-role/admin-managed.
 
 ### `teams`
 | Column | Type | Notes |
@@ -297,8 +303,9 @@ not just in the UI, so the API can never leak a hidden prediction.
 - **`predictions` INSERT/UPDATE:** only your own row, and only while
   `now() < matches.kickoff_at` (predictions close at kickoff).
 - **`profiles`:** everyone (authenticated) can read names/avatars (leaderboard);
-  you can insert/update only your own row. Column grants exclude `is_admin`, so
-  owning a row cannot be used to self-promote. There is no user DELETE policy.
+  you can insert/update only your own row. Column grants exclude `is_admin` and
+  `password_reset_pending`, so owning a row cannot be used to self-promote or
+  self-trigger a reset. There is no user DELETE policy.
 - **`teams` / `matches` / `app_settings`:** read for all authenticated users;
   write only for admins (`is_admin = true`, checked via a `SECURITY DEFINER`
   helper to avoid RLS recursion).
@@ -338,9 +345,10 @@ not just in the UI, so the API can never leak a hidden prediction.
   predictions after kickoff.
 - **Admin (`ahmed.mohamed.xx420@gmail.com` and phone `+966595440204`):**
   everything a member can do (so admins also predict and appear on the
-  leaderboard), plus manage fixtures/teams and enter final scores (which
-  triggers scoring), plus a **Sync** tab to pull teams/fixtures/results from the
-  openfootball feed. Admin UI is intentionally minimal in v1.
+  leaderboard), plus manage fixtures/teams/users, enter final scores (which
+  triggers scoring), reset member passwords manually, and use the **Sync** tab to
+  pull teams/fixtures/results from the openfootball feed. Admin UI is
+  intentionally minimal in v1.
 
 ---
 
@@ -362,10 +370,12 @@ Documented defaults (change here if the owner decides otherwise):
 - **Invite-code registration gate:** not built (registration is open per decision
   §4.3). Low-effort future enhancement if privacy needs tightening.
 - **Account deletion / admin user removal:** not in v1 unless requested.
-- **Admin grant:** the email owner is promoted via a **one-off SQL `UPDATE`** in
-  the Supabase editor after first login; the admin phone `+966595440204` is
-  auto-promoted in server actions and the profile read path once its `profiles`
-  row exists.
+- **Admin grant:** the owner email `ahmed.mohamed.xx420@gmail.com` and legacy
+  phone `+966595440204` are auto-promoted in server actions/profile reads once
+  their `profiles` row exists. No one-off SQL grant is needed.
+- **Fresh-start auth wipe:** requested for this auth switch, but not run by code.
+  With explicit owner go-ahead, delete all rows from `auth.users`; profile and
+  prediction rows cascade, while synced teams/fixtures/results/app settings stay.
 - **Knockout TBD fixtures:** created with `home_label`/`away_label` placeholders;
   predictions open once both teams are assigned.
 - **Mid-tournament launch:** matches whose kickoff has already passed are

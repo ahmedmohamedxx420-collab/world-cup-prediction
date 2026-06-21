@@ -19,6 +19,21 @@ export function sideName(
   return label || tbd;
 }
 
+// Same resolution as sideName, but without the leading flag. Use this in views
+// that render the flag as its own visual element.
+export function sideLabel(
+  teamMap: Map<number, Team>,
+  teamId: number | null,
+  label: string | null,
+  tbd: string,
+) {
+  if (teamId != null) {
+    const team = teamMap.get(teamId);
+    if (team) return team.name_en;
+  }
+  return label || tbd;
+}
+
 // Kickoff is stored UTC; the admin enters/sees UTC, so render it explicitly in
 // UTC with the active locale's formatting.
 export function formatKickoffUtc(iso: string, locale: string) {

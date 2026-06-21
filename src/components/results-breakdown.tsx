@@ -4,6 +4,7 @@ import { getTranslations } from "next-intl/server";
 import { EmptyState } from "@/components/empty-state";
 import { LocalKickoff } from "@/components/local-kickoff";
 import { Avatar } from "@/components/ui/avatar";
+import type { AppSettings } from "@/lib/app-settings";
 import type {
   LeaderboardRow,
   MemberProfile,
@@ -11,6 +12,9 @@ import type {
 } from "@/lib/leaderboard";
 import type { FormDot, PlayerStats } from "@/lib/hall-of-fame";
 import { sideName } from "@/lib/match-format";
+import { scoreTier } from "@/lib/scoring";
+import { ScoringStrip } from "@/components/scoring-legend";
+import { TIER_META } from "@/components/scoring-tiers";
 import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
 
@@ -78,7 +82,7 @@ export async function ResultsBreakdown({
   teams,
   locale,
   playerStats,
-  exactPoints,
+  settings,
   isCurrentUser = false,
 }: {
   profile: MemberProfile;
@@ -87,13 +91,14 @@ export async function ResultsBreakdown({
   teams: Team[];
   locale: string;
   playerStats: PlayerStats;
-  exactPoints: number;
+  settings: AppSettings;
   isCurrentUser?: boolean;
 }) {
-  const [t, fixturesT, stagesT] = await Promise.all([
+  const [t, fixturesT, stagesT, scoringT] = await Promise.all([
     getTranslations("leaderboard"),
     getTranslations("fixtures"),
     getTranslations("admin.fixtures.stages"),
+    getTranslations("scoring"),
   ]);
   const teamMap = new Map(teams.map((team) => [team.id, team]));
   const name = isCurrentUser
@@ -186,7 +191,20 @@ export async function ResultsBreakdown({
           <StatChip
             label={t("bestMatch")}
             value={bestMatchLabel}
-            emphasis={bestMatchPoints >= exactPoints && bestMatch != null}
+            emphasis={bestMatchPoints >= settings.exact_points && bestMatch != null}
+          />
+        </div>
+
+        <div className="space-y-2 rounded-2xl border bg-card/95 p-3 shadow-sm">
+          <span className="block text-xs font-semibold text-muted-foreground">
+            {scoringT("title")}
+          </span>
+          <ScoringStrip
+            points={{
+              exact: settings.exact_points,
+              margin: settings.goal_diff_points,
+              winner: settings.winner_points,
+            }}
           />
         </div>
       </header>
@@ -214,6 +232,18 @@ export async function ResultsBreakdown({
               fixturesT("tbd"),
             );
             const actual = scoreText(match.home_score, match.away_score);
+            const tier =
+              match.home_score != null &&
+              match.away_score != null &&
+              result.points_awarded != null
+                ? scoreTier(
+                    result.home_score,
+                    result.away_score,
+                    match.home_score,
+                    match.away_score,
+                  )
+                : null;
+            const TierIcon = tier ? TIER_META[tier].icon : null;
 
             return (
               <li
@@ -266,7 +296,7 @@ export async function ResultsBreakdown({
                     {match.venue ? <span>{match.venue}</span> : null}
                   </div>
 
-                  <div className="grid gap-2 sm:grid-cols-3">
+                  <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
                     <div className="rounded-xl bg-muted/40 px-3 py-2">
                       <span className="block text-xs text-muted-foreground">
                         {t("prediction")}
@@ -283,25 +313,33 @@ export async function ResultsBreakdown({
                         {actual ?? t("resultPending")}
                       </span>
                     </div>
-                    <div
-                      className={cn(
-                        "rounded-xl px-3 py-2",
-                        result.points_awarded == null
-                          ? "bg-muted/40"
-                          : "bg-gold/15",
-                      )}
-                    >
-                      <span className="block text-xs text-muted-foreground">
-                        {t("points")}
-                      </span>
-                      <span className="text-base font-bold tabular-nums">
-                        {result.points_awarded == null
-                          ? t("pointsPending")
-                          : t("pointsValue", {
-                              points: result.points_awarded,
-                            })}
-                      </span>
-                    </div>
+                    {tier && TierIcon ? (
+                      <div
+                        className={cn(
+                          "flex items-center justify-between gap-3 rounded-xl border px-3 py-2 sm:flex-col sm:items-start sm:justify-center",
+                          TIER_META[tier].soft,
+                        )}
+                      >
+                        <span className="inline-flex items-center gap-1.5 text-xs font-bold">
+                          <TierIcon className="size-3.5" aria-hidden />
+                          {scoringT(`${tier}Title`)}
+                        </span>
+                        <span className="text-lg font-black tabular-nums">
+                          {t("pointsValue", {
+                            points: result.points_awarded ?? 0,
+                          })}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="rounded-xl bg-muted/40 px-3 py-2">
+                        <span className="block text-xs text-muted-foreground">
+                          {t("points")}
+                        </span>
+                        <span className="text-base font-bold tabular-nums">
+                          {t("pointsPending")}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </li>

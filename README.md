@@ -30,6 +30,8 @@ Copy `.env.example` to `.env.local` and fill in from your Supabase project
 | `NEXT_PUBLIC_SUPABASE_URL` | browser + server | Project URL; public |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser + server | anon/publishable key; public, RLS-bound |
 | `SUPABASE_SERVICE_ROLE_KEY` | **server only** | service_role/secret key; bypasses RLS — never expose |
+| `NEXT_PUBLIC_AUTH_MODE` | browser + server | optional; default/unset is email + password, set `phone` or `otp` for legacy flows |
+| `PHONE_AUTH_SECRET` | **server only** | only used by legacy `phone` auth mode |
 | `CRON_SECRET` | **server only** | Bearer secret protecting `POST /api/sync` |
 | `WORLDCUP_FEED_URL` | server | *optional* — source feed override; defaults to the openfootball `worldcup.json` (free, no key, covers WC2026) |
 
@@ -54,9 +56,10 @@ are applied manually, in numeric order, by pasting each file into the Supabase
 dashboard's **SQL Editor**. See [`supabase/README.md`](supabase/README.md) for the
 workflow.
 
-For typed email-code login, update **Auth → Emails → Magic Link** in the
-Supabase dashboard so the message displays the six-digit `{{ .Token }}`. Also
-confirm **Auth → Providers → Email** is enabled and email signups are on.
+Default auth is email + password; signups are created server-side with confirmed
+email, so no Supabase email template is required for the default flow. If you set
+`NEXT_PUBLIC_AUTH_MODE=otp`, update **Auth → Emails → Magic Link** in Supabase so
+the message displays the six-digit `{{ .Token }}`.
 
 ## Scripts
 

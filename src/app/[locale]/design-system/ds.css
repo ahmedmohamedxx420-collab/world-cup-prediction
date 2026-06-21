@@ -3551,3 +3551,403 @@
     animation: none !important;
   }
 }
+
+/* ----------------------------------------------------------------------------
+   Scoring explainers (section 13)
+   Tier tones are set once per parent so every variant shares one palette:
+   exact = lime, right margin = gold, right winner = emerald, miss = muted.
+---------------------------------------------------------------------------- */
+.ds-root .ds-score-ladder .is-exact,
+.ds-root .ds-score-maps .is-exact,
+.ds-root .ds-score-disclosure__body .is-exact,
+.ds-root .ds-score-cardgrid .is-exact,
+.ds-root .ds-score-strip .is-exact {
+  --tier: var(--ds-lime-500);
+  --tier-ink: var(--ds-emerald-850);
+  --tier-soft: rgba(198, 242, 78, 0.2);
+}
+
+.ds-root .ds-score-ladder .is-margin,
+.ds-root .ds-score-maps .is-margin,
+.ds-root .ds-score-disclosure__body .is-margin,
+.ds-root .ds-score-cardgrid .is-margin,
+.ds-root .ds-score-strip .is-margin {
+  --tier: var(--ds-gold-500);
+  --tier-ink: var(--ds-gold-700);
+  --tier-soft: rgba(244, 197, 74, 0.2);
+}
+
+.ds-root .ds-score-ladder .is-winner,
+.ds-root .ds-score-maps .is-winner,
+.ds-root .ds-score-disclosure__body .is-winner,
+.ds-root .ds-score-cardgrid .is-winner,
+.ds-root .ds-score-strip .is-winner {
+  --tier: var(--ds-emerald-700);
+  --tier-ink: var(--ds-emerald-850);
+  --tier-soft: rgba(29, 111, 80, 0.12);
+}
+
+.ds-root .ds-score-ladder .is-miss,
+.ds-root .ds-score-maps .is-miss,
+.ds-root .ds-score-disclosure__body .is-miss,
+.ds-root .ds-score-cardgrid .is-miss,
+.ds-root .ds-score-strip .is-miss {
+  --tier: #c2ccc4;
+  --tier-ink: var(--ds-muted);
+  --tier-soft: rgba(107, 119, 112, 0.1);
+}
+
+.ds-root .ds-score-block {
+  align-content: start;
+}
+
+.ds-root .ds-score-pts {
+  align-items: baseline;
+  display: inline-flex;
+  gap: 3px;
+}
+
+.ds-root .ds-score-pts strong {
+  color: var(--tier-ink);
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+}
+
+.ds-root .ds-score-pts small {
+  color: var(--ds-muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+/* Variant A — tiered ladder */
+.ds-root .ds-score-ladder {
+  display: grid;
+  gap: 8px;
+}
+
+.ds-root .ds-score-tier {
+  align-items: center;
+  background: var(--tier-soft);
+  border: 1px solid var(--ds-border);
+  border-inline-start: 4px solid var(--tier);
+  border-radius: 14px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto 1fr auto;
+  padding: 12px 14px;
+}
+
+.ds-root .ds-score-tier__icon {
+  align-items: center;
+  background: var(--ds-white);
+  border-radius: 10px;
+  box-shadow: inset 0 0 0 1px var(--ds-border);
+  color: var(--tier-ink);
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.ds-root .ds-score-tier__icon svg {
+  height: 18px;
+  width: 18px;
+}
+
+.ds-root .ds-score-tier__body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ds-root .ds-score-tier__body strong {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.ds-root .ds-score-tier__body span {
+  color: var(--ds-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ds-root .ds-score-foot {
+  align-items: center;
+  color: var(--ds-muted);
+  display: flex;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 7px;
+  margin: 2px 0 0;
+}
+
+.ds-root .ds-score-foot svg {
+  color: var(--ds-emerald-700);
+  flex: none;
+  height: 15px;
+  width: 15px;
+}
+
+/* Variant B — by example */
+.ds-root .ds-score-actual {
+  align-items: center;
+  background: var(--ds-gradient);
+  border-radius: 14px;
+  box-shadow: var(--ds-shadow-soft);
+  color: var(--ds-white);
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+}
+
+.ds-root .ds-score-actual span {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+  text-transform: uppercase;
+}
+
+.ds-root .ds-score-actual strong {
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+}
+
+.ds-root .ds-score-maps {
+  display: grid;
+  gap: 8px;
+}
+
+.ds-root .ds-score-map {
+  align-items: center;
+  background: var(--ds-white);
+  border: 1px solid var(--ds-border);
+  border-radius: 12px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto auto 1fr auto;
+  padding: 10px 12px;
+}
+
+.ds-root .ds-score-map__guess {
+  background: var(--tier-soft);
+  border-radius: 8px;
+  color: var(--tier-ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  min-width: 46px;
+  padding: 4px 8px;
+  text-align: center;
+}
+
+.ds-root .ds-score-map__arrow {
+  color: var(--ds-muted);
+  font-weight: 900;
+}
+
+.ds-root .ds-score-map__label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ds-root .ds-score-map__pts {
+  color: var(--tier-ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+}
+
+/* Variant C — collapsible disclosure */
+.ds-root .ds-score-disclosure {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 6px 4px;
+  text-align: start;
+  width: 100%;
+}
+
+.ds-root .ds-score-disclosure__title {
+  align-items: center;
+  display: inline-flex;
+  font-size: 15px;
+  font-weight: 900;
+  gap: 10px;
+}
+
+.ds-root .ds-score-disclosure__chev {
+  color: var(--ds-muted);
+  height: 20px;
+  transition: transform 160ms ease;
+  width: 20px;
+}
+
+.ds-root .ds-score-disclosure.is-open .ds-score-disclosure__chev {
+  transform: rotate(180deg);
+}
+
+.ds-root .ds-score-disclosure__body {
+  border-top: 1px solid var(--ds-border);
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+}
+
+.ds-root .ds-score-line {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: auto auto 1fr auto;
+  padding: 8px 6px;
+}
+
+.ds-root .ds-score-line__dot {
+  background: var(--tier);
+  border-radius: 999px;
+  box-shadow: inset 0 0 0 1px rgba(15, 26, 20, 0.08);
+  height: 10px;
+  width: 10px;
+}
+
+.ds-root .ds-score-line__title {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ds-root .ds-score-line__blurb {
+  color: var(--ds-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.ds-root .ds-score-line__pts {
+  background: var(--tier-soft);
+  border-radius: 999px;
+  color: var(--tier-ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  min-width: 26px;
+  padding: 2px 8px;
+  text-align: center;
+}
+
+/* Variant D — stat cards */
+.ds-root .ds-score-cardgrid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ds-root .ds-score-card {
+  align-content: start;
+  display: grid;
+  gap: 6px;
+  overflow: hidden;
+  position: relative;
+}
+
+.ds-root .ds-score-card::before {
+  background: var(--tier);
+  content: "";
+  height: 4px;
+  inset-block-start: 0;
+  inset-inline: 0;
+  position: absolute;
+}
+
+.ds-root .ds-score-card__top {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.ds-root .ds-score-card__icon {
+  align-items: center;
+  background: var(--tier-soft);
+  border-radius: 10px;
+  color: var(--tier-ink);
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.ds-root .ds-score-card__icon svg {
+  height: 18px;
+  width: 18px;
+}
+
+.ds-root .ds-score-card__num {
+  color: var(--tier-ink);
+  font-size: 30px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ds-root .ds-score-card__title {
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.ds-root .ds-score-card__blurb {
+  color: var(--ds-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Variant E — compact strip */
+.ds-root .ds-score-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ds-root .ds-score-seg {
+  background: var(--tier-soft);
+  border: 1px solid var(--ds-border);
+  border-block-start: 3px solid var(--tier);
+  border-radius: 14px;
+  display: grid;
+  flex: 1 1 80px;
+  gap: 4px;
+  justify-items: center;
+  min-width: 0;
+  padding: 12px 8px;
+  text-align: center;
+}
+
+.ds-root .ds-score-seg__num {
+  color: var(--tier-ink);
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ds-root .ds-score-seg__label {
+  align-items: center;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 800;
+  gap: 5px;
+}
+
+.ds-root .ds-score-seg__label svg {
+  height: 13px;
+  width: 13px;
+}
+
+@media (max-width: 640px) {
+  .ds-root .ds-score-cardgrid {
+    grid-template-columns: 1fr;
+  }
+}

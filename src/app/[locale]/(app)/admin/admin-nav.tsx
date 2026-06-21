@@ -11,6 +11,7 @@ const items = [
   { key: "results", href: "/admin/results" },
   { key: "sync", href: "/admin/sync" },
   { key: "teams", href: "/admin/teams" },
+  { key: "users", href: "/admin/users" },
 ] as const;
 
 export function AdminNav() {

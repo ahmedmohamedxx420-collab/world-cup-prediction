@@ -1,35 +1,39 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { AUTH_MODE } from "@/lib/auth/mode";
+import { AuthCard } from "../auth-card";
 import { LoginForm } from "./login-form";
+import { PasswordLoginForm } from "./password-login-form";
 import { PhoneLoginForm } from "./phone-login-form";
 
 export default async function LoginPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ email?: string }>;
 }) {
   const { locale } = await params;
+  const { email } = await searchParams;
+  const defaultEmail = typeof email === "string" ? email : "";
   setRequestLocale(locale);
   const t = await getTranslations("auth");
 
-  const isPhone = AUTH_MODE === "phone";
+  const descriptionKey =
+    AUTH_MODE === "phone"
+      ? "phoneDescription"
+      : AUTH_MODE === "otp"
+        ? "description"
+        : "passwordDescription";
 
   return (
-    <Card className="w-full max-w-sm">
-      <CardHeader>
-        <CardTitle>{t("title")}</CardTitle>
-        <CardDescription>
-          {t(isPhone ? "phoneDescription" : "description")}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>{isPhone ? <PhoneLoginForm /> : <LoginForm />}</CardContent>
-    </Card>
+    <AuthCard title={t("title")} description={t(descriptionKey)}>
+      {AUTH_MODE === "phone" ? (
+        <PhoneLoginForm />
+      ) : AUTH_MODE === "otp" ? (
+        <LoginForm />
+      ) : (
+        <PasswordLoginForm defaultEmail={defaultEmail} />
+      )}
+    </AuthCard>
   );
 }

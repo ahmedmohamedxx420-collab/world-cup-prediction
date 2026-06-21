@@ -30,8 +30,33 @@
   "auth": {
     "title": "Welcome",
     "description": "Enter your email and we'll send you a six-digit login code.",
+    "passwordDescription": "Enter your email, then use your password to sign in.",
+    "signupTitle": "Create your account",
+    "signupDescription": "Use your email and a password. No confirmation code needed.",
     "emailLabel": "Email",
     "emailPlaceholder": "you@example.com",
+    "passwordLabel": "Password",
+    "newPasswordLabel": "New password",
+    "confirmPasswordLabel": "Confirm password",
+    "continue": "Continue",
+    "checking": "Checking...",
+    "back": "Back",
+    "createAccount": "Create account",
+    "creatingAccount": "Creating...",
+    "needAccount": "New here?",
+    "signupLink": "Create an account",
+    "haveAccount": "Already have an account?",
+    "signInLink": "Sign in",
+    "enterPasswordTitle": "Enter your password",
+    "enterPasswordDescription": "Signing in as {email}.",
+    "setPasswordTitle": "Create a new password",
+    "setPasswordDescription": "An admin reset this account. Set a new password for {email}.",
+    "loginSubmit": "Log in",
+    "loggingIn": "Signing in...",
+    "savePassword": "Save new password",
+    "savingPassword": "Saving...",
+    "accountNotFoundTitle": "No account found",
+    "accountNotFoundDescription": "We couldn't find an account for {email}. Create one to join.",
     "sendCode": "Send code",
     "sending": "Sending…",
     "codeLabel": "Login code",
@@ -119,6 +144,12 @@
     "errors": {
       "invalidCode": "That code is invalid or expired. Try again or resend it.",
       "invalidPhone": "Enter a valid phone number.",
+      "invalidEmail": "Enter a valid email address.",
+      "emailTaken": "That email already has an account. Sign in instead.",
+      "wrongPassword": "That password didn't work. Try again.",
+      "passwordTooShort": "Use at least {count} characters.",
+      "passwordsDontMatch": "The passwords don't match.",
+      "accountNotFound": "No account was found for that email.",
       "rateLimited": "Too many attempts. Wait a bit, then try again.",
       "generic": "Something went wrong. Please try again."
     }
@@ -289,6 +320,18 @@
       "generic": "We couldn't save your prediction. Please try again."
     }
   },
+  "scoring": {
+    "title": "How points work",
+    "footnote": "Checked top to bottom — the first match wins, points never stack.",
+    "exactTitle": "Exact score",
+    "exactBlurb": "Both numbers right.",
+    "marginTitle": "Right margin",
+    "marginBlurb": "Correct goal gap and winner.",
+    "winnerTitle": "Right winner",
+    "winnerBlurb": "Right side, wrong margin.",
+    "missTitle": "Miss",
+    "missBlurb": "Wrong outcome."
+  },
   "admin": {
     "title": "Admin",
     "description": "Manage teams, fixtures, and results.",
@@ -296,7 +339,8 @@
       "fixtures": "Fixtures",
       "results": "Results",
       "sync": "Sync",
-      "teams": "Teams"
+      "teams": "Teams",
+      "users": "Users"
     },
     "common": {
       "save": "Save",
@@ -322,6 +366,26 @@
         "required": "Name (English), name (Arabic), and code are required.",
         "duplicateCode": "That code is already used by another team.",
         "generic": "Something went wrong. Please try again."
+      }
+    },
+    "users": {
+      "title": "Users",
+      "description": "Find a family member and mark their account for a manual password reset.",
+      "searchLabel": "Search users",
+      "searchPlaceholder": "Search by name or email",
+      "count": "{count} users",
+      "empty": "No users match that search.",
+      "resetButton": "Reset password",
+      "resetting": "Resetting...",
+      "confirm": "Reset password for {name}? Their old password will stop working.",
+      "pendingBadge": "Pending reset",
+      "adminBadge": "Admin",
+      "noProfile": "Profile pending",
+      "joined": "Joined {date}",
+      "profilePending": "Profile pending - joined {date}",
+      "resetToast": "Password reset is pending for {email}.",
+      "errors": {
+        "generic": "We couldn't reset that password. Please try again."
       }
     },
     "fixtures": {

@@ -9,11 +9,11 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { listMatches } from "@/lib/matches";
 import type { Match } from "@/lib/match-types";
-import { sideName } from "@/lib/match-format";
+import { sideLabel } from "@/lib/match-format";
 import { getMyPredictions, type Prediction } from "@/lib/predictions";
 import { listTeams } from "@/lib/teams";
 
-type Tab = "upcoming" | "finished";
+type Tab = "upcoming" | "ongoing" | "finished";
 
 type MatchGroup = {
   key: string;
@@ -100,7 +100,9 @@ function groupByDate(matches: Match[], locale: string): MatchGroup[] {
 }
 
 function tabHref(tab: Tab) {
-  return tab === "upcoming" ? "/fixtures" : "/fixtures?tab=finished";
+  if (tab === "upcoming") return "/fixtures";
+  if (tab === "ongoing") return "/fixtures?tab=ongoing";
+  return "/fixtures?tab=finished";
 }
 
 async function getServerNow() {
@@ -230,7 +232,7 @@ export default async function FixturesPage({
   const [{ locale }, query] = await Promise.all([params, searchParams]);
   setRequestLocale(locale);
 
-  const activeTab: Tab = query.tab === "finished" ? "finished" : "upcoming";
+  const requestedTab = query.tab;
   const [matches, teams, myPredictions] = await Promise.all([
     listMatches(),
     listTeams(),
@@ -246,17 +248,24 @@ export default async function FixturesPage({
   const tomorrowKey = dateKeyFromTime(now + DAY_MS);
 
   // Finished = has a final score (or is flagged finished). A match that has
-  // kicked off but isn't finished yet is "in progress" and stays in Upcoming.
+  // kicked off but isn't finished yet is "in progress" and goes to Ongoing.
   const finished = matches.filter((match) => isFinished(match));
   const notFinished = matches.filter((match) => !isFinished(match));
   const live = notFinished.filter((match) => isLiveMatch(match, now));
   const notStarted = notFinished.filter(
     (match) => !isLiveMatch(match, now) && !isLocked(match, now),
   );
+  const showOngoing = live.length > 0;
+  const activeTab: Tab =
+    requestedTab === "finished"
+      ? "finished"
+      : requestedTab === "ongoing" && showOngoing
+        ? "ongoing"
+        : "upcoming";
 
-  // Upcoming shows only the next "batch": everything in progress now, plus the
-  // not-yet-started matches that fall within 24h of the earliest upcoming one
-  // (listMatches() pre-sorts by kickoff ascending, so notStarted[0] is next).
+  // Upcoming shows only the next not-yet-started "batch": matches that fall
+  // within 24h of the earliest upcoming one (listMatches() pre-sorts by kickoff
+  // ascending, so notStarted[0] is next).
   const batchAnchor = notStarted[0]
     ? Date.parse(notStarted[0].kickoff_at)
     : null;
@@ -269,13 +278,16 @@ export default async function FixturesPage({
 
   const visibleMatches =
     activeTab === "upcoming"
-      ? [...live, ...nextBatch]
-      : [...finished].reverse();
+      ? nextBatch
+      : activeTab === "finished"
+        ? [...finished].reverse()
+        : [];
   const groups = groupByDate(visibleMatches, locale);
 
-  // Featured match banners are now reserved for live fixtures only. Upcoming
-  // matches stay in the regular list so the hero treatment means "watch now".
-  const liveHeroMatches = activeTab === "upcoming" ? live : [];
+  // Featured match banners are reserved for live fixtures on the Ongoing tab.
+  // Upcoming matches stay in the regular list so the hero treatment means
+  // "watch now" without duplicating rows.
+  const liveHeroMatches = activeTab === "ongoing" ? live : [];
 
   return (
     <div className="space-y-6">
@@ -313,13 +325,23 @@ export default async function FixturesPage({
       <div className="space-y-3">
         <nav
           aria-label={t("tabsLabel")}
-          className="grid grid-cols-2 rounded-full border bg-card/85 p-1 shadow-sm"
+          className={cn(
+            "grid rounded-full border bg-card/85 p-1 shadow-sm",
+            showOngoing ? "grid-cols-3" : "grid-cols-2",
+          )}
         >
           <TabLink
             tab="upcoming"
             activeTab={activeTab}
             label={t("upcoming")}
           />
+          {showOngoing ? (
+            <TabLink
+              tab="ongoing"
+              activeTab={activeTab}
+              label={t("inProgress")}
+            />
+          ) : null}
           <TabLink
             tab="finished"
             activeTab={activeTab}
@@ -328,7 +350,7 @@ export default async function FixturesPage({
         </nav>
       </div>
 
-      {liveHeroMatches.length > 0 ? (
+      {activeTab === "ongoing" ? (
         <div className="grid gap-3 lg:grid-cols-2">
           {liveHeroMatches.map((match) => {
             const result = scoreText(match.home_score, match.away_score);
@@ -336,13 +358,13 @@ export default async function FixturesPage({
             return (
               <MatchBanner
                 key={match.id}
-                homeName={sideName(
+                homeName={sideLabel(
                   teamMap,
                   match.home_team_id,
                   match.home_label,
                   t("tbd"),
                 )}
-                awayName={sideName(
+                awayName={sideLabel(
                   teamMap,
                   match.away_team_id,
                   match.away_label,
@@ -381,9 +403,7 @@ export default async function FixturesPage({
             );
           })}
         </div>
-      ) : null}
-
-      {groups.length === 0 ? (
+      ) : groups.length === 0 ? (
         <EmptyState
           icon={<CalendarDays className="size-8" aria-hidden />}
           title={t(activeTab === "upcoming" ? "emptyUpcoming" : "emptyFinished")}
@@ -470,7 +490,7 @@ export default async function FixturesPage({
                                 </span>
                               ) : null}
                               <span className="truncate text-start text-base font-black tracking-normal">
-                                {sideName(
+                                {sideLabel(
                                   teamMap,
                                   match.home_team_id,
                                   match.home_label,
@@ -498,7 +518,7 @@ export default async function FixturesPage({
                                 </span>
                               ) : null}
                               <span className="truncate text-start text-base font-black tracking-normal">
-                                {sideName(
+                                {sideLabel(
                                   teamMap,
                                   match.away_team_id,
                                   match.away_label,

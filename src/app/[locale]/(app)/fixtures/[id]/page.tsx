@@ -7,9 +7,11 @@ import { MatchBanner } from "@/components/match-banner";
 import { MomentumBar } from "@/components/momentum-bar";
 import { GoalBurst } from "@/components/goal-burst";
 import { Avatar } from "@/components/ui/avatar";
+import { getAppSettings } from "@/lib/app-settings";
 import { getMatch } from "@/lib/matches";
 import type { Match } from "@/lib/match-types";
-import { sideName } from "@/lib/match-format";
+import { sideLabel } from "@/lib/match-format";
+import { ScoringDisclosure } from "@/components/scoring-legend";
 import {
   getMatchPredictions,
   getMyPrediction,
@@ -125,13 +127,14 @@ export default async function FixtureDetailPage({
   const matchId = Number(id);
   if (!Number.isInteger(matchId)) notFound();
 
-  const [match, teams, myPrediction, visiblePredictions, user] =
+  const [match, teams, myPrediction, visiblePredictions, user, settings] =
     await Promise.all([
       getMatch(matchId),
       listTeams(),
       getMyPrediction(matchId),
       getMatchPredictions(matchId),
       getCurrentUser(),
+      getAppSettings(),
     ]);
 
   if (!match) notFound();
@@ -144,13 +147,13 @@ export default async function FixtureDetailPage({
   ]);
 
   const teamMap = new Map(teams.map((team) => [team.id, team]));
-  const homeName = sideName(
+  const homeName = sideLabel(
     teamMap,
     match.home_team_id,
     match.home_label,
     fixturesT("tbd"),
   );
-  const awayName = sideName(
+  const awayName = sideLabel(
     teamMap,
     match.away_team_id,
     match.away_label,
@@ -269,6 +272,16 @@ export default async function FixtureDetailPage({
           tbd={tbd}
         />
       )}
+
+      {!finishedMatch && !tbd ? (
+        <ScoringDisclosure
+          points={{
+            exact: settings.exact_points,
+            margin: settings.goal_diff_points,
+            winner: settings.winner_points,
+          }}
+        />
+      ) : null}
 
       {showReveal ? (
         <RevealList

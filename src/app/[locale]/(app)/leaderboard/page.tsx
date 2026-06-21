@@ -1,8 +1,9 @@
-import { Trophy } from "lucide-react";
+import { Info, Trophy } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/empty-state";
 import { HallOfFame } from "@/components/hall-of-fame";
 import { ResultsBreakdown } from "@/components/results-breakdown";
+import { ScoringStrip } from "@/components/scoring-legend";
 import { Avatar } from "@/components/ui/avatar";
 import { Link } from "@/i18n/navigation";
 import { getAppSettings } from "@/lib/app-settings";
@@ -183,21 +184,29 @@ export default async function LeaderboardPage({
       : query.tab === "my-results"
         ? "my-results"
         : "board";
-  const [leaderboard, user, t] = await Promise.all([
+  const [leaderboard, user, t, scoringT, appSettings] = await Promise.all([
     getLeaderboard(),
     getCurrentUser(),
     getTranslations("leaderboard"),
+    getTranslations("scoring"),
+    getAppSettings(),
   ]);
   const currentUserId = user?.id;
   const myRow = currentUserId
     ? leaderboard.find((row) => row.user_id === currentUserId)
     : undefined;
 
+  // Display-only mirror of the scoring tiers (DB stays the source of truth).
+  const scoringPoints = {
+    exact: appSettings.exact_points,
+    margin: appSettings.goal_diff_points,
+    winner: appSettings.winner_points,
+  };
+
   let myProfile: MemberProfile | null = null;
   let myResults: UserResult[] | null = null;
   let teams: Team[] | null = null;
   let playerStats: PlayerStats | null = null;
-  let exactPoints: number | null = null;
   let hallBadges: Badge[] | null = null;
   let hallSetupPending = false;
 
@@ -215,10 +224,9 @@ export default async function LeaderboardPage({
   }
 
   if (activeTab === "my-results" && currentUserId && myRow) {
-    const [results, teamRows, settings] = await Promise.all([
+    const [results, teamRows] = await Promise.all([
       getUserResults(currentUserId),
       listTeams(),
-      getAppSettings(),
     ]);
     myProfile = {
       id: myRow.user_id,
@@ -227,8 +235,7 @@ export default async function LeaderboardPage({
     };
     myResults = results;
     teams = teamRows;
-    exactPoints = settings.exact_points;
-    playerStats = computePlayerStats(results, settings.exact_points);
+    playerStats = computePlayerStats(results, appSettings.exact_points);
   }
 
   return (
@@ -264,6 +271,15 @@ export default async function LeaderboardPage({
           </div>
         ) : null}
       </div>
+
+      <section className="space-y-3 rounded-2xl border bg-card/95 p-4 shadow-sm">
+        <div className="flex items-center gap-2">
+          <Info className="size-4 text-primary" aria-hidden />
+          <h2 className="text-sm font-semibold">{scoringT("title")}</h2>
+        </div>
+        <ScoringStrip points={scoringPoints} />
+        <p className="text-xs text-muted-foreground">{scoringT("footnote")}</p>
+      </section>
 
       <div className="space-y-3">
         <nav
@@ -311,12 +327,7 @@ export default async function LeaderboardPage({
         />
       ) : activeTab === "hall-of-fame" && hallBadges ? (
         <HallOfFame badges={hallBadges} locale={locale} />
-      ) : myProfile &&
-        myRow &&
-        myResults &&
-        teams &&
-        playerStats &&
-        exactPoints != null ? (
+      ) : myProfile && myRow && myResults && teams && playerStats ? (
         <ResultsBreakdown
           profile={myProfile}
           stats={myRow}
@@ -324,7 +335,7 @@ export default async function LeaderboardPage({
           teams={teams}
           locale={locale}
           playerStats={playerStats}
-          exactPoints={exactPoints}
+          settings={appSettings}
           isCurrentUser
         />
       ) : (

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 // Toggles between Arabic and English, preserving the current path. The page
 // visibly mirrors (RTL ⇄ LTR) because `dir` is driven by the locale.
-export function LanguageSwitcher() {
+export function LanguageSwitcher({ className }: { className?: string }) {
   const locale = useLocale();
   const pathname = usePathname();
   const router = useRouter();
@@ -14,11 +14,22 @@ export function LanguageSwitcher() {
 
   const other = locale === "ar" ? "en" : "ar";
 
+  function switchLocale() {
+    const suffix =
+      typeof window === "undefined"
+        ? ""
+        : `${window.location.search}${window.location.hash}`;
+
+    router.replace(`${pathname}${suffix}`, { locale: other });
+  }
+
   return (
     <Button
+      type="button"
       variant="outline"
       size="sm"
-      onClick={() => router.replace(pathname, { locale: other })}
+      className={className}
+      onClick={switchLocale}
       aria-label={t("label")}
     >
       {t(other)}

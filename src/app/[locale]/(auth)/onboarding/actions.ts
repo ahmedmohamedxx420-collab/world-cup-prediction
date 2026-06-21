@@ -5,6 +5,7 @@ import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import {
   phoneDigitsFromSyntheticEmail,
+  promoteEmailAdminProfile,
   promotePhoneAdminProfile,
 } from "@/lib/auth/phone-admin";
 import { normalizeOwnAvatarUrl } from "@/lib/avatar-url";
@@ -54,6 +55,9 @@ export async function completeOnboarding(
   );
 
   if (promotionError) return { error: "generic" };
+
+  const emailPromotionError = await promoteEmailAdminProfile(user.id, user.email);
+  if (emailPromotionError) return { error: "generic" };
 
   redirect({ href: "/fixtures", locale });
   return {};

@@ -28,6 +28,261 @@
 
 ---
 
+## 2026-06-21 — Cross-link login/signup by account existence
+**Plan item:** Auth rework / Phase 1.4 (follow-up)   **Status:** done (local verify clean)
+
+**What changed**
+- `/login`: an email with **no** account no longer shows an intermediate
+  "No account found" card — `lookupLogin` now redirects straight to
+  `/signup?email=…` (email prefilled). The `not_found` step and its UI block
+  were removed.
+- `/signup`: an email that **already** has an account no longer falls through to
+  `createUser` and a red error — `signUpWithEmailPassword` checks existence up
+  front and redirects to `/login?email=…` (email prefilled). The `createUser`
+  "already registered" → `emailTaken` mapping stays as a race-condition guard.
+- Extracted the user lookup into shared server-only `src/lib/auth/users.ts`
+  (`findUserByEmail`); both login and signup actions import it.
+- `/login` and `/signup` pages read `?email=` from `searchParams` and prefill the
+  email field (login form seeds its email state; signup uses `defaultValue`).
+
+**Why**
+- Reported UX/bug: signing up with an existing email "gave an error." That error
+  was the by-design duplicate guard (Supabase `createUser` rejects a known email →
+  `emailTaken`), but landing on a red message is confusing. Redirecting to login
+  (and login→signup for new emails) makes the two screens hand off cleanly.
+- The up-front existence check is reliable regardless of GoTrue's error wording,
+  so the fragile `/already|registered|exists/i` string match is no longer the
+  primary path.
+
+**Files touched**
+- src/lib/auth/users.ts (new — shared `findUserByEmail`)
+- src/app/[locale]/(auth)/login/password-actions.ts
+- src/app/[locale]/(auth)/login/password-login-form.tsx
+- src/app/[locale]/(auth)/login/page.tsx
+- src/app/[locale]/(auth)/signup/actions.ts
+- src/app/[locale]/(auth)/signup/signup-form.tsx
+- src/app/[locale]/(auth)/signup/page.tsx
+
+**Notes / gotchas**
+- `redirect()` throws `NEXT_REDIRECT`; both actions call it **outside** the
+  try/catch so the lookup catch can't swallow the redirect.
+- `accountNotFoundTitle` / `accountNotFoundDescription` message keys are now
+  unused (left in place, harmless). The `accountNotFound` error key is still used
+  by `setNewPassword`.
+
+---
+
+## 2026-06-20 — Email + password auth and admin password reset
+**Plan item:** Auth rework / Phase 1.4   **Status:** done (local verify clean; live migration/wipe pending)
+
+**What changed**
+- Added password auth as the default mode: `NEXT_PUBLIC_AUTH_MODE` now supports
+  `password | phone | otp`, with unset/default resolving to `password`.
+- Added `/signup` for email + password account creation. The server action uses
+  the service-role admin client with `email_confirm: true`, signs in through the
+  cookie-bound server client, then redirects to the existing onboarding flow.
+- Replaced default `/login` with an email-first password flow. Known normal
+  accounts enter their password; accounts flagged for reset set a new password;
+  unknown emails link to signup. Legacy phone and OTP forms still render behind
+  explicit auth-mode flags.
+- Added `0011_password_reset.sql` with `profiles.password_reset_pending` and an
+  explicit revoke so members cannot set the reset flag.
+- Added `/admin/users`: admin-only auth-user list joined to profiles, search by
+  name/email, pending-reset badge, and a reset action that marks the profile
+  pending and scrambles the old password.
+- Added owner email auto-promotion (`ahmed.mohamed.xx420@gmail.com`) alongside
+  the existing legacy phone promotion, including the shared `getProfile()` heal
+  path and onboarding action.
+- Updated English/Arabic auth/admin messages, env/setup docs, Supabase migration
+  docs, and project context/build plan.
+
+**Why**
+- The day-to-day app should use email + password without OTP. Password recovery is
+  deliberately admin-managed for this private family app: no reset email, no code,
+  just an admin-set pending state and a new-password claim on next login.
+
+**Files touched**
+- supabase/migrations/0011_password_reset.sql
+- src/lib/auth/{mode.ts,phone-admin.ts,password-policy.ts}
+- src/lib/profile.ts
+- src/app/[locale]/(auth)/signup/*
+- src/app/[locale]/(auth)/login/{page.tsx,password-actions.ts,password-login-form.tsx}
+- src/app/[locale]/(auth)/onboarding/actions.ts
+- src/app/[locale]/(app)/admin/{admin-nav.tsx,users/*}
+- messages/en.json, messages/ar.json
+- .env.example, README.md, supabase/README.md
+- docs/PROJECT-CONTEXT.md, docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Live DB still needs `0011_password_reset.sql` applied before admin reset works
+  against Supabase.
+- I did **not** run `delete from auth.users;`. The plan calls for explicit
+  go-ahead before the destructive fresh-start wipe; that remains an owner action.
+- The reset flow does not revoke already-live sessions; the plan explicitly left
+  hard session revocation out of scope.
+- Verified with `npm run lint` and `npm run build`.
+
+---
+
+## 2026-06-20 — Leaderboard scoring banner (how points work, at the top)
+**Plan item:** Scoring explainer (extend to leaderboard)   **Status:** done (local verify clean)
+
+**What changed**
+- Added a **"How points work"** card at the top of the leaderboard
+  ([leaderboard/page.tsx](../src/app/[locale]/(app)/leaderboard/page.tsx)), above
+  the board/hall-of-fame/my-results tabs so it shows on every tab. It pairs the
+  reusable **`<ScoringStrip>`** (the 7 / 4 / 2 / 0 visual with a per-tier icon and
+  label) with the `scoring.footnote` line explaining that tiers are checked
+  top-to-bottom and never stack.
+- Lifted `getAppSettings()` into the page's top-level `Promise.all` (added a
+  `scoring` translations fetch too) so the point values are available for the
+  always-shown banner; the `my-results` branch now reuses that one fetch instead
+  of re-querying. Dropped the now-unused `AppSettings` import and the redundant
+  `appSettings != null` guard.
+
+**Why**
+- The leaderboard rows show tier *counts* (exact / goal-diff / winner / miss) and a
+  total, but nothing on that page said what those tiers are worth or how they're
+  earned. The owner asked for the explainer + an icon visual right at the top, so a
+  newcomer reading the board understands the numbers without leaving the page.
+
+**Files touched**
+- src/app/[locale]/(app)/leaderboard/page.tsx
+- docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Reused the existing `<ScoringStrip>` and the `scoring` i18n namespace — no new
+  component or strings. Values still come from `app_settings`; the DB
+  `score_match()` trigger remains the source of truth for `points_awarded`.
+
+---
+
+## 2026-06-20 — Scoring explainers live: predict disclosure, results tier badges
+**Plan item:** Scoring explainer (promote chosen variants)   **Status:** done (local verify clean)
+
+**What changed**
+- Promoted the design-tab **disclosure + strip** options into real member UI:
+  - **`<ScoringDisclosure>`** — a collapsible "How points work" card under the
+    predict form ([fixtures/[id]/page.tsx](../src/app/[locale]/(app)/fixtures/[id]/page.tsx)),
+    shown for predictable (non-finished, non-TBD) matches.
+  - **`<ScoringStrip>`** — the compact 7 / 4 / 2 / 0 key added to the results
+    breakdown header, right under the player's stat chips.
+- Redesigned each scored result row so it shows **how** the points were earned:
+  a colour-coded **tier badge** (Exact / Right margin / Right winner / Miss) with
+  its icon and the awarded points, replacing the old plain "Points" tile. The row
+  now reads prediction → actual → outcome.
+- New `src/lib/scoring.ts` (`scoreTier()` + `tierPoints()`) derives the tier from
+  a prediction vs. the real result, mirroring PROJECT-CONTEXT §5 (signed goal
+  difference). Display-only — the DB `score_match()` trigger is still the source of
+  truth for `points_awarded`.
+- Shared tier visuals in `src/components/scoring-tiers.ts` (icon + colour per tier)
+  so the legend and the row badges never drift; reusable legend in
+  `src/components/scoring-legend.tsx`.
+- Added the `scoring` i18n namespace (tier titles/blurbs + footnote) to `en.json`
+  and `ar.json`.
+- `ResultsBreakdown` now takes the full `settings: AppSettings` (was `exactPoints`);
+  both call sites updated.
+
+**Why**
+- Scoring was previously explained **nowhere** in the member UI, and the results
+  page showed tier *counts* with no point values or definitions. This makes "why
+  did I get N points on this match" obvious at the point of prediction and on the
+  player card. The owner chose the disclosure + strip layouts from the rev-32
+  design-tab exploration.
+
+**Files touched**
+- src/lib/scoring.ts (new)
+- src/components/scoring-tiers.ts (new)
+- src/components/scoring-legend.tsx (new)
+- src/components/results-breakdown.tsx (strip + per-row tier badge; settings prop)
+- src/app/[locale]/(app)/fixtures/[id]/page.tsx (disclosure + getAppSettings)
+- src/app/[locale]/(app)/leaderboard/page.tsx (pass settings)
+- src/app/[locale]/(app)/leaderboard/[userId]/page.tsx (pass settings)
+- messages/en.json, messages/ar.json (`scoring` namespace)
+- docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- The tier badge derives its label from `scoreTier()` but shows the real
+  `points_awarded` from the DB, so a future settings change can't desync the label
+  from the stored points. A "miss" row reads "Miss · 0 pts".
+- The five design-tab variants remain at `/design-system` (`#scoring`) for
+  reference; only the disclosure + strip were promoted.
+- Still TODO: an authenticated mobile + RTL visual pass (the new UI is behind auth,
+  so it wasn't screenshot-verified — only `npm run build` + `npm run lint`).
+
+## 2026-06-20 — Scoring-explainer variants in the design tab
+**Plan item:** Scoring explainer exploration   **Status:** done (local verify clean)
+
+**What changed**
+- Added a new **Scoring** section to the design tab (`/design-system`, anchor
+  `#scoring`, kicker "13") presenting **five** layouts for teaching how points are
+  awarded, so the owner can pick a favourite before it becomes a real component:
+  - **A · Tiered ladder** — color-coded rows (lime/gold/emerald/muted), point pill
+    per tier, plus a "first match wins, points never stack" footnote.
+  - **B · By example** — one real result (`2-1`) with four sample predictions
+    mapped to their tier and points.
+  - **C · Collapsible disclosure** — smallest footprint for the predict page
+    (interactive open/close).
+  - **D · Stat cards** — 2-up cards, big number first, top accent bar.
+  - **E · Compact strip** — four-segment horizontal bar to sit under the steppers.
+- Copy reframes the jargon for a casual family audience: "Goal diff" → **Right
+  margin**, "Winner" → **Right winner**.
+- Bumped the Atmosphere section kicker from 13 → 14; registered the new section in
+  the sidebar nav and render order.
+
+**Why**
+- The app currently explains scoring **nowhere** in the member UI — the rules only
+  live in `app_settings` + the docs, and the results page shows tier *counts* with
+  no point values or definitions. This explores the visual options first (per
+  owner request to build them in the design tab) before committing one to the
+  live predict/results flow.
+
+**Files touched**
+- src/app/[locale]/design-system/sections/scoring.tsx (new)
+- src/app/[locale]/design-system/design-system.tsx (import, nav link, render)
+- src/app/[locale]/design-system/sections/football-motion.tsx (kicker 13 → 14)
+- src/app/[locale]/design-system/ds.css (`.ds-score-*` styles)
+- docs/BUILD-PLAN.md, docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Design-tab only: sample data, no `app_settings` read, no member-facing route
+  changed. The chosen variant still needs to be promoted to a reusable
+  `<ScoringLegend>` that reads live point values and added to the predict page
+  (and reused as the results-breakdown legend), with `ar`/`en` strings.
+- Tier tones are driven by `--tier` / `--tier-ink` / `--tier-soft` CSS vars set
+  once per parent, so all five variants share one palette.
+
+## 2026-06-20 — Fixtures Ongoing tab and single flags
+**Plan item:** 3.1 Fixtures list follow-up   **Status:** done (local verify clean)
+
+**What changed**
+- Added a member-facing **Ongoing** tab on `/fixtures`, shown only when live
+  matches exist. The default landing tab remains Upcoming.
+- Upcoming now lists only not-yet-started matches from the next 24h batch; live
+  matches render only on Ongoing as the existing stadium hero banners, removing
+  the previous top/bottom duplication.
+- Added `sideLabel()` next to `sideName()` and switched member fixtures list/detail
+  views to it where flags are already rendered separately.
+- Updated project docs so the product context matches the new Ongoing-tab behavior.
+
+**Why**
+- Live fixtures needed a dedicated home, and member rows/banners were showing the
+  same flag twice because `sideName()` embeds flags while the refreshed UI also
+  renders flag elements.
+
+**Files touched**
+- `src/app/[locale]/(app)/fixtures/page.tsx`
+- `src/app/[locale]/(app)/fixtures/[id]/page.tsx`
+- `src/lib/match-format.ts`
+- `docs/PROJECT-CONTEXT.md`, `docs/BUILD-PLAN.md`, `docs/CHANGELOG.md`
+
+**Notes / gotchas**
+- `sideName()` still returns `flag + English name` and remains the right helper
+  for admin fixtures/results and the results breakdown, which do not render
+  separate flag elements.
+- No DB/schema/RLS changes and no new translation keys.
+- Verified with `npm run lint` and `npm run build`.
+
 ## 2026-06-18 — Adopt the design-tab football language app-wide (UI refresh)
 **Plan item:** 5.1 UX polish (follow-up)   **Status:** done (local verify clean)
 
