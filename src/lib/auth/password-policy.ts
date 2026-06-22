@@ -1,4 +1,4 @@
-export const MIN_PASSWORD_LENGTH = 8;
+export const MIN_PASSWORD_LENGTH = 4;
 
 export function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
