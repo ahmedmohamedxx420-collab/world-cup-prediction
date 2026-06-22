@@ -1,7 +1,7 @@
 {
   "common": {
     "appName": "World Cup Predictions",
-    "tagline": "Predict the scores and compete with your family on one board.",
+    "tagline": "Predict the scores and compete with the server crew on one board.",
     "start": "Get started"
   },
   "toasts": {
@@ -55,6 +55,8 @@
     "loggingIn": "Signing in...",
     "savePassword": "Save new password",
     "savingPassword": "Saving...",
+    "passwordResetTipTitle": "Need to reset your password?",
+    "passwordResetTipBody": "Open a ticket on Discord and contact Mr. Boss Baby. He can reset your password for you.",
     "accountNotFoundTitle": "No account found",
     "accountNotFoundDescription": "We couldn't find an account for {email}. Create one to join.",
     "sendCode": "Send code",
@@ -156,7 +158,7 @@
   },
   "onboarding": {
     "title": "Set up your profile",
-    "description": "Tell the family who you are and pick your preferred language.",
+    "description": "Tell the server crew who you are and pick your preferred language.",
     "nameLabel": "Full name",
     "namePlaceholder": "Your name",
     "localeLabel": "Preferred language",
@@ -178,6 +180,8 @@
     "photoUploading": "Uploading photo…",
     "saved": "Profile saved.",
     "signOut": "Sign out",
+    "passwordResetTipTitle": "Need to reset your password?",
+    "passwordResetTipBody": "Open a ticket on Discord and contact Mr. Boss Baby. He can reset your password for you.",
     "errors": {
       "nameRequired": "Enter your name to continue.",
       "generic": "We couldn't save your changes. Please try again."
@@ -207,6 +211,18 @@
     "boardTab": "Board",
     "hallOfFameTab": "Hall of Fame",
     "myResultsTab": "My results",
+    "champion": "Champion",
+    "exactShort": "EXA",
+    "goalDiffShort": "GDF",
+    "winnerShort": "WIN",
+    "accuracyShort": "ACC",
+    "playedShort": "PLD",
+    "ppgShort": "PPG",
+    "ahead": "ahead",
+    "tierChasers": "Chasers (4-5)",
+    "tierTop10": "Top 10",
+    "tierTop20": "Top 20",
+    "tierField": "The field",
     "rank": "Rank",
     "points": "Points",
     "pointsShort": "pts",
@@ -222,7 +238,7 @@
     "pointsPending": "Pending",
     "pointsValue": "{points} pts",
     "empty": "No members yet",
-    "emptyDescription": "The board will fill as family members finish setup.",
+    "emptyDescription": "The board will fill as server members finish setup.",
     "emptyResults": "No visible results yet",
     "emptyResultsDescription": "Predictions appear here after they are visible through the database privacy rules.",
     "backToBoard": "Back to leaderboard",
@@ -243,6 +259,9 @@
     "bestMatchValue": "{match}, {points} pts",
     "hallOfFame": {
       "title": "Hall of Fame",
+      "description": "The family's standout predictors — crowned for the calls nobody else made.",
+      "crownedTitle": "Crowned",
+      "moreTitle": "More honours",
       "emptyTitle": "No awards yet",
       "emptyDescription": "Awards will appear once there are enough predictions or scored matches.",
       "setupPendingTitle": "Awards are being set up",
@@ -303,17 +322,46 @@
     "closesAtKickoff": "Closes at kickoff",
     "increase": "Increase {team} score",
     "decrease": "Decrease {team} score",
-    "revealTitle": "Family picks",
+    "revealTitle": "Server picks",
     "actualResult": "Result: {score}",
     "resultPending": "Result pending",
     "unknownMember": "Member",
     "you": "(you)",
     "pointsPending": "Points pending",
     "points": "{points} pts",
-    "leanTitle": "Where the family leans",
+    "leanTitle": "Where the server leans",
     "leanCaption": "Predicted winner",
     "celebrateWord": "GOAL!",
     "celebrateExact": "You nailed the exact score!",
+    "draw": "Draw",
+    "insightsTitle": "Crowd insights",
+    "verdictTitle": "Server verdict",
+    "verdictLeg": "{pct}% · {count}",
+    "crowdFavorite": "Crowd favorite: {pick}",
+    "scorelineTitle": "Most predicted score",
+    "scorelineMeta": "×{count} · {pct}%",
+    "averageLine": "Server average {score} · {goals} goals expected",
+    "calledIt": {
+      "nailed": {
+        "title": "The server called it!",
+        "body": "The crowd backed {pick} — and that's how it ended ({score})."
+      },
+      "fooled": {
+        "title": "Upset! The crowd was fooled",
+        "body": "Most backed {pick}, but it finished {score}."
+      },
+      "split": {
+        "title": "The server was split",
+        "body": "The server crew was split with no clear favorite. It finished {score}."
+      }
+    },
+    "podiumTitle": "Match podium",
+    "bullseyeTitle": "Bullseye club",
+    "bullseyeEmpty": "Nobody nailed the exact score this time.",
+    "loneWolfTitle": "Lone wolf",
+    "loneWolf": "Only {name} backed {pick}.",
+    "boldestTitle": "Boldest call",
+    "boldest": "{name} predicted {score} — the most goals of anyone.",
     "errors": {
       "validation": "Enter scores from 0 to 99.",
       "locked": "This match is locked. Predictions close at kickoff.",
@@ -370,7 +418,7 @@
     },
     "users": {
       "title": "Users",
-      "description": "Find a family member and mark their account for a manual password reset.",
+      "description": "Find a server member and mark their account for a manual password reset.",
       "searchLabel": "Search users",
       "searchPlaceholder": "Search by name or email",
       "count": "{count} users",

@@ -92,8 +92,12 @@ export function SignUpForm({
         <Input
           id="signup-password"
           name="password"
-          type="password"
+          type="text"
           autoComplete="new-password"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          dir="ltr"
           minLength={MIN_PASSWORD_LENGTH}
           aria-invalid={
             error === "passwordTooShort" || error === "passwordsDontMatch"
@@ -109,8 +113,12 @@ export function SignUpForm({
         <Input
           id="signup-confirm-password"
           name="confirmPassword"
-          type="password"
+          type="text"
           autoComplete="new-password"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          dir="ltr"
           minLength={MIN_PASSWORD_LENGTH}
           aria-invalid={
             error === "passwordTooShort" || error === "passwordsDontMatch"

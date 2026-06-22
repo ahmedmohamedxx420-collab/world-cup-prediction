@@ -1,7 +1,7 @@
 {
   "common": {
     "appName": "كأس العالم — توقعات",
-    "tagline": "توقّع نتائج المباريات ونافس عائلتك على لوحة واحدة.",
+    "tagline": "توقّع نتائج المباريات ونافس ناس السيرفر على لوحة واحدة.",
     "start": "ابدأ"
   },
   "toasts": {
@@ -55,6 +55,8 @@
     "loggingIn": "جارٍ الدخول...",
     "savePassword": "حفظ كلمة المرور الجديدة",
     "savingPassword": "جارٍ الحفظ...",
+    "passwordResetTipTitle": "تحتاج تعيد تعيين كلمة المرور؟",
+    "passwordResetTipBody": "افتح تذكرة في Discord وتواصل مع Mr. Boss Baby. يقدر يعيد تعيين كلمة المرور لك.",
     "accountNotFoundTitle": "لا يوجد حساب",
     "accountNotFoundDescription": "لم نجد حسابًا للبريد {email}. أنشئ حسابًا للانضمام.",
     "sendCode": "أرسل الرمز",
@@ -156,7 +158,7 @@
   },
   "onboarding": {
     "title": "جهّز حسابك",
-    "description": "عرّف العائلة باسمك واختر لغتك المفضلة.",
+    "description": "عرّف ناس السيرفر باسمك واختر لغتك المفضلة.",
     "nameLabel": "الاسم الكامل",
     "namePlaceholder": "اسمك",
     "localeLabel": "اللغة المفضلة",
@@ -178,6 +180,8 @@
     "photoUploading": "\u062c\u0627\u0631 \u0631\u0641\u0639 \u0627\u0644\u0635\u0648\u0631\u0629...",
     "saved": "تم حفظ حسابك.",
     "signOut": "تسجيل الخروج",
+    "passwordResetTipTitle": "تحتاج تعيد تعيين كلمة المرور؟",
+    "passwordResetTipBody": "افتح تذكرة في Discord وتواصل مع Mr. Boss Baby. يقدر يعيد تعيين كلمة المرور لك.",
     "errors": {
       "nameRequired": "اكتب اسمك عشان تكمل.",
       "generic": "ما قدرنا نحفظ التغييرات. جرّب مرة ثانية."
@@ -207,6 +211,18 @@
     "boardTab": "اللوحة",
     "hallOfFameTab": "قاعة المشاهير",
     "myResultsTab": "نتائجي",
+    "champion": "البطل",
+    "exactShort": "مضبوط",
+    "goalDiffShort": "الفارق",
+    "winnerShort": "الفائز",
+    "accuracyShort": "الدقة",
+    "playedShort": "توقعات",
+    "ppgShort": "المعدل",
+    "ahead": "متقدّم",
+    "tierChasers": "المطاردون (٤-٥)",
+    "tierTop10": "أفضل ١٠",
+    "tierTop20": "أفضل ٢٠",
+    "tierField": "بقية المنافسين",
     "rank": "المركز",
     "points": "النقاط",
     "pointsShort": "نقطة",
@@ -222,7 +238,7 @@
     "pointsPending": "بانتظار النقاط",
     "pointsValue": "{points} نقطة",
     "empty": "لا يوجد أعضاء بعد",
-    "emptyDescription": "ستظهر اللوحة بعد إكمال أفراد العائلة حساباتهم.",
+    "emptyDescription": "ستظهر اللوحة بعد إكمال ناس السيرفر حساباتهم.",
     "emptyResults": "لا توجد نتائج ظاهرة بعد",
     "emptyResultsDescription": "تظهر التوقعات هنا عندما تسمح بها قواعد الخصوصية في قاعدة البيانات.",
     "backToBoard": "العودة للترتيب",
@@ -243,6 +259,9 @@
     "bestMatchValue": "{match}، {points} نقطة",
     "hallOfFame": {
       "title": "قاعة المشاهير",
+      "description": "أبرز المتوقعين في العائلة — متوّجون على التوقعات اللي ما جابها غيرهم.",
+      "crownedTitle": "المتوّجون",
+      "moreTitle": "أوسمة أخرى",
       "emptyTitle": "لا توجد أوسمة بعد",
       "emptyDescription": "ستظهر الأوسمة بعد توفر توقعات أو مباريات محتسبة كافية.",
       "setupPendingTitle": "جاري تجهيز الأوسمة",
@@ -303,17 +322,46 @@
     "closesAtKickoff": "تغلق عند البداية",
     "increase": "زد أهداف {team}",
     "decrease": "أنقص أهداف {team}",
-    "revealTitle": "توقعات العائلة",
+    "revealTitle": "توقعات ناس السيرفر",
     "actualResult": "النتيجة: {score}",
     "resultPending": "النتيجة لم تسجل بعد",
     "unknownMember": "عضو",
     "you": "(أنت)",
     "pointsPending": "النقاط بانتظار النتيجة",
     "points": "{points} نقطة",
-    "leanTitle": "إلى أين تميل العائلة",
+    "leanTitle": "إلى أين يميل ناس السيرفر",
     "leanCaption": "الفائز المتوقع",
     "celebrateWord": "هدف!",
     "celebrateExact": "أصبت النتيجة بالضبط!",
+    "draw": "تعادل",
+    "insightsTitle": "نظرة ناس السيرفر",
+    "verdictTitle": "حكم ناس السيرفر",
+    "verdictLeg": "{pct}% · {count}",
+    "crowdFavorite": "المفضّل عند ناس السيرفر: {pick}",
+    "scorelineTitle": "النتيجة الأكثر توقعًا",
+    "scorelineMeta": "×{count} · {pct}%",
+    "averageLine": "متوسط ناس السيرفر {score} · {goals} هدف متوقع",
+    "calledIt": {
+      "nailed": {
+        "title": "ناس السيرفر أصابوا التوقع!",
+        "body": "راهن ناس السيرفر على {pick} — وهكذا انتهت ({score})."
+      },
+      "fooled": {
+        "title": "مفاجأة! خابت توقعات ناس السيرفر",
+        "body": "راهن الأغلبية على {pick}، لكنها انتهت {score}."
+      },
+      "split": {
+        "title": "انقسم ناس السيرفر",
+        "body": "انقسم ناس السيرفر دون مفضّل واضح. انتهت {score}."
+      }
+    },
+    "podiumTitle": "منصة المباراة",
+    "bullseyeTitle": "نادي الإصابة",
+    "bullseyeEmpty": "لا أحد أصاب النتيجة بالضبط هذه المرة.",
+    "loneWolfTitle": "الذئب المنفرد",
+    "loneWolf": "{name} وحده راهن على {pick}.",
+    "boldestTitle": "أجرأ توقع",
+    "boldest": "توقّع {name} نتيجة {score} — الأكثر أهدافًا بين الجميع.",
     "errors": {
       "validation": "أدخل نتيجة من 0 إلى 99.",
       "locked": "أغلقت المباراة. التوقعات تغلق عند البداية.",
@@ -370,7 +418,7 @@
     },
     "users": {
       "title": "المستخدمون",
-      "description": "ابحث عن فرد من العائلة وعلّم حسابه لإعادة تعيين كلمة المرور يدويًا.",
+      "description": "ابحث عن عضو في السيرفر وعلّم حسابه لإعادة تعيين كلمة المرور يدويًا.",
       "searchLabel": "البحث عن مستخدم",
       "searchPlaceholder": "ابحث بالاسم أو البريد",
       "count": "{count} مستخدم",

@@ -343,8 +343,8 @@ export function BarChart({ data }: { data: BarDatum[] }) {
       style={{ "--ds-bar-count": data.length } as CSSProperties}
       aria-label="Bar chart"
     >
-      {data.map((item) => (
-        <div className="ds-bars__item" key={item.label}>
+      {data.map((item, index) => (
+        <div className="ds-bars__item" key={`${item.label}-${index}`}>
           <span
             className={cx("ds-bars__bar", item.highlight && "is-highlighted")}
             style={

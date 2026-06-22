@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { type FormEvent, useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
@@ -67,6 +67,9 @@ export function PasswordLoginForm({
     setNewPassword,
     authInitialState,
   );
+  const [resetClientError, setResetClientError] =
+    useState<PasswordAuthState["error"]>(undefined);
+  const resetError = resetClientError ?? resetState.error;
   const hasFreshLookup =
     lookupState.email === normalizeEmail(email) && Boolean(lookupState.step);
   const step: "email" | PasswordLoginStep =
@@ -76,6 +79,25 @@ export function PasswordLoginForm({
   function goBack() {
     setEmail(selectedEmail);
     setIsEditingEmail(true);
+  }
+
+  function handleResetSubmit(event: FormEvent<HTMLFormElement>) {
+    const formData = new FormData(event.currentTarget);
+    const password = String(formData.get("password") ?? "");
+    const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+    setResetClientError(undefined);
+
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      event.preventDefault();
+      setResetClientError("passwordTooShort");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      event.preventDefault();
+      setResetClientError("passwordsDontMatch");
+    }
   }
 
   if (step === "email") {
@@ -124,7 +146,11 @@ export function PasswordLoginForm({
 
   if (step === "set_password") {
     return (
-      <form action={resetAction} className="space-y-4">
+      <form
+        action={resetAction}
+        className="space-y-4"
+        onSubmit={handleResetSubmit}
+      >
         <input type="hidden" name="locale" value={locale} />
         <input type="hidden" name="email" value={selectedEmail} />
 
@@ -140,10 +166,14 @@ export function PasswordLoginForm({
           <Input
             id="new-password"
             name="password"
-            type="password"
+            type="text"
             autoComplete="new-password"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            dir="ltr"
             minLength={MIN_PASSWORD_LENGTH}
-            aria-invalid={Boolean(resetState.error)}
+            aria-invalid={Boolean(resetError)}
             required
           />
         </div>
@@ -155,17 +185,21 @@ export function PasswordLoginForm({
           <Input
             id="confirm-new-password"
             name="confirmPassword"
-            type="password"
+            type="text"
             autoComplete="new-password"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            dir="ltr"
             minLength={MIN_PASSWORD_LENGTH}
-            aria-invalid={Boolean(resetState.error)}
+            aria-invalid={Boolean(resetError)}
             required
           />
         </div>
 
-        {resetState.error ? (
+        {resetError ? (
           <p className="text-sm text-destructive" role="alert">
-            {t(`errors.${resetState.error}`, { count: MIN_PASSWORD_LENGTH })}
+            {t(`errors.${resetError}`, { count: MIN_PASSWORD_LENGTH })}
           </p>
         ) : null}
 
@@ -202,7 +236,24 @@ export function PasswordLoginForm({
         />
       </div>
 
-      {passwordState.error ? (
+      {passwordState.error === "wrongPassword" ? (
+        <div
+          className="space-y-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm"
+          role="alert"
+        >
+          <p className="font-medium text-destructive">
+            {t(`errors.${passwordState.error}`, {
+              count: MIN_PASSWORD_LENGTH,
+            })}
+          </p>
+          <div className="space-y-1">
+            <p className="font-semibold">{t("passwordResetTipTitle")}</p>
+            <p className="text-muted-foreground">
+              {t("passwordResetTipBody")}
+            </p>
+          </div>
+        </div>
+      ) : passwordState.error ? (
         <p className="text-sm text-destructive" role="alert">
           {t(`errors.${passwordState.error}`, { count: MIN_PASSWORD_LENGTH })}
         </p>

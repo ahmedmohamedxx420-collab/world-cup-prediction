@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-20 (rev 35)
+> **Last updated:** 2026-06-21 (rev 39)
 
 ---
 
@@ -17,6 +17,56 @@
 - ⊘ **Blocked / skipped** (note why inline)
 
 ## Current Position
+
+➡️ **Podium cards motion pass (rev 41).** Added ambient motion to the FUT podium
+cards: each card gently bobs out of phase (gold highest) via `wc-podium-float` on
+the `translate` property, hover lifts via the `scale` property (so float + hover
+compose), the champion avatar breathes a gold halo, and the crown/medal mark drifts.
+Champion's raised offset moved to `margin-block-end` to free the `translate` channel.
+All guarded by `prefers-reduced-motion`. `npm run build` clean. See CHANGELOG 2026-06-22 (rev 41).
+
+➡️ **Leaderboard podium → FIFA-style player cards (rev 40).** The top three Board
+rows now render as FIFA Ultimate Team–style foil cards (gold/silver/bronze) instead
+of the Olympic podium: corner rating = points, medal mark / crown, avatar photo,
+uppercase name, and two attributes (EXA = exact hits, ACC = derived accuracy %).
+The champion card is raised with an ambient sheen sweep and a `+N ahead` lead-gap
+badge over #2. Kept the 2·1·3 ordering, profile links, and current-user highlight.
+Old `.wc-podium*` halo/crown/pedestal CSS was replaced by `.wc-fut-card*` reusing
+the existing medal gradient/shadow tokens; champion sheen is reduced-motion-guarded.
+Added `leaderboard.exactShort` / `accuracyShort` / `ahead` (EN + AR). `npm run build`
+and `npm run lint` clean; final visual QA still needs an authenticated browser.
+See CHANGELOG 2026-06-21 (rev 40).
+
+➡️ **Leaderboard Board podium + tier ladder (rev 39).** The Board tab now renders
+the first three leaderboard rows as an Olympic-style podium ordered 2 · 1 · 3,
+with #1 centered, largest, crowned, and using the strongest gold halo/pedestal;
+#2 and #3 use silver/bronze companion glows. Everyone below the podium is grouped
+into tier sections (Chasers 4-5, Top 10, Top 20, Field) with distinct rank badges,
+card density, and accents while preserving the current-user highlight and member
+result links. CSS medal tokens and reduced-motion guards were added in
+`globals.css`; no scoring/data/RLS changes. `npm run build` and `npm run lint`
+clean. Local `/ar/leaderboard` and `/en/leaderboard` requests redirect to login
+without an auth cookie, so final visual QA still needs an authenticated browser.
+See CHANGELOG 2026-06-21 (rev 39).
+
+➡️ **Hall of Fame crowned-holder redesign (rev 38).** The leaderboard Hall of
+Fame tab is now two tiers: a **Crowned** row of the three prestige badges
+(Sniper, On Form, Sharpshooter) as premium cards with a gold-ringed glowing
+holder avatar and a distinct signature effect each (crown+sparkles / rotating
+reticle / momentum spark trail), above a **More honours** grid of the other five.
+All effects are pure CSS in `globals.css` built on existing tokens, fully
+`prefers-reduced-motion`-guarded; the `computeHallOfFame` data layer is unchanged
+(component splits tiers by key). `npm run build` clean. See CHANGELOG 2026-06-21
+(rev 38).
+
+➡️ **Crowd Insights on passed matches (rev 37).** After kickoff, the fixture
+detail page shows an aggregate recap of what the family predicted: family verdict
+(Home/Draw/Away split), most-predicted scorelines + average, and — once a result
+exists — "did the family call it?", match podium, bullseye club, and superlatives
+(lone wolf / boldest call). All computed in `src/lib/crowd-insights.ts` from the
+already-RLS-gated predictions (no DB changes). Replaced the old live-only
+`MomentumBar` lean block. Local verification clean (`npm run lint` + `npm run
+build`). See CHANGELOG 2026-06-21 (rev 37).
 
 ➡️ **Login and signup now hand off by account existence (rev 36).** Unknown
 emails at `/login` redirect to `/signup?email=…`; already-registered emails at

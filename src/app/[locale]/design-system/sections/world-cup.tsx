@@ -5,6 +5,7 @@ import {
   ChevronDown,
   CircleAlert,
   Clock3,
+  Crown,
   Flame,
   Goal,
   ImagePlus,
@@ -913,6 +914,152 @@ function KnockoutBracket() {
   );
 }
 
+// --- Podium color-option previews (comparison only) ----------------------
+// Three transparent medal-shadow treatments for the top-3 podium.
+// Uses the real .wc-fut-card system with .wc-podium-a/b/c--N overrides.
+type PodiumSample = {
+  rank: 1 | 2 | 3;
+  name: string;
+  initials: string;
+  points: number;
+  exact: number;
+  acc: number;
+};
+
+const podiumSample: PodiumSample[] = [
+  { rank: 1, name: "Layla H.", initials: "LH", points: 64, exact: 7, acc: 78 },
+  { rank: 2, name: "Omar K.", initials: "OK", points: 58, exact: 5, acc: 71 },
+  { rank: 3, name: "Sara M.", initials: "SM", points: 51, exact: 4, acc: 66 },
+];
+
+const PODIUM_MEDAL: Record<2 | 3, string> = { 2: "🥈", 3: "🥉" };
+
+function PodiumPreview({ variant }: { variant: string }) {
+  // Render order places the champion in the middle (2nd, 1st, 3rd).
+  const order: PodiumSample[] = [podiumSample[1], podiumSample[0], podiumSample[2]];
+  return (
+    <div className="wc-podium-cards px-0.5 pt-3">
+      <div className="grid grid-cols-3 items-end gap-2 [direction:ltr]">
+        {order.map((p) => {
+          const champ = p.rank === 1;
+          return (
+            <div
+              key={p.rank}
+              className={cx(
+                "wc-fut-card",
+                `${variant}--${p.rank}`,
+                champ && "wc-fut-card--champion",
+              )}
+            >
+              <span className="flex w-full items-start justify-between">
+                <span className="flex flex-col items-center leading-none">
+                  <span
+                    className={cx(
+                      "font-black tabular-nums",
+                      champ ? "text-3xl" : "text-2xl",
+                    )}
+                  >
+                    {p.points}
+                  </span>
+                  <span className="mt-0.5 text-[0.55rem] font-bold uppercase tracking-widest opacity-70">
+                    pts
+                  </span>
+                </span>
+                <span className="wc-fut-card__mark text-xl leading-none" aria-hidden>
+                  {champ ? (
+                    <Crown className="size-6 text-gold-foreground/80" />
+                  ) : (
+                    PODIUM_MEDAL[p.rank as 2 | 3]
+                  )}
+                </span>
+              </span>
+
+              <span
+                className={cx(
+                  "wc-fut-card__avatar flex items-center justify-center rounded-full font-black",
+                  champ ? "size-20 text-xl" : "size-16 text-base",
+                )}
+              >
+                {p.initials}
+              </span>
+
+              <span
+                className={cx(
+                  "max-w-full truncate text-center font-black uppercase leading-tight tracking-tight",
+                  champ ? "text-sm" : "text-xs",
+                )}
+              >
+                {p.name}
+              </span>
+
+              <span className="wc-fut-card__attrs">
+                <span className="flex flex-col items-center gap-0.5">
+                  <span className="text-sm font-black tabular-nums leading-none">
+                    {p.exact}
+                  </span>
+                  <span className="text-[0.6rem] font-bold uppercase tracking-wider opacity-70">
+                    Exact
+                  </span>
+                </span>
+                <span className="flex flex-col items-center gap-0.5">
+                  <span className="text-sm font-black tabular-nums leading-none">
+                    {p.acc}%
+                  </span>
+                  <span className="text-[0.6rem] font-bold uppercase tracking-wider opacity-70">
+                    Acc
+                  </span>
+                </span>
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+const podiumOptions: Array<{ id: string; variant: string; label: string; note: string }> = [
+  {
+    id: "a",
+    variant: "wc-podium-a",
+    label: "Option A - Clear glass + medal shadow",
+    note: "All three cards stay frosted and transparent. Gold, silver, and bronze show up mainly as the colored shadow behind each rank.",
+  },
+  {
+    id: "b",
+    variant: "wc-podium-b",
+    label: "Option B - Neutral glass + big halo",
+    note: "The card fill is nearly neutral, while each rank gets a wider medal glow around it. This is the softest and most airy version.",
+  },
+  {
+    id: "c",
+    variant: "wc-podium-c",
+    label: "Option C - Pitch glass + medal outline",
+    note: "All three cards share the same green-tinted glass surface, then rank is marked by gold, silver, and bronze outline shadows.",
+  },
+];
+
+function PodiumOptions() {
+  return (
+    <Subgroup title="Top 1/2/3 card options">
+      <div className="ds-stack">
+        {podiumOptions.map((option) => (
+          <DsCard key={option.id}>
+            <div className="ds-card-title">
+              <IconContainer icon={Trophy} tone="lime" />
+              <span>{option.label}</span>
+            </div>
+            <div className="ds-podium-stage">
+              <PodiumPreview variant={option.variant} />
+            </div>
+            <p className="mt-4 text-sm leading-relaxed opacity-70">{option.note}</p>
+          </DsCard>
+        ))}
+      </div>
+    </Subgroup>
+  );
+}
+
 function Subgroup({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="ds-section__subhead">
@@ -936,6 +1083,8 @@ export function WorldCupSection() {
       </div>
 
       <MatchdayFeature />
+
+      <PodiumOptions />
 
       <Subgroup title="Fixtures and predictions">
         <div className="ds-grid ds-grid--two">

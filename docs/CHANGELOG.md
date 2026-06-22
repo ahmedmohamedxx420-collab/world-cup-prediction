@@ -28,6 +28,304 @@
 
 ---
 
+## 2026-06-22 — Podium cards show Hall-of-Fame honours
+**Plan item:** Board tab podium polish   **Status:** done (build clean)
+
+**What changed**
+- Top-3 podium FUT cards now display any **Hall-of-Fame badges** their holder
+  currently owns, as a centered wrapping row of labeled pills (tinted icon + the
+  award **name**, e.g. "SNIPER") between the name and the attribute grid. Pills
+  carry a native tooltip and flip padding under RTL.
+- The board tab now also calls `getMemberStats()` + `computeHallOfFame()` (only
+  when a podium exists) and folds the result into a `Map<userId, BadgeKey[]>`
+  passed to `<Podium>`. Wrapped in the same `MemberStatsUnavailableError`
+  try/catch the Hall-of-Fame tab uses, so a missing RPC just means no chips.
+- Exported `BADGE_META` from `hall-of-fame.tsx` so the page reuses the existing
+  icon + tone mapping instead of duplicating it.
+- Added `.wc-fut-card__badges` / `.wc-fut-card__badge` styles (white glassy
+  circular chips; unlayered bg intentionally overrides the Tailwind tint so only
+  the colored icon shows, keeping legibility on the medal glass).
+
+**Why**
+- Ties the two leaderboard surfaces together — you can see *why* someone is on the
+  podium (sniper, on-form, etc.) without switching tabs. Reuses computed data, no
+  new query shape or RLS change.
+
+**Files touched**
+- src/app/[locale]/(app)/leaderboard/page.tsx
+- src/components/hall-of-fame.tsx
+- src/app/globals.css
+
+**Notes / gotchas**
+- Board tab now issues the member-stats RPC on every render where a podium exists
+  (previously only the Hall-of-Fame tab did). Same call, so no new failure mode,
+  but it is an extra query on the most-visited tab — fine at family scale.
+
+---
+
+## 2026-06-22 — Podium player cards: 6-stat FUT attribute grid
+**Plan item:** Board tab podium polish   **Status:** done (build clean)
+
+**What changed**
+- Expanded the top-3 podium FUT cards from **2 attributes (EXA, ACC)** to a full
+  **6-stat FUT-style grid**: EXA (exact), GDF (goal-diff hits), WIN (winner hits),
+  ACC (accuracy %), PLD (predictions made), PPG (points per scored match).
+- Added `pointsPerMatch()` helper in the leaderboard page — `total_points /
+  scored_count`, one decimal, guarded against divide-by-zero.
+- Reworked `.wc-fut-card__attrs` from a centered flex row into a **3×2 grid** with
+  thin inline dividers on the middle column; champion card gets slightly larger
+  gaps. Shrank the attribute label size to fit three columns.
+- New i18n short labels (`goalDiffShort`, `winnerShort`, `playedShort`,
+  `ppgShort`) in `en.json` + `ar.json`.
+
+**Why**
+- The cards had lots of empty real estate and only two numbers; FUT cards are
+  recognizable precisely for their dense attribute block. PPG is the most
+  "interesting" addition — a per-match rating that rewards efficiency, not just
+  volume, so a player who predicted fewer matches well still reads as strong.
+
+**Files touched**
+- src/app/[locale]/(app)/leaderboard/page.tsx
+- src/app/globals.css
+- messages/en.json
+- messages/ar.json
+
+**Notes / gotchas**
+- All six stats come from existing `LeaderboardRow` fields — no query/RLS change.
+- Arabic `ppgShort` is "المعدل" (not a literal "pts/match") to keep the tiny label
+  from wrapping; revisit if a clearer term is wanted.
+
+---
+
+## 2026-06-22 — Leaderboard palette harmony + rank-5 parity
+**Plan item:** Board tab hierarchy polish (revision)   **Status:** done (build clean)
+
+**What changed**
+- Recolored the podium FUT cards onto the **brand palette** instead of literal
+  metals (metallic silver/bronze are off-theme by nature). New trio: **gold (1st,
+  unchanged) → emerald (2nd) → lime (3rd)** — a warm-to-green descent using only
+  the stadium colors. `.wc-fut-card--silver` is now emerald glass, `--bronze` is
+  lime glass; both keep the light glassy finish + dark ink so contrast holds. Class
+  names left as `--silver`/`--bronze` because the medal/rank wiring keys off them.
+- (Superseded the earlier platinum re-tone of silver, which still clashed.)
+- Rank **5** now gets the same highlighted card treatment as rank 4: added a
+  `wc-board-card--rank5` class (page) and folded it into the rank-4 selectors in
+  `globals.css` (base blur, light + dark gradients). Both ranks already shared the
+  `"chase"` tier; only the decorative glow class was missing on rank 5.
+
+**Why**
+- User reported the top-3 medal colors clashed with the theme — the silver card's
+  blue-gray was the offender. And rank 5 looked plainer than rank 4 despite being
+  the same tier, because only rank 4 carried the glow class.
+
+**Files touched**
+- src/app/[locale]/(app)/leaderboard/page.tsx
+- src/app/globals.css
+
+**Notes / gotchas**
+- `.wc-board-card--rank4` and `--rank5` are now aliases sharing one ruleset; keep
+  them together if re-toning.
+
+---
+
+## 2026-06-22 — Podium cards motion pass (floaty)
+**Plan item:** Engagement / Board tab hierarchy polish (revision)   **Status:** done (build clean)
+
+**What changed**
+- Added tasteful continuous motion to the FUT podium cards so they don't read as
+  static/stale:
+  - Each card gently **bobs** out of phase (gold floats highest), via a new
+    `wc-podium-float` keyframe on the **`translate`** property so the hover
+    response composes instead of fighting it.
+  - Hover now lifts via the **`scale`** property (1.04) plus a slight
+    saturate/brightness bump — clean because `translate` (float) and `scale`
+    (hover) are independent transform channels.
+  - Champion avatar gets a soft breathing gold halo (`wc-fut-glow`); the corner
+    crown/medal mark drifts + tilts (`wc-fut-crown`).
+- Champion's raised offset moved from `transform` to `margin-block-end` to keep
+  the `translate` channel free for the float.
+- All new motion is disabled under `prefers-reduced-motion`.
+
+**Why**
+- Follow-up to the same-day card redesign: user wanted it "floaty", with motion a
+  pro designer would add. Using individual transform properties (`translate` /
+  `scale`) is the idiomatic way to layer an ambient loop with an interactive state.
+
+**Files touched**
+- src/app/[locale]/(app)/leaderboard/page.tsx (added `wc-fut-card__mark` class)
+- src/app/globals.css
+
+**Notes / gotchas**
+- Relies on the individual `translate`/`scale` CSS properties (all modern browsers).
+  Don't reintroduce a `transform`-based float here — it would clobber the hover scale.
+
+---
+
+## 2026-06-21 — Leaderboard podium → FIFA-style player cards
+**Plan item:** Engagement / Board tab hierarchy polish (revision)   **Status:** done (build + lint clean)
+
+**What changed**
+- Replaced the top-3 Olympic-podium treatment with **FIFA Ultimate Team–style
+  player cards** to give the section real substance instead of generic glow.
+  - Each top-3 member is a vertical foil card (gold/silver/bronze gradient
+    finish): corner "rating" = total points, medal mark (🥇/🥈/🥉; crown for #1),
+    avatar "photo", uppercase name, and two attributes — **EXA** (`exact_count`)
+    and **ACC** (derived accuracy %).
+  - Champion card is raised, has a slow ambient sheen sweep, and shows a
+    **lead-gap** badge (`+N ahead`) over #2 when the gap is > 0.
+  - Kept the 2·1·3 ordering via `[direction:ltr]`, profile links, and the
+    `mine` highlight (now an outline ring).
+- Dropped the animated halos / bobbing crown / pedestal blocks (`.wc-podium*`)
+  in favour of new `.wc-fut-card*` classes reusing the existing
+  `--gradient-*` / `--shadow-*` medal tokens.
+- Added `leaderboard.exactShort` / `accuracyShort` / `ahead` keys (EN + AR).
+
+**Why**
+- The previous podium read as "AI-generated": lots of decorative glow, almost no
+  per-player information. Cards trade decoration for stats and a distinct identity.
+
+**Files touched**
+- src/app/[locale]/(app)/leaderboard/page.tsx
+- src/app/globals.css
+- messages/en.json, messages/ar.json
+
+**Notes / gotchas**
+- Accuracy is computed in-page (`accuracyPct`), guarded against `scored_count === 0`.
+- `.wc-podium*` styles were fully removed; the champion sheen (`wc-fut-card--champion::before`)
+  is disabled under `prefers-reduced-motion`. `wc-crown-bob` keyframe is still used by Hall of Fame.
+
+---
+
+## 2026-06-21 — Leaderboard Board podium + tier ladder
+**Plan item:** Engagement / Board tab hierarchy polish (new)   **Status:** done (build + lint clean)
+
+**What changed**
+- Reworked the leaderboard **Board** tab so the top three members render as a
+  linked Olympic podium ordered **2 · 1 · 3**:
+  - #1 is centered, tallest, largest avatar (`size-20`), crowned, and gets the
+    strongest animated gold halo plus a gold pedestal sheen.
+  - #2 and #3 use smaller avatars (`size-16`) with silver and bronze halos,
+    rings, and descending pedestal heights.
+- Replaced the flat all-member `<ol>` with podium + tiered field sections:
+  - Chasers (ranks 4-5): lime badge/border and elevated glow.
+  - Top 10: primary/emerald badge and standard density.
+  - Top 20: cool slate/blue tint.
+  - Field: compact muted rows.
+- Added `rankTier()` and kept `BoardRow`'s link/stat layout, current-user
+  highlight, and per-member result routes unchanged.
+- Added `champion` and tier-header strings in `messages/en.json` and
+  `messages/ar.json`.
+- Added silver/bronze gradient + shadow tokens and `.wc-podium*` CSS utilities
+  in `globals.css`, with reduced-motion entries for the new halo/crown/shine.
+
+**Why**
+- The old Board tab treated every member like an identical row. The podium and
+  tier ladder make rank feel earned while staying inside the existing football
+  glow/halo/shine language.
+
+**Files touched**
+- src/app/[locale]/(app)/leaderboard/page.tsx (podium component, tier helpers, grouped Board render)
+- src/app/globals.css (silver/bronze tokens, podium avatar/halo/pedestal styles, reduced motion)
+- messages/en.json, messages/ar.json (new leaderboard labels)
+- docs/BUILD-PLAN.md, docs/CHANGELOG.md (workflow update)
+
+**Notes / gotchas**
+- No DB/RLS/scoring changes. The podium uses the first three rows returned by
+  `getLeaderboard()`; tier styling below it is based on each row's `rank`.
+- The podium grid pins visual order with `[direction:ltr]` so 2 · 1 · 3 stays
+  left-to-right in Arabic and English; member names use `dir="auto"`.
+- Fewer than three members skips the podium and sends all rows through the field
+  list path.
+- Verification: `npm run build` clean, `npm run lint` clean. Local
+  `/ar/leaderboard` and `/en/leaderboard` requests reached the dev server but
+  redirected to login without an auth cookie, so authenticated visual QA remains
+  the one check to do in-browser.
+
+---
+
+## 2026-06-21 — Hall of Fame crowned-holder redesign
+**Plan item:** Engagement / Hall of Fame polish (new)   **Status:** done (build clean)
+
+**What changed**
+- Reworked the leaderboard **Hall of Fame** tab from one flat 8-card grid into a
+  two-tier layout with a kicker + description header:
+  - **Crowned** row — the three prestige badges (Sniper, On Form, Sharpshooter)
+    as larger premium cards with a gold-ringed, glowing holder avatar and a
+    **distinct signature effect each**:
+    - *Sharpshooter → royalty:* floating bobbing gold crown + twinkling sparkles,
+      violet/gold aura.
+    - *Sniper → marksman lock-on:* rotating dashed reticle + counter-rotating
+      broken ring + pulsing lock glint, emerald aura.
+    - *On Form → momentum:* rising spark trail behind the avatar + pulsing
+      up-chevron, sky aura.
+  - **More honours** grid — the remaining five badges in the polished compact grid.
+- Added CSS for the crowned avatar base + the three effects and their keyframes
+  in `globals.css`, all built on existing tokens (`--gold`/`--lime`,
+  `wc-trophy__halo`/`__shine`, `wc-momentum-sweep`). Every new animated class is
+  added to the `prefers-reduced-motion` block (crown/reticle/aura stay as static
+  styling; sparkles/glint/spark layers hide so there's no frozen artifact).
+- Added `description`, `crownedTitle`, `moreTitle` keys under
+  `leaderboard.hallOfFame` in both `en.json` and `ar.json`.
+
+**Why**
+- The old Hall of Fame felt flat — a holder looked identical whether they'd won a
+  badge or not. The crown/aura makes winning read as an *achievement*, and giving
+  each prestige badge its own effect ties the visual to the badge's meaning.
+
+**Files touched**
+- src/components/hall-of-fame.tsx (two-tier layout, CrownedAvatar/CrownedCard/StandardCard)
+- src/app/globals.css (crowned-holder styles, keyframes, reduced-motion entries)
+- messages/en.json, messages/ar.json (3 new hallOfFame keys)
+
+**Notes / gotchas**
+- `computeHallOfFame` data layer is unchanged; the component splits tiers by key
+  (`CROWNED_KEYS`), so `EmptyState` / setup-pending paths are untouched.
+- Sparkle/spark positions use logical props (`insetInlineStart/End`) so the
+  layout stays RTL-safe. CardHeader is a CSS grid → centered via
+  `justify-items-center`, not `items-center`.
+- `npm run build` clean (TypeScript + static gen).
+
+---
+
+## 2026-06-21 — Crowd insights on passed matches
+**Plan item:** Engagement / match recap (new)   **Status:** done (local verify clean)
+
+**What changed**
+- After a match kicks off, the fixture detail page now shows a **Crowd Insights**
+  panel summarising what the whole family predicted, replacing the old live-only
+  2-way "family lean" `MomentumBar` block.
+- Consensus cards (shown for any post-kickoff match, live or finished):
+  - **Family verdict** — 3-segment bar of Home win / Draw / Away win with counts,
+    percentages, and the crowd favourite highlighted.
+  - **Most predicted score** — top 3 scorelines with counts/percentages, plus the
+    family-average scoreline and total goals expected.
+- Result-dependent cards (only once a final score exists):
+  - **Did the family call it?** — nailed / fooled / split verdict vs the actual outcome.
+  - **Match podium** — top 3 point earners on this match (points derived locally).
+  - **Bullseye club** — members who hit the exact score.
+  - **Superlatives** — lone wolf (only one to back the actual winner, needs ≥3 picks)
+    and boldest call (most goals predicted).
+
+**Why**
+- Passed matches had no aggregate payoff — only the per-person `RevealList`. This
+  turns opening a finished match into a mini results-show recap and drives engagement.
+
+**Files touched**
+- src/lib/crowd-insights.ts (new — pure `computeCrowdInsights`)
+- src/components/crowd-insights.tsx (new — async server component, RTL-safe)
+- src/app/[locale]/(app)/fixtures/[id]/page.tsx (wire-in; removed lean block)
+- messages/en.json, messages/ar.json (new `predict.*` keys, Arabic-first)
+
+**Notes / gotchas**
+- **No DB/RLS/migration changes.** All insights are computed from the existing
+  `getMatchPredictions` result, which RLS already gates by `now() >= kickoff_at`,
+  so nothing is revealed before kickoff. The panel reuses the existing `showReveal`
+  gate, so it never renders pre-kickoff.
+- Points for podium/bullseye are derived locally via `scoreTier`/`tierPoints`
+  (from `app_settings`), so cards are correct even before `score_match()` has run.
+- `momentum-bar.tsx` is now unused (left in place as a generic component).
+- Unused `predict.leanTitle` / `predict.leanCaption` keys retained (harmless).
+
 ## 2026-06-21 — Cross-link login/signup by account existence
 **Plan item:** Auth rework / Phase 1.4 (follow-up)   **Status:** done (local verify clean)
 

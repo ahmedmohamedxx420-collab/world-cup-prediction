@@ -81,8 +81,12 @@
   --gradient-pitch: linear-gradient(145deg, #0a3a2b 0%, #14533c 52%, #2c7a48 100%);
   --gradient-lime: linear-gradient(135deg, #c6f24e 0%, #b4e832 100%);
   --gradient-gold: linear-gradient(135deg, #f6d36b 0%, #e0a92e 100%);
+  --gradient-silver: linear-gradient(135deg, #e8edf2 0%, #b9c2cc 100%);
+  --gradient-bronze: linear-gradient(135deg, #e7a86a 0%, #b06f33 100%);
   --shadow-lime: 0 14px 28px rgba(198, 242, 78, 0.34);
   --shadow-gold: 0 14px 28px rgba(244, 197, 74, 0.36);
+  --shadow-silver: 0 14px 28px rgba(185, 194, 204, 0.34);
+  --shadow-bronze: 0 14px 28px rgba(176, 111, 51, 0.34);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -125,8 +129,12 @@
   --gradient-pitch: linear-gradient(145deg, #0a3a2b 0%, #14533c 52%, #2c7a48 100%);
   --gradient-lime: linear-gradient(135deg, #c6f24e 0%, #b4e832 100%);
   --gradient-gold: linear-gradient(135deg, #f6d36b 0%, #e0a92e 100%);
+  --gradient-silver: linear-gradient(135deg, #eef2f6 0%, #aeb8c4 100%);
+  --gradient-bronze: linear-gradient(135deg, #f0b879 0%, #9c5f2d 100%);
   --shadow-lime: 0 14px 28px rgba(198, 242, 78, 0.3);
   --shadow-gold: 0 14px 28px rgba(244, 197, 74, 0.3);
+  --shadow-silver: 0 14px 28px rgba(185, 194, 204, 0.26);
+  --shadow-bronze: 0 14px 28px rgba(176, 111, 51, 0.28);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -178,8 +186,12 @@
 }
 .bg-lime-grad { background: var(--gradient-lime); }
 .bg-gold-grad { background: var(--gradient-gold); }
+.bg-silver-grad { background: var(--gradient-silver); }
+.bg-bronze-grad { background: var(--gradient-bronze); }
 .shadow-lime { box-shadow: var(--shadow-lime); }
 .shadow-gold { box-shadow: var(--shadow-gold); }
+.shadow-silver { box-shadow: var(--shadow-silver); }
+.shadow-bronze { box-shadow: var(--shadow-bronze); }
 
 /* --- App shell field atmosphere ----------------------------------------- */
 .wc-app-shell {
@@ -591,6 +603,728 @@
   animation: wc-shine 3.4s ease-in-out infinite;
 }
 
+/* --- Leaderboard podium (FIFA-style player cards) ------------------------ */
+.wc-podium-cards {
+  position: relative;
+  isolation: isolate;
+}
+.wc-fut-card {
+  --wc-medal-rgb: 244 197 74;
+  --wc-medal-deep-rgb: 138 101 18;
+  --wc-fut-grad:
+    radial-gradient(circle at 50% 112%, rgb(var(--wc-medal-rgb) / 0.28), transparent 48%),
+    radial-gradient(circle at 18% 0%, rgb(255 255 255 / 0.5), transparent 32%),
+    linear-gradient(155deg, rgb(255 255 255 / 0.36), rgb(255 255 255 / 0.12) 48%, rgb(var(--wc-medal-rgb) / 0.1));
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 0.85rem 0.6rem 0.95rem;
+  border: 1px solid var(--wc-fut-edge, rgba(255, 255, 255, 0.5));
+  border-radius: 1.15rem;
+  /* Frosted base: medal color lives mostly in the aura/shadow, not the card fill. */
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 0.34), rgb(255 255 255 / 0.08)),
+    var(--wc-fut-grad);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: var(--wc-fut-shadow);
+  color: var(--wc-fut-ink, var(--gold-foreground));
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.22);
+  /* Continuous bob via the `translate` property so the hover `scale` composes
+     with it instead of clobbering it. Each medal floats out of phase. */
+  animation: wc-podium-float var(--wc-float-dur, 5s) ease-in-out infinite;
+  animation-delay: var(--wc-float-delay, 0s);
+  transition:
+    scale 0.22s ease,
+    box-shadow 0.25s ease,
+    filter 0.25s ease;
+}
+.wc-fut-card::after {
+  position: absolute;
+  inset: 1px;
+  z-index: 0;
+  border-radius: calc(1.15rem - 1px);
+  background:
+    radial-gradient(circle at 50% -12%, rgb(255 255 255 / 0.46), transparent 36%),
+    radial-gradient(circle at 50% 110%, rgb(var(--wc-medal-rgb) / 0.18), transparent 44%),
+    linear-gradient(180deg, rgb(255 255 255 / 0.14), transparent 44%, rgb(15 26 20 / 0.08));
+  opacity: 0.74;
+  pointer-events: none;
+  content: "";
+}
+.wc-fut-card:hover {
+  scale: 1.04;
+  filter: saturate(1.08) brightness(1.03);
+}
+.wc-fut-card:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--ring),
+    var(--wc-fut-shadow);
+}
+/* 2nd place: transparent glass with silver held as the background aura/shadow. */
+.wc-fut-card--silver {
+  --wc-medal-rgb: 203 213 225;
+  --wc-medal-deep-rgb: 100 116 139;
+  --wc-fut-grad:
+    radial-gradient(circle at 50% 112%, rgb(203 213 225 / 0.36), transparent 50%),
+    linear-gradient(155deg, rgb(255 255 255 / 0.34), rgb(255 255 255 / 0.1) 48%, rgb(100 116 139 / 0.12));
+  --wc-fut-shadow:
+    0 24px 50px rgb(148 163 184 / 0.3),
+    0 10px 24px rgb(100 116 139 / 0.14),
+    inset 0 1px 0 rgb(255 255 255 / 0.58);
+  --wc-fut-edge: rgb(226 232 240 / 0.7);
+  --wc-fut-ink: #1e293b;
+  --wc-float-delay: -0.7s;
+  --wc-float-dur: 5.2s;
+}
+/* 3rd place: transparent glass with bronze held as the background aura/shadow. */
+.wc-fut-card--bronze {
+  --wc-medal-rgb: 205 127 50;
+  --wc-medal-deep-rgb: 124 63 19;
+  --wc-fut-grad:
+    radial-gradient(circle at 50% 112%, rgb(205 127 50 / 0.36), transparent 50%),
+    linear-gradient(155deg, rgb(255 255 255 / 0.32), rgb(255 255 255 / 0.1) 48%, rgb(124 63 19 / 0.13));
+  --wc-fut-shadow:
+    0 24px 50px rgb(205 127 50 / 0.3),
+    0 10px 24px rgb(124 63 19 / 0.13),
+    inset 0 1px 0 rgb(255 255 255 / 0.56);
+  --wc-fut-edge: rgb(232 178 119 / 0.62);
+  --wc-fut-ink: #2b1607;
+  --wc-float-delay: -1.4s;
+  --wc-float-dur: 4.6s;
+}
+.wc-fut-card--gold {
+  --wc-medal-rgb: 244 197 74;
+  --wc-medal-deep-rgb: 138 101 18;
+  --wc-fut-grad:
+    radial-gradient(circle at 50% 112%, rgb(244 197 74 / 0.4), transparent 50%),
+    linear-gradient(155deg, rgb(255 255 255 / 0.34), rgb(255 255 255 / 0.1) 48%, rgb(138 101 18 / 0.12));
+  --wc-fut-shadow:
+    0 28px 58px rgb(244 197 74 / 0.34),
+    0 12px 28px rgb(138 101 18 / 0.16),
+    inset 0 1px 0 rgb(255 255 255 / 0.58);
+  --wc-fut-edge: rgb(255 230 122 / 0.68);
+  --wc-fut-ink: #261903;
+  --wc-float-delay: -2.1s;
+  --wc-float-dur: 4.4s;
+  --wc-float-amp: 1.35;
+}
+/* Champion sits taller (margin keeps `translate` free for the float) and carries
+   a slow ambient sheen sweep. */
+.wc-fut-card--champion {
+  margin-block-end: 0.9rem;
+  padding-block: 1.1rem 1.15rem;
+  border-width: 1.5px;
+}
+.wc-fut-card--champion .wc-fut-card__avatar {
+  animation: wc-fut-glow 2.9s ease-in-out infinite;
+}
+.wc-fut-card--champion::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 42%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 58%
+  );
+  pointer-events: none;
+  content: "";
+  animation: wc-shine 4.2s ease-in-out infinite;
+}
+.wc-fut-card--mine {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.wc-fut-card > * {
+  position: relative;
+  z-index: 1;
+}
+.wc-fut-card__photo {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  isolation: isolate;
+}
+.wc-fut-card__photo--champion {
+  margin-top: 0.1rem;
+  padding: 0.72rem 0 0.18rem;
+}
+.wc-fut-card__avatar {
+  background: rgb(255 255 255 / 0.72);
+  box-shadow:
+    0 0 0 3px rgb(255 255 255 / 0.78),
+    0 0 22px rgb(var(--wc-medal-rgb) / 0.2),
+    0 10px 22px rgb(0 0 0 / 0.14);
+}
+.wc-fut-card__mark {
+  display: inline-flex;
+  animation: wc-fut-crown 3.6s ease-in-out infinite;
+}
+.wc-fut-card__points {
+  position: relative;
+  display: inline-block;
+  color: rgb(var(--wc-medal-deep-rgb));
+  text-shadow:
+    0 1px 0 rgb(255 255 255 / 0.78),
+    0 0 6px rgb(var(--wc-medal-rgb) / 0.95),
+    0 0 16px rgb(var(--wc-medal-rgb) / 0.72),
+    0 0 30px rgb(var(--wc-medal-rgb) / 0.46);
+  animation: wc-fut-points-shine 3.1s ease-in-out infinite;
+}
+.wc-fut-card__points::before {
+  position: absolute;
+  inset: 0;
+  color: rgb(var(--wc-medal-rgb));
+  content: attr(data-points);
+  filter: blur(4px);
+  opacity: 0.82;
+  pointer-events: none;
+  transform: scale(1.08);
+}
+.wc-fut-card__points::after {
+  position: absolute;
+  top: -0.08em;
+  bottom: -0.08em;
+  left: -42%;
+  width: 0.34em;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 248 199 / 0.9),
+    transparent
+  );
+  box-shadow:
+    0 0 8px rgb(255 248 199 / 0.82),
+    0 0 14px rgb(var(--wc-medal-rgb) / 0.46);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(0) skewX(-18deg);
+  animation: wc-fut-points-glint 2.6s ease-in-out infinite;
+}
+.wc-fut-card__rank-badge {
+  position: relative;
+  display: inline-grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1.5px solid rgb(255 255 255 / 0.88);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 22%, rgb(255 255 255 / 0.95), transparent 24%),
+    conic-gradient(from 210deg, #b77716, #fff0a8, #f4c54a, #b77716, #ffe88a, #b77716),
+    linear-gradient(135deg, #ffe88a 0%, #f4c54a 46%, #d79325 100%);
+  box-shadow:
+    0 0 0 3px rgb(244 197 74 / 0.24),
+    0 12px 22px rgb(138 101 18 / 0.26),
+    inset 0 1px 0 rgb(255 255 255 / 0.76),
+    inset 0 -5px 10px rgb(138 101 18 / 0.2);
+  color: #261903;
+  font-size: 1.45rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  line-height: 0.95;
+  text-shadow:
+    0 1px 0 rgb(255 255 255 / 0.68),
+    0 0 10px rgb(255 248 199 / 0.52);
+}
+.wc-fut-card__rank-badge::before {
+  position: absolute;
+  inset: 0.22rem;
+  border: 1.5px solid rgb(255 248 199 / 0.66);
+  border-radius: inherit;
+  box-shadow: inset 0 0 10px rgb(138 101 18 / 0.16);
+  content: "";
+  pointer-events: none;
+}
+.wc-fut-card__rank-badge::after {
+  position: absolute;
+  top: -26%;
+  bottom: -26%;
+  left: -58%;
+  width: 0.42rem;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.92), transparent);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(0) rotate(22deg);
+  animation: wc-fut-rank-glint 3.2s ease-in-out infinite;
+}
+.wc-fut-card__avatar-crown {
+  position: absolute;
+  top: 0.04rem;
+  right: -0.42rem;
+  z-index: 4;
+  width: 2.35rem;
+  height: 2.35rem;
+  color: #8a6512;
+  fill: #f4c54a;
+  filter:
+    drop-shadow(0 1px 0 rgb(255 248 201 / 0.92))
+    drop-shadow(0 7px 8px rgb(138 101 18 / 0.32));
+  pointer-events: none;
+  stroke-width: 2.25;
+  transform: translateY(0) rotate(22deg);
+  transform-origin: 22% 82%;
+  animation: wc-fut-crown-worn 3.4s ease-in-out infinite;
+}
+.wc-fut-card__sparkle {
+  position: absolute;
+  z-index: 3;
+  width: 0.52rem;
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, #fff8c7 0%, #f4c54a 56%, #d79325 100%);
+  clip-path: polygon(
+    50% 0,
+    62% 36%,
+    100% 50%,
+    62% 64%,
+    50% 100%,
+    38% 64%,
+    0 50%,
+    38% 36%
+  );
+  filter: drop-shadow(0 0 8px rgb(244 197 74 / 0.72));
+  pointer-events: none;
+  transform-origin: center;
+  animation: wc-fut-sparkle 2.5s ease-in-out infinite;
+}
+.wc-fut-card__sparkle--one {
+  top: 0.42rem;
+  right: 0.18rem;
+  animation-delay: -0.15s;
+}
+.wc-fut-card__sparkle--two {
+  top: 2.2rem;
+  left: 0.06rem;
+  width: 0.42rem;
+  animation-delay: -1.05s;
+}
+.wc-fut-card__sparkle--three {
+  right: 0.1rem;
+  bottom: 1.05rem;
+  width: 0.44rem;
+  animation-delay: -1.65s;
+}
+.wc-fut-card__sparkle--four {
+  bottom: 0.52rem;
+  left: 0.72rem;
+  width: 0.34rem;
+  animation-delay: -0.72s;
+}
+.wc-fut-card__lead {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(15, 26, 20, 0.16);
+  font-size: 0.6rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+.wc-fut-card__attrs {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem 0.35rem;
+  margin-top: 0.1rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgb(15 26 20 / 0.14);
+}
+/* Vertical separators between the three FUT attribute columns. */
+.wc-fut-card__attrs > :nth-child(3n-1) {
+  border-inline: 1px solid rgb(15 26 20 / 0.1);
+}
+.wc-fut-card--champion .wc-fut-card__attrs {
+  gap: 0.6rem 0.4rem;
+  padding-top: 0.7rem;
+}
+/* Hall-of-Fame honour chips on a podium card (icon + name pill). */
+.wc-fut-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  margin-top: -0.05rem;
+}
+.wc-fut-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  max-width: 100%;
+  padding: 0.16rem 0.42rem 0.16rem 0.18rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.82);
+  box-shadow:
+    0 1px 2px rgb(15 26 20 / 0.18),
+    inset 0 0 0 1px rgb(255 255 255 / 0.6);
+  text-shadow: none;
+}
+.wc-fut-card__badge:dir(rtl) {
+  padding: 0.16rem 0.18rem 0.16rem 0.42rem;
+}
+.wc-fut-card__badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+}
+.wc-fut-card__badge-label {
+  overflow: hidden;
+  color: rgb(15 26 20 / 0.82);
+  font-size: 0.6rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* --- Podium color options (design-tab comparison only) -------------------- */
+/* Three transparent medal-shadow treatments for the top-3 cards, rendered in
+   the design system so we can pick one. After choosing, fold the winner into
+   .wc-fut-card--gold/silver/bronze and delete this block + the previews. */
+
+/* Option A: clear glass cards with medal color pushed into the shadow. */
+.wc-podium-a--1 {
+  --wc-medal-rgb: 244 197 74;
+  --wc-medal-deep-rgb: 138 101 18;
+  --wc-fut-grad:
+    radial-gradient(circle at 50% 112%, rgb(244 197 74 / 0.4), transparent 50%),
+    linear-gradient(155deg, rgb(255 255 255 / 0.34), rgb(255 255 255 / 0.1) 48%, rgb(138 101 18 / 0.12));
+  --wc-fut-shadow:
+    0 28px 58px rgb(244 197 74 / 0.34),
+    0 12px 28px rgb(138 101 18 / 0.16),
+    inset 0 1px 0 rgb(255 255 255 / 0.58);
+  --wc-fut-edge: rgb(255 230 122 / 0.68);
+  --wc-fut-ink: #261903;
+  --wc-float-delay: -2.1s;
+  --wc-float-dur: 4.4s;
+}
+.wc-podium-a--2 {
+  --wc-medal-rgb: 203 213 225;
+  --wc-medal-deep-rgb: 100 116 139;
+  --wc-fut-grad:
+    radial-gradient(circle at 50% 112%, rgb(203 213 225 / 0.36), transparent 50%),
+    linear-gradient(155deg, rgb(255 255 255 / 0.34), rgb(255 255 255 / 0.1) 48%, rgb(100 116 139 / 0.12));
+  --wc-fut-shadow:
+    0 24px 50px rgb(148 163 184 / 0.3),
+    0 10px 24px rgb(100 116 139 / 0.14),
+    inset 0 1px 0 rgb(255 255 255 / 0.58);
+  --wc-fut-edge: rgb(226 232 240 / 0.7);
+  --wc-fut-ink: #1e293b;
+  --wc-float-delay: -0.7s;
+  --wc-float-dur: 5.2s;
+}
+.wc-podium-a--3 {
+  --wc-medal-rgb: 205 127 50;
+  --wc-medal-deep-rgb: 124 63 19;
+  --wc-fut-grad:
+    radial-gradient(circle at 50% 112%, rgb(205 127 50 / 0.36), transparent 50%),
+    linear-gradient(155deg, rgb(255 255 255 / 0.32), rgb(255 255 255 / 0.1) 48%, rgb(124 63 19 / 0.13));
+  --wc-fut-shadow:
+    0 24px 50px rgb(205 127 50 / 0.3),
+    0 10px 24px rgb(124 63 19 / 0.13),
+    inset 0 1px 0 rgb(255 255 255 / 0.56);
+  --wc-fut-edge: rgb(232 178 119 / 0.62);
+  --wc-fut-ink: #2b1607;
+  --wc-float-delay: -1.4s;
+  --wc-float-dur: 4.6s;
+}
+
+/* Option B: almost-neutral glass cards with a broad medal halo behind each one. */
+.wc-podium-b--1 {
+  --wc-medal-rgb: 244 197 74;
+  --wc-medal-deep-rgb: 138 101 18;
+  --wc-fut-grad:
+    radial-gradient(circle at 50% 118%, rgb(244 197 74 / 0.22), transparent 48%),
+    linear-gradient(155deg, rgb(255 255 255 / 0.44), rgb(255 255 255 / 0.14) 52%, rgb(255 255 255 / 0.02));
+  --wc-fut-shadow:
+    0 0 0 1px rgb(244 197 74 / 0.46),
+    0 24px 64px 8px rgb(244 197 74 / 0.34),
+    0 12px 28px rgb(15 26 20 / 0.1),
+    inset 0 1px 0 rgb(255 255 255 / 0.62);
+  --wc-fut-edge: rgb(255 230 122 / 0.52);
+  --wc-fut-ink: #261903;
+  --wc-float-delay: -2.1s;
+  --wc-float-dur: 4.4s;
+  --wc-float-amp: 1.35;
+}
+.wc-podium-b--2 {
+  --wc-medal-rgb: 203 213 225;
+  --wc-medal-deep-rgb: 100 116 139;
+  --wc-fut-grad:
+    radial-gradient(circle at 50% 118%, rgb(203 213 225 / 0.22), transparent 48%),
+    linear-gradient(155deg, rgb(255 255 255 / 0.44), rgb(255 255 255 / 0.14) 52%, rgb(255 255 255 / 0.02));
+  --wc-fut-shadow:
+    0 0 0 1px rgb(203 213 225 / 0.5),
+    0 22px 56px 6px rgb(148 163 184 / 0.3),
+    0 12px 28px rgb(15 26 20 / 0.09),
+    inset 0 1px 0 rgb(255 255 255 / 0.62);
+  --wc-fut-edge: rgb(226 232 240 / 0.58);
+  --wc-fut-ink: #1e293b;
+  --wc-float-delay: -0.7s;
+  --wc-float-dur: 5.2s;
+}
+.wc-podium-b--3 {
+  --wc-medal-rgb: 205 127 50;
+  --wc-medal-deep-rgb: 124 63 19;
+  --wc-fut-grad:
+    radial-gradient(circle at 50% 118%, rgb(205 127 50 / 0.22), transparent 48%),
+    linear-gradient(155deg, rgb(255 255 255 / 0.42), rgb(255 255 255 / 0.13) 52%, rgb(255 255 255 / 0.02));
+  --wc-fut-shadow:
+    0 0 0 1px rgb(205 127 50 / 0.4),
+    0 22px 56px 5px rgb(205 127 50 / 0.28),
+    0 12px 28px rgb(15 26 20 / 0.09),
+    inset 0 1px 0 rgb(255 255 255 / 0.6);
+  --wc-fut-edge: rgb(232 178 119 / 0.5);
+  --wc-fut-ink: #2b1607;
+  --wc-float-delay: -1.4s;
+  --wc-float-dur: 4.6s;
+}
+
+/* Option C: shared pitch-glass surface; medal color appears as the rank outline. */
+.wc-podium-c--1,
+.wc-podium-c--2,
+.wc-podium-c--3 {
+  --wc-medal-rgb: 29 111 80;
+  --wc-medal-deep-rgb: 20 83 60;
+  --wc-fut-grad:
+    radial-gradient(circle at 50% 112%, rgb(29 111 80 / 0.24), transparent 50%),
+    linear-gradient(155deg, rgb(255 255 255 / 0.34), rgb(255 255 255 / 0.11) 48%, rgb(20 83 60 / 0.18));
+  --wc-fut-edge: rgb(210 245 220 / 0.58);
+  --wc-fut-ink: #0f2a1d;
+}
+.wc-podium-c--1 {
+  --wc-medal-rgb: 244 197 74;
+  --wc-fut-shadow:
+    0 0 0 2px rgb(244 197 74 / 0.76),
+    0 0 26px rgb(244 197 74 / 0.42),
+    0 24px 52px rgb(20 83 60 / 0.24),
+    inset 0 1px 0 rgb(255 255 255 / 0.58);
+  --wc-float-delay: -2.1s;
+  --wc-float-dur: 4.4s;
+}
+.wc-podium-c--2 {
+  --wc-medal-rgb: 203 213 225;
+  --wc-fut-shadow:
+    0 0 0 2px rgb(203 213 225 / 0.72),
+    0 0 20px rgb(148 163 184 / 0.36),
+    0 22px 46px rgb(20 83 60 / 0.22),
+    inset 0 1px 0 rgb(255 255 255 / 0.56);
+  --wc-float-delay: -0.7s;
+  --wc-float-dur: 5.2s;
+}
+.wc-podium-c--3 {
+  --wc-medal-rgb: 205 127 50;
+  --wc-fut-shadow:
+    0 0 0 2px rgb(205 127 50 / 0.56),
+    0 0 18px rgb(205 127 50 / 0.3),
+    0 20px 42px rgb(20 83 60 / 0.2),
+    inset 0 1px 0 rgb(255 255 255 / 0.54);
+  --wc-float-delay: -1.4s;
+  --wc-float-dur: 4.6s;
+}
+/* Faithful app backdrop for the previews — the FUT cards are frosted glass, so
+   they need the real lime-washed off-white behind them (not a flat-white card)
+   to read their colors the same way they do on the live leaderboard. */
+.ds-podium-stage {
+  border-radius: 1.25rem;
+  padding: 0.25rem 0.75rem 1rem;
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(198, 242, 78, 0.16), transparent 26rem),
+    linear-gradient(180deg, #f7f8f6 0%, #eef1ee 100%);
+}
+.dark .ds-podium-stage {
+  background-image:
+    radial-gradient(circle at 20% 0%, rgba(198, 242, 78, 0.1), transparent 26rem),
+    linear-gradient(180deg, #0b1a13 0%, #0a130e 100%);
+}
+
+.wc-board-card--rank1,
+.wc-board-card--rank2,
+.wc-board-card--rank4,
+.wc-board-card--rank5 {
+  -webkit-backdrop-filter: blur(16px) saturate(1.16);
+  backdrop-filter: blur(16px) saturate(1.16);
+}
+.wc-board-card--rank1 {
+  border-color: color-mix(in oklch, var(--gold) 62%, transparent);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(244, 197, 74, 0.34), transparent 24rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.62), rgba(244, 197, 74, 0.24) 46%, rgba(20, 83, 60, 0.12));
+  box-shadow:
+    0 16px 34px rgba(244, 197, 74, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+.wc-board-card--rank2 {
+  border-color: color-mix(in oklch, #aeb8c4 62%, transparent);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.54), transparent 23rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(174, 184, 196, 0.24) 48%, rgba(20, 83, 60, 0.1));
+  box-shadow:
+    0 16px 34px rgba(125, 147, 165, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.46);
+}
+.wc-board-card--rank4,
+.wc-board-card--rank5 {
+  border-color: color-mix(in oklch, var(--lime) 58%, transparent);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(198, 242, 78, 0.34), transparent 24rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.58), rgba(198, 242, 78, 0.24) 44%, rgba(20, 83, 60, 0.16));
+  box-shadow:
+    0 16px 34px rgba(20, 83, 60, 0.14),
+    0 0 0 1px rgba(198, 242, 78, 0.12) inset;
+}
+.dark .wc-board-card--rank1 {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(244, 197, 74, 0.24), transparent 24rem),
+    linear-gradient(135deg, rgba(244, 197, 74, 0.2), rgba(20, 83, 60, 0.32) 58%, rgba(255, 255, 255, 0.08));
+}
+.dark .wc-board-card--rank2 {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.18), transparent 23rem),
+    linear-gradient(135deg, rgba(174, 184, 196, 0.22), rgba(20, 83, 60, 0.3) 58%, rgba(255, 255, 255, 0.07));
+}
+.dark .wc-board-card--rank4,
+.dark .wc-board-card--rank5 {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(198, 242, 78, 0.22), transparent 24rem),
+    linear-gradient(135deg, rgba(198, 242, 78, 0.18), rgba(20, 83, 60, 0.34) 58%, rgba(255, 255, 255, 0.06));
+}
+
+/* --- Hall of Fame crowned holders ---------------------------------------- */
+/* Shared base: a gold-ringed, glowing avatar. Each prestige badge layers its
+   own signature flourish on top (sniper reticle / on-form momentum / crown). */
+.wc-crowned {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  isolation: isolate;
+  --wc-aura: rgba(244, 197, 74, 0.55);
+}
+.wc-crowned--sniper { --wc-aura: color-mix(in oklch, var(--lime), transparent 42%); }
+.wc-crowned--onForm { --wc-aura: rgba(56, 189, 248, 0.55); }
+.wc-crowned--sharpshooter { --wc-aura: rgba(167, 139, 250, 0.6); }
+
+.wc-crowned__avatar {
+  position: relative;
+  z-index: 2;
+  box-shadow:
+    0 0 0 2px var(--gold),
+    0 0 0 4px color-mix(in oklch, var(--gold), transparent 72%),
+    0 8px 22px rgba(244, 197, 74, 0.32);
+}
+.wc-crowned__halo {
+  position: absolute;
+  inset: -18px;
+  z-index: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--wc-aura), transparent 68%);
+  animation: wc-halo-pulse 2.8s ease-in-out infinite;
+}
+
+/* Sharpshooter — royalty: floating crown + twinkling sparkles */
+.wc-crown {
+  position: absolute;
+  top: -15px;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  color: var(--gold);
+  filter: drop-shadow(0 2px 4px rgba(244, 197, 74, 0.55));
+  transform: translateX(-50%);
+  animation: wc-crown-bob 3s ease-in-out infinite;
+}
+.wc-sparkle {
+  position: absolute;
+  z-index: 3;
+  color: #fff;
+  opacity: 0;
+  filter: drop-shadow(0 0 3px rgba(255, 255, 255, 0.8));
+  animation: wc-twinkle 2.4s ease-in-out infinite;
+  animation-delay: var(--wc-delay, 0s);
+}
+
+/* Sniper — marksman lock-on: rotating reticle + pulsing lock glint */
+.wc-reticle {
+  position: absolute;
+  inset: -9px;
+  z-index: 1;
+  border-radius: 50%;
+  border: 1.5px dashed color-mix(in oklch, var(--lime), transparent 28%);
+  animation: wc-reticle-spin 9s linear infinite;
+}
+.wc-reticle::before {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  border-top-color: var(--lime);
+  border-bottom-color: var(--lime);
+  animation: wc-reticle-spin 5s linear infinite reverse;
+}
+.wc-reticle__glint {
+  position: absolute;
+  inset: -3px;
+  z-index: 1;
+  border-radius: 50%;
+  border: 2px solid color-mix(in oklch, var(--lime), transparent 40%);
+  animation: wc-lock-glint 2.8s ease-out infinite;
+}
+
+/* On Form — momentum: rising sparks behind avatar + pulsing up-chevron */
+.wc-momentum-trail {
+  position: absolute;
+  inset: -6px -2px;
+  z-index: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.wc-momentum-trail__spark {
+  position: absolute;
+  bottom: -8px;
+  inset-inline-start: var(--wc-x, 50%);
+  height: 11px;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(to top, transparent, var(--wc-aura));
+  opacity: 0;
+  animation: wc-rise 1.8s ease-in infinite;
+  animation-delay: var(--wc-delay, 0s);
+}
+.wc-momentum-chevron {
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  z-index: 3;
+  color: #38bdf8;
+  filter: drop-shadow(0 2px 4px rgba(56, 189, 248, 0.5));
+  transform: translateX(-50%);
+  animation: wc-crown-bob 2.4s ease-in-out infinite;
+}
+
 /* --- Keyframes ----------------------------------------------------------- */
 @keyframes wc-ball-spin { to { transform: rotate(360deg); } }
 @keyframes wc-ball-bounce {
@@ -635,6 +1369,85 @@
   0%, 100% { transform: translateX(-120%); }
   55%, 70% { transform: translateX(120%); }
 }
+@keyframes wc-crown-bob {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(-4deg); }
+  50% { transform: translateX(-50%) translateY(-4px) rotate(4deg); }
+}
+/* Podium FUT cards: gentle vertical bob (amplitude per medal via --wc-float-amp). */
+@keyframes wc-podium-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 calc(var(--wc-float-amp, 1) * -7px); }
+}
+/* Champion avatar: soft breathing gold halo. */
+@keyframes wc-fut-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.85),
+      0 10px 22px rgba(0, 0, 0, 0.18);
+  }
+  50% {
+    box-shadow:
+      0 0 0 3px rgba(255, 255, 255, 0.95),
+      0 0 20px 4px rgba(244, 197, 74, 0.55),
+      0 10px 22px rgba(0, 0, 0, 0.18);
+  }
+}
+/* Crowned glyph: small floaty drift + tilt. */
+@keyframes wc-fut-crown {
+  0%, 100% { translate: 0 0; rotate: -5deg; }
+  50% { translate: 0 -3px; rotate: 5deg; }
+}
+/* Champion crown: positioned to sit on the avatar rather than the card corner. */
+@keyframes wc-fut-crown-worn {
+  0%, 100% { transform: translateY(0) rotate(22deg); }
+  50% { transform: translateY(-2px) rotate(17deg); }
+}
+@keyframes wc-fut-sparkle {
+  0%, 100% { opacity: 0.28; transform: scale(0.58) rotate(0deg); }
+  45% { opacity: 1; transform: scale(1) rotate(32deg); }
+  72% { opacity: 0.62; transform: scale(0.78) rotate(54deg); }
+}
+@keyframes wc-fut-points-shine {
+  0%, 100% {
+    text-shadow:
+      0 1px 0 rgb(255 255 255 / 0.78),
+      0 0 6px rgb(var(--wc-medal-rgb) / 0.95),
+      0 0 16px rgb(var(--wc-medal-rgb) / 0.72),
+      0 0 30px rgb(var(--wc-medal-rgb) / 0.46);
+  }
+  50% {
+    text-shadow:
+      0 1px 0 rgb(255 255 255 / 0.92),
+      0 0 9px rgb(var(--wc-medal-rgb) / 1),
+      0 0 24px rgb(var(--wc-medal-rgb) / 0.86),
+      0 0 42px rgb(var(--wc-medal-rgb) / 0.6);
+  }
+}
+@keyframes wc-fut-points-glint {
+  0%, 22% { opacity: 0; transform: translateX(0) skewX(-18deg); }
+  38% { opacity: 0.9; }
+  62% { opacity: 0.9; }
+  82%, 100% { opacity: 0; transform: translateX(380%) skewX(-18deg); }
+}
+@keyframes wc-fut-rank-glint {
+  0%, 24% { opacity: 0; transform: translateX(0) rotate(22deg); }
+  44% { opacity: 0.88; }
+  72%, 100% { opacity: 0; transform: translateX(6rem) rotate(22deg); }
+}
+@keyframes wc-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.4); }
+  50% { opacity: 1; transform: scale(1); }
+}
+@keyframes wc-reticle-spin { to { transform: rotate(360deg); } }
+@keyframes wc-lock-glint {
+  0% { opacity: 0.85; transform: scale(0.82); }
+  70%, 100% { opacity: 0; transform: scale(1.18); }
+}
+@keyframes wc-rise {
+  0% { opacity: 0; transform: translateY(6px) scaleY(0.6); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-22px) scaleY(1.1); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .wc-ball--spin .wc-ball-svg,
@@ -650,12 +1463,30 @@
   .wc-fixture-card:hover::before,
   .wc-momentum__sweep,
   .wc-trophy__halo,
-  .wc-trophy__shine {
+  .wc-trophy__shine,
+  .wc-fut-card,
+  .wc-fut-card--champion .wc-fut-card__avatar,
+  .wc-fut-card--champion::before,
+  .wc-fut-card__mark,
+  .wc-fut-card__avatar-crown,
+  .wc-fut-card__sparkle,
+  .wc-fut-card__points,
+  .wc-fut-card__points::after,
+  .wc-fut-card__rank-badge::after,
+  .wc-crowned__halo,
+  .wc-crown,
+  .wc-reticle,
+  .wc-reticle::before,
+  .wc-momentum-chevron {
     animation: none !important;
   }
-  /* Removed entirely so there's no static ring/confetti artifact. */
+  /* Removed entirely so there's no static ring/confetti artifact. The crown,
+     reticle ring, and aura stay as static styling so "crowned" still reads. */
   .wc-confetti,
-  .wc-goal-ring {
+  .wc-goal-ring,
+  .wc-sparkle,
+  .wc-reticle__glint,
+  .wc-momentum-trail__spark {
     display: none !important;
   }
 }

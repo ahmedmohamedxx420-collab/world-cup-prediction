@@ -4,10 +4,11 @@ import { BackLink } from "@/components/back-link";
 import { LiveBadge } from "@/components/live-badge";
 import { LocalKickoff } from "@/components/local-kickoff";
 import { MatchBanner } from "@/components/match-banner";
-import { MomentumBar } from "@/components/momentum-bar";
+import { CrowdInsights } from "@/components/crowd-insights";
 import { GoalBurst } from "@/components/goal-burst";
 import { Avatar } from "@/components/ui/avatar";
 import { getAppSettings } from "@/lib/app-settings";
+import { computeCrowdInsights } from "@/lib/crowd-insights";
 import { getMatch } from "@/lib/matches";
 import type { Match } from "@/lib/match-types";
 import { sideLabel } from "@/lib/match-format";
@@ -171,17 +172,11 @@ export default async function FixtureDetailPage({
     visiblePredictions.length > 0 &&
     (lockedHint || inProgress || hasOtherVisiblePrediction);
 
-  // Live "family lean": real, privacy-safe split of who members backed to win,
-  // computed only from already-visible (post-kickoff) predictions.
-  const leanHome = visiblePredictions.filter(
-    (p) => p.home_score > p.away_score,
-  ).length;
-  const leanAway = visiblePredictions.filter(
-    (p) => p.away_score > p.home_score,
-  ).length;
-  const leanDecisive = leanHome + leanAway;
-  const homePct = leanDecisive ? Math.round((leanHome / leanDecisive) * 100) : 50;
-  const showLean = inProgress && leanDecisive > 0;
+  // Aggregate, privacy-safe "what did the family vote" insights, computed only
+  // from already-visible (post-kickoff) predictions. Hidden before kickoff.
+  const insights = showReveal
+    ? computeCrowdInsights(visiblePredictions, match, settings)
+    : null;
 
   // Celebrate when the viewer's own saved prediction matched the exact result.
   const exactHit =
@@ -236,21 +231,6 @@ export default async function FixtureDetailPage({
         }
       />
 
-      {showLean ? (
-        <section className="wc-fixture-card space-y-2 rounded-2xl border bg-card/95 p-4 shadow-sm">
-          <h2 className="text-sm font-semibold text-muted-foreground">
-            {t("leanTitle")}
-          </h2>
-          <MomentumBar
-            startLabel={homeName}
-            endLabel={awayName}
-            startValue={homePct}
-            endValue={100 - homePct}
-            caption={t("leanCaption")}
-          />
-        </section>
-      ) : null}
-
       {exactHit ? (
         <GoalBurst word={t("celebrateWord")} subtitle={t("celebrateExact")} />
       ) : null}
@@ -280,6 +260,15 @@ export default async function FixtureDetailPage({
             margin: settings.goal_diff_points,
             winner: settings.winner_points,
           }}
+        />
+      ) : null}
+
+      {insights ? (
+        <CrowdInsights
+          insights={insights}
+          homeName={homeName}
+          awayName={awayName}
+          result={result}
         />
       ) : null}
 

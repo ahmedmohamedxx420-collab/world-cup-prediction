@@ -105,6 +105,12 @@ export default async function ProfilePage({
             avatarUrl={profile.avatar_url}
             locale={profile.locale}
           />
+          <div className="rounded-lg border bg-muted/40 px-3 py-2 text-sm">
+            <p className="font-semibold">{t("passwordResetTipTitle")}</p>
+            <p className="mt-1 text-muted-foreground">
+              {t("passwordResetTipBody")}
+            </p>
+          </div>
         </CardContent>
         <CardFooter>
           <form action={signOut} className="w-full">
