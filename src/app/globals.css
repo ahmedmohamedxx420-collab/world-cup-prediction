@@ -820,6 +820,7 @@
 }
 .wc-fut-card__avatar {
   background: rgb(255 255 255 / 0.72);
+  color: var(--wc-fut-ink, #1e293b);
   box-shadow:
     0 0 0 3px rgb(255 255 255 / 0.78),
     0 0 22px rgb(var(--wc-medal-rgb) / 0.2),

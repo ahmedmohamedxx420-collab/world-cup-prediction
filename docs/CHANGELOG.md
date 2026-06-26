@@ -28,6 +28,34 @@
 
 ---
 
+## 2026-06-26 - Hall of Fame opacity and podium initials follow-up
+**Plan item:** Mobile UI polish follow-up   **Status:** done (lint + build clean; dev route smoke checked)
+
+**What changed**
+- Replaced `bg-muted/30` with solid `bg-muted` for unawarded crowned and standard
+  Hall of Fame cards, while keeping their dashed borders.
+- Added `color: var(--wc-fut-ink, #1e293b)` to `.wc-fut-card__avatar` so fallback
+  initials contrast on the white-glass podium avatar background.
+
+**Why**
+- `bg-muted/30` merged over the `Card` component's `bg-card` and left empty badge
+  cards translucent on darker mobile backgrounds.
+- Podium fallback initials inherited near-white avatar text on a near-white glass
+  circle; medal-specific dark ink keeps initials readable without changing photo
+  avatars.
+
+**Files touched**
+- src/components/hall-of-fame.tsx
+- src/app/globals.css
+- docs/BUILD-PLAN.md
+- docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Local dev smoke checked non-mutating routes: `/ar` returned 200,
+  `/en/design-system` returned 200, and unauthenticated `/en/leaderboard`
+  redirected to `/en/login` as expected. Authenticated phone-width visual QA still
+  needs a browser session for the real leaderboard tabs.
+
 ## 2026-06-26 - Mobile UI polish: scores, podium, Hall of Fame, avatars, reveal links
 **Plan item:** Mobile UI polish batch   **Status:** done (lint + build clean)
 

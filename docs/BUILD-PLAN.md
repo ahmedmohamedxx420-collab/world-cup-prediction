@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-26 (rev 47)
+> **Last updated:** 2026-06-26 (rev 48)
 
 ---
 
@@ -18,7 +18,18 @@
 
 ## Current Position
 
-=> **Mobile UI polish for scores, podium, Hall of Fame, avatars, and reveal links (rev 47).**
+=> **Hall of Fame opacity and podium initials follow-up (rev 48).**
+Closed two remaining phone-visible regressions from the mobile polish pass:
+unawarded Hall of Fame crowned/standard cards now use solid `bg-muted` dashed
+surfaces instead of `bg-muted/30`, so the `Card` surface is opaque after
+`tailwind-merge`; FUT podium fallback avatars now set
+`color: var(--wc-fut-ink, #1e293b)` on the white-glass avatar circle, so initials
+use each medal card's dark ink. Files: `hall-of-fame.tsx`, `globals.css`.
+`npm run lint` and `npm run build` clean; local dev route smoke checked `/ar`
+200, `/en/design-system` 200, and unauthenticated `/en/leaderboard` -> `/en/login`.
+See CHANGELOG 2026-06-26 (rev 48).
+
+-> **Mobile UI polish for scores, podium, Hall of Fame, avatars, and reveal links (rev 47).**
 Fixed the reported light-mode mobile polish batch: finished-match score badges in
 fixtures and member result breakdowns now stay on one line; the leaderboard podium
 stacks the champion full-width above silver/bronze on mobile and returns to the
