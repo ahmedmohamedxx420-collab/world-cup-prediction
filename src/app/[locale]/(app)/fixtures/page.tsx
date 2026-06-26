@@ -9,7 +9,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { listMatches } from "@/lib/matches";
 import type { Match } from "@/lib/match-types";
-import { sideLabel } from "@/lib/match-format";
+import { formatScoreline, sideLabel } from "@/lib/match-format";
 import { getMyPredictions, type Prediction } from "@/lib/predictions";
 import { listTeams } from "@/lib/teams";
 
@@ -46,13 +46,8 @@ function isLiveMatch(match: Match, now: number) {
   );
 }
 
-function scoreText(home: number | null, away: number | null) {
-  if (home == null || away == null) return null;
-  return `${home}-${away}`;
-}
-
 function predictionText(prediction: Prediction) {
-  return `${prediction.home_score}-${prediction.away_score}`;
+  return formatScoreline(prediction.home_score, prediction.away_score);
 }
 
 function formatDateKey(key: string, locale: string) {
@@ -151,7 +146,7 @@ function RowCta({
   tbd: boolean;
   t: Awaited<ReturnType<typeof getTranslations>>;
 }) {
-  const result = scoreText(match.home_score, match.away_score);
+  const result = formatScoreline(match.home_score, match.away_score);
 
   if (tbd) {
     return (
@@ -180,7 +175,10 @@ function RowCta({
   if (locked) {
     return (
       <span className="flex items-center gap-2">
-        <span className="text-sm font-semibold tabular-nums">
+        <span
+          className="text-sm font-semibold tabular-nums"
+          dir={result ? "ltr" : "auto"}
+        >
           {result ?? t("locked")}
         </span>
         <span
@@ -198,7 +196,7 @@ function RowCta({
   if (prediction) {
     return (
       <span className="flex items-center gap-2">
-        <span className="text-sm font-semibold tabular-nums">
+        <span className="text-sm font-semibold tabular-nums" dir="ltr">
           {predictionText(prediction)}
         </span>
         <span
@@ -353,7 +351,7 @@ export default async function FixturesPage({
       {activeTab === "ongoing" ? (
         <div className="grid gap-3 lg:grid-cols-2">
           {liveHeroMatches.map((match) => {
-            const result = scoreText(match.home_score, match.away_score);
+            const result = formatScoreline(match.home_score, match.away_score);
 
             return (
               <MatchBanner
@@ -363,16 +361,19 @@ export default async function FixturesPage({
                   match.home_team_id,
                   match.home_label,
                   t("tbd"),
+                  locale,
                 )}
                 awayName={sideLabel(
                   teamMap,
                   match.away_team_id,
                   match.away_label,
                   t("tbd"),
+                  locale,
                 )}
                 homeFlag={teamMap.get(match.home_team_id ?? -1)?.flag}
                 awayFlag={teamMap.get(match.away_team_id ?? -1)?.flag}
                 centerLabel={result ?? t("vs")}
+                centerLabelDirection={result ? "ltr" : "auto"}
                 venue={match.venue}
                 topStart={
                   <>
@@ -449,7 +450,10 @@ export default async function FixturesPage({
                   const locked = isLocked(match, now);
                   const tbd = isTbd(match);
                   const inProgress = isLiveMatch(match, now);
-                  const result = scoreText(match.home_score, match.away_score);
+                  const result = formatScoreline(
+                    match.home_score,
+                    match.away_score,
+                  );
 
                   return (
                     <li key={match.id}>
@@ -479,7 +483,7 @@ export default async function FixturesPage({
                             ) : null}
                           </span>
 
-                          <span className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+                          <span className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 [direction:ltr]">
                             <span className="flex min-w-0 items-center gap-1.5">
                               {teamMap.get(match.home_team_id ?? -1)?.flag ? (
                                 <span
@@ -489,12 +493,16 @@ export default async function FixturesPage({
                                   {teamMap.get(match.home_team_id ?? -1)?.flag}
                                 </span>
                               ) : null}
-                              <span className="truncate text-start text-base font-black tracking-normal">
+                              <span
+                                className="truncate text-start text-base font-black tracking-normal"
+                                dir="auto"
+                              >
                                 {sideLabel(
                                   teamMap,
                                   match.home_team_id,
                                   match.home_label,
                                   t("tbd"),
+                                  locale,
                                 )}
                               </span>
                             </span>
@@ -505,6 +513,7 @@ export default async function FixturesPage({
                                   ? "bg-gold-grad text-gold-foreground"
                                   : "bg-muted text-muted-foreground",
                               )}
+                              dir={result ? "ltr" : "auto"}
                             >
                               {result ?? t("vs")}
                             </span>
@@ -517,12 +526,16 @@ export default async function FixturesPage({
                                   {teamMap.get(match.away_team_id ?? -1)?.flag}
                                 </span>
                               ) : null}
-                              <span className="truncate text-start text-base font-black tracking-normal">
+                              <span
+                                className="truncate text-start text-base font-black tracking-normal"
+                                dir="auto"
+                              >
                                 {sideLabel(
                                   teamMap,
                                   match.away_team_id,
                                   match.away_label,
                                   t("tbd"),
+                                  locale,
                                 )}
                               </span>
                             </span>

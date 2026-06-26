@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Tajawal } from "next/font/google";
+import { Tajawal, Bebas_Neue } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -13,6 +13,15 @@ const tajawal = Tajawal({
   variable: "--font-sans",
   subsets: ["arabic", "latin"],
   weight: ["400", "500", "700"],
+});
+
+// Tall condensed display font for the "Sudanship" wordmark — sleek stadium /
+// jersey energy. Exposed as --font-display and used via the `.wc-wordmark`
+// styles.
+const bebasNeue = Bebas_Neue({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 export function generateStaticParams() {
@@ -48,7 +57,7 @@ export default async function LocaleLayout({
     <html
       lang={locale}
       dir={dir}
-      className={`${tajawal.variable} h-full antialiased`}
+      className={`${tajawal.variable} ${bebasNeue.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider>

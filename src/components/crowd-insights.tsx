@@ -16,6 +16,7 @@ import type {
   InsightMember,
   Outcome,
 } from "@/lib/crowd-insights";
+import { formatScoreline, isolateScoreline } from "@/lib/match-format";
 import { cn } from "@/lib/utils";
 
 const cardClass = "wc-fixture-card space-y-3 rounded-2xl border bg-card/95 p-4 shadow-sm";
@@ -105,8 +106,14 @@ export async function CrowdInsights({
         </h3>
         <ul className="space-y-1.5">
           {topScorelines.map((row) => (
-            <li key={row.score} className="flex items-center gap-3">
-              <span className="inline-flex min-w-12 justify-center rounded-lg bg-muted px-2.5 py-1 text-sm font-bold tabular-nums">
+            <li
+              key={row.score}
+              className="flex items-center gap-3 [direction:ltr]"
+            >
+              <span
+                className="inline-flex min-w-12 justify-center rounded-lg bg-muted px-2.5 py-1 text-sm font-bold tabular-nums"
+                dir="ltr"
+              >
                 {row.score}
               </span>
               <span className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted">
@@ -123,7 +130,9 @@ export async function CrowdInsights({
         </ul>
         <p className="text-xs font-medium text-muted-foreground">
           {t("averageLine", {
-            score: `${average.home}–${average.away}`,
+            score: formatScoreline(average.home, average.away, {
+              isolate: true,
+            }),
             goals: average.total,
           })}
         </p>
@@ -155,7 +164,7 @@ export async function CrowdInsights({
             {t(`calledIt.${calledIt.status}.body`, {
               pick: verdict.favorite ? outcomeLabel(verdict.favorite) : "",
               actual: outcomeLabel(calledIt.actual),
-              score: result ?? "",
+              score: isolateScoreline(result) ?? "",
             })}
           </p>
         </section>
@@ -256,7 +265,7 @@ export async function CrowdInsights({
                 <span className="font-semibold">{t("boldestTitle")} · </span>
                 {t("boldest", {
                   name: memberName(boldest.member),
-                  score: boldest.score,
+                  score: isolateScoreline(boldest.score),
                 })}
               </span>
             </p>

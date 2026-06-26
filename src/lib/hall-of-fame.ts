@@ -1,4 +1,5 @@
 import type { MemberStatsRow, UserResult } from "@/lib/leaderboard";
+import { formatScoreline } from "@/lib/match-format";
 
 export type BadgeKey =
   | "sniper"
@@ -177,7 +178,10 @@ export function computePlayerStats(
   let favouriteCount = 0;
 
   for (const result of results) {
-    const scoreline = `${result.home_score}-${result.away_score}`;
+    const scoreline = formatScoreline(
+      result.home_score,
+      result.away_score,
+    ) as string;
     const count = (scorelineCounts.get(scoreline) ?? 0) + 1;
     scorelineCounts.set(scoreline, count);
 

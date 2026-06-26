@@ -11,7 +11,11 @@ import { getAppSettings } from "@/lib/app-settings";
 import { computeCrowdInsights } from "@/lib/crowd-insights";
 import { getMatch } from "@/lib/matches";
 import type { Match } from "@/lib/match-types";
-import { sideLabel } from "@/lib/match-format";
+import {
+  formatScoreline,
+  isolateScoreline,
+  sideLabel,
+} from "@/lib/match-format";
 import { ScoringDisclosure } from "@/components/scoring-legend";
 import {
   getMatchPredictions,
@@ -24,8 +28,7 @@ import { cn } from "@/lib/utils";
 import { PredictForm } from "./predict-form";
 
 function scoreText(match: Match) {
-  if (match.home_score == null || match.away_score == null) return null;
-  return `${match.home_score}-${match.away_score}`;
+  return formatScoreline(match.home_score, match.away_score);
 }
 
 function isTbd(match: Match) {
@@ -65,7 +68,7 @@ function RevealList({
         <h2 className="text-base font-semibold">{t("revealTitle")}</h2>
         <span className="text-sm font-medium text-muted-foreground tabular-nums">
           {result
-            ? t("actualResult", { score: result })
+            ? t("actualResult", { score: isolateScoreline(result) })
             : t("resultPending")}
         </span>
       </div>
@@ -106,8 +109,8 @@ function RevealList({
                   )}
                 </span>
               </span>
-              <span className="shrink-0 text-lg font-bold tabular-nums">
-                {prediction.home_score}-{prediction.away_score}
+              <span className="shrink-0 text-lg font-bold tabular-nums" dir="ltr">
+                {formatScoreline(prediction.home_score, prediction.away_score)}
               </span>
             </li>
           );
@@ -153,12 +156,14 @@ export default async function FixtureDetailPage({
     match.home_team_id,
     match.home_label,
     fixturesT("tbd"),
+    locale,
   );
   const awayName = sideLabel(
     teamMap,
     match.away_team_id,
     match.away_label,
     fixturesT("tbd"),
+    locale,
   );
   const lockedHint = Date.parse(match.kickoff_at) <= now;
   const tbd = isTbd(match);
@@ -199,6 +204,7 @@ export default async function FixtureDetailPage({
         homeFlag={teamMap.get(match.home_team_id ?? -1)?.flag}
         awayFlag={teamMap.get(match.away_team_id ?? -1)?.flag}
         centerLabel={result ?? fixturesT("vs")}
+        centerLabelDirection={result ? "ltr" : "auto"}
         venue={match.venue}
         topStart={
           <>

@@ -1,10 +1,12 @@
 import "server-only";
 
+import { normalizeUsername } from "@/lib/auth/password-policy";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const SYNTHETIC_EMAIL_DOMAIN = "phone.local";
 const ADMIN_PHONE_CANONICAL_DIGITS = "966595440204";
 export const ADMIN_EMAIL = "ahmed.mohamed.xx420@gmail.com";
+export const ADMIN_USERNAME = "admin";
 
 const ADMIN_PHONE_DIGITS = new Set([
   ADMIN_PHONE_CANONICAL_DIGITS,
@@ -45,6 +47,11 @@ export function isAdminEmail(email: string | null | undefined) {
   return email?.trim().toLowerCase() === ADMIN_EMAIL;
 }
 
+export function isAdminUsername(username: string | null | undefined) {
+  if (!username) return false;
+  return normalizeUsername(username) === ADMIN_USERNAME;
+}
+
 export async function promotePhoneAdminProfile(
   userId: string,
   phoneDigits: string | null | undefined,
@@ -65,6 +72,21 @@ export async function promoteEmailAdminProfile(
   email: string | null | undefined,
 ) {
   if (!userId || !isAdminEmail(email)) return null;
+
+  const admin = createAdminClient();
+  const { error } = await admin
+    .from("profiles")
+    .update({ is_admin: true })
+    .eq("id", userId);
+
+  return error;
+}
+
+export async function promoteUsernameAdminProfile(
+  userId: string,
+  username: string | null | undefined,
+) {
+  if (!userId || !isAdminUsername(username)) return null;
 
   const admin = createAdminClient();
   const { error } = await admin

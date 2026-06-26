@@ -6,7 +6,11 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { listMatches, MATCH_STAGES } from "@/lib/matches";
 import { listTeams } from "@/lib/teams";
-import { sideName, formatKickoffUtc } from "@/lib/match-format";
+import {
+  formatKickoffUtc,
+  formatScoreline,
+  sideName,
+} from "@/lib/match-format";
 
 export default async function AdminFixturesPage({
   params,
@@ -48,32 +52,60 @@ export default async function AdminFixturesPage({
               {stagesT(stage)}
             </h2>
             <ul className="divide-y rounded-lg border">
-              {items.map((match) => (
-                <li key={match.id}>
-                  <Link
-                    href={`/admin/fixtures/${match.id}`}
-                    className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-accent/50"
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-medium">
-                        {sideName(teamMap, match.home_team_id, match.home_label, t("tbd"))}{" "}
-                        {t("vs")}{" "}
-                        {sideName(teamMap, match.away_team_id, match.away_label, t("tbd"))}
+              {items.map((match) => {
+                const scoreline = formatScoreline(
+                  match.home_score,
+                  match.away_score,
+                );
+
+                return (
+                  <li key={match.id}>
+                    <Link
+                      href={`/admin/fixtures/${match.id}`}
+                      className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-accent/50"
+                    >
+                      <span className="min-w-0">
+                        <span className="flex min-w-0 items-center gap-1.5 text-sm font-medium [direction:ltr]">
+                          <span className="truncate" dir="auto">
+                            {sideName(
+                              teamMap,
+                              match.home_team_id,
+                              match.home_label,
+                              t("tbd"),
+                              locale,
+                            )}
+                          </span>
+                          <span className="shrink-0" dir="auto">
+                            {t("vs")}
+                          </span>
+                          <span className="truncate" dir="auto">
+                            {sideName(
+                              teamMap,
+                              match.away_team_id,
+                              match.away_label,
+                              t("tbd"),
+                              locale,
+                            )}
+                          </span>
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {match.group_letter ? `${match.group_letter} · ` : ""}
+                          {formatKickoffUtc(match.kickoff_at, locale)}
+                          {match.venue ? ` · ${match.venue}` : ""}
+                        </span>
                       </span>
-                      <span className="block text-xs text-muted-foreground">
-                        {match.group_letter ? `${match.group_letter} · ` : ""}
-                        {formatKickoffUtc(match.kickoff_at, locale)}
-                        {match.venue ? ` · ${match.venue}` : ""}
-                      </span>
-                    </span>
-                    {match.home_score != null && match.away_score != null ? (
-                      <span className="shrink-0 text-sm font-medium tabular-nums">
-                        {match.home_score}–{match.away_score}
-                      </span>
-                    ) : null}
-                  </Link>
-                </li>
-              ))}
+                      {scoreline ? (
+                        <span
+                          className="shrink-0 text-sm font-medium tabular-nums"
+                          dir="ltr"
+                        >
+                          {scoreline}
+                        </span>
+                      ) : null}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         ))

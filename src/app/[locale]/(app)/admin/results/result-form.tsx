@@ -52,10 +52,13 @@ export function ResultForm({
 
   return (
     <div className="space-y-3">
-      <form action={formAction} className="flex flex-wrap items-end gap-3">
+      <form
+        action={formAction}
+        className="flex flex-wrap items-end gap-3 [direction:ltr]"
+      >
         <input type="hidden" name="match_id" value={matchId} />
         <div className="space-y-1">
-          <Label htmlFor={`home-${matchId}`} className="text-xs">
+          <Label htmlFor={`home-${matchId}`} className="text-xs" dir="auto">
             {t("homeScore")}
           </Label>
           <Input
@@ -66,11 +69,12 @@ export function ResultForm({
             max={99}
             defaultValue={homeScore ?? ""}
             className="w-20"
+            dir="ltr"
             required
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor={`away-${matchId}`} className="text-xs">
+          <Label htmlFor={`away-${matchId}`} className="text-xs" dir="auto">
             {t("awayScore")}
           </Label>
           <Input
@@ -81,13 +85,14 @@ export function ResultForm({
             max={99}
             defaultValue={awayScore ?? ""}
             className="w-20"
+            dir="ltr"
             required
           />
         </div>
 
         {teamOptions.length === 2 ? (
           <div className="w-48 space-y-1">
-            <Label htmlFor={`so-${matchId}`} className="text-xs">
+            <Label htmlFor={`so-${matchId}`} className="text-xs" dir="auto">
               {t("shootoutWinner")}
             </Label>
             <select

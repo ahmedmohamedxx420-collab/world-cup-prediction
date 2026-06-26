@@ -421,14 +421,14 @@ export async function HallOfFame({
             <Trophy className="size-4" aria-hidden />
             {t("hallOfFame.moreTitle")}
           </h3>
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="flex flex-wrap justify-center gap-3">
             {standardBadges.map((badge) => (
-              <StandardCard
+              <div
                 key={badge.key}
-                badge={badge}
-                locale={locale}
-                t={t}
-              />
+                className="w-[calc(50%-0.375rem)] lg:w-[calc(33.333%-0.5rem)]"
+              >
+                <StandardCard badge={badge} locale={locale} t={t} />
+              </div>
             ))}
           </div>
         </div>

@@ -28,6 +28,314 @@
 
 ---
 
+## 2026-06-26 — Copywriting & UX polish (scoring labels, Hall of Fame, splash skip, competition framing)
+**Plan item:** Copy/UX polish pass   **Status:** done (build clean)
+
+**What changed**
+- **Scoring labels (ar + en):** `marginTitle` "الفارق الصحيح" → "فارق الأهداف الصحيح"
+  ("Right margin" → "Right goal difference"); `missTitle` "بعيد" → "نتيجة خاطئة"
+  ("Miss" → "Wrong result"). Reworded `missBlurb` to "ولا رقم صح." / "Neither
+  number right." so it no longer duplicates the new title.
+- **Hall of Fame description:** reframed from "في العائلة" (family) to "في السيرفر"
+  (server) and expanded to explain badges are auto-awarded by accuracy, streaks,
+  and scoring rate.
+- **Hall of Fame standard cards:** the 5 lower badges were laid out in a grid that
+  left a lone card on the last row. Switched to `flex flex-wrap justify-center`
+  with per-card width wrappers (`w-[calc(50%-0.375rem)] lg:w-[calc(33.333%-0.5rem)]`)
+  → centered 3+2 on desktop, 2+2+centered-1 on mobile.
+- **Splash skip:** signed-in users now skip the `/[locale]` splash. Added a
+  `getCurrentUser()` check that `redirect`s to `/fixtures` before rendering.
+- **Competition framing:** added `common.competition` ("بطولة توقّع مباريات كأس
+  العالم" / "FIFA World Cup match-prediction tournament"), surfaced on the landing
+  hero (under the wordmark) and as an eyebrow on the login/signup cards (new
+  optional `eyebrow` prop on `AuthCard`).
+
+**Why**
+- Direct copywriting feedback from the user; the family→server reframing matches
+  the existing "ناس السيرفر" tagline wording. The splash adds friction for
+  returning users. The competition line makes the app's purpose explicit at every
+  entry point.
+
+**Files touched**
+- messages/ar.json, messages/en.json
+- src/components/hall-of-fame.tsx
+- src/app/[locale]/page.tsx
+- src/app/[locale]/(auth)/auth-card.tsx
+- src/app/[locale]/(auth)/login/page.tsx
+- src/app/[locale]/(auth)/signup/page.tsx
+
+**Notes / gotchas**
+- `/[locale]` is now a dynamic route (`ƒ`) because it reads the auth cookie via
+  `getCurrentUser()`; it was effectively static before. Expected.
+
+---
+
+## 2026-06-26 — Redesign podium prizes & honours by shape (bars vs medallions)
+**Plan item:** Leaderboard polish (rev 46)   **Status:** done (build clean)
+
+**What changed**
+- Prizes and Hall-of-Fame honours on the top-3 cards still blended (both white
+  icon+label pills stacked ~1.6px apart). Reworked so they differ by **shape**:
+  - **Prizes → big full-width bars.** `.wc-prize` is now a vertical stack of
+    full-width banners (`flex-direction: column`, chips `width:100%`), larger
+    padding (`0.52rem 0.7rem`), bigger radius (`0.85rem`), icon `1.05rem→1.3rem`,
+    label `0.72rem→0.85rem`. Champion card bumps its cash bar even larger.
+    Eyebrow kept and slightly enlarged. Cash gradient/coins, Nitro, role accent
+    all preserved (just scaled). Full-width centered bars are RTL-symmetric, so
+    the previously-missing `:dir(rtl)` padding flip is no longer needed.
+  - **Honours → small round icon-only medallions.** `CardAchievements` now
+    renders just the colored icon (`size-3→size-4`) in a `2rem` circle; the
+    label moved to an `sr-only` span (title tooltip + container aria-label kept
+    for a11y). Removed unused `.wc-fut-card__badge-icon`/`-label` CSS.
+
+**Why**
+- User feedback: prizes and badges were confusing/mixing; make prizes even
+  bigger. Chosen direction: differentiate by shape (big labeled bars vs round
+  medals) so they're unmistakable. Scope: podium cards only.
+
+**Files touched**
+- src/app/[locale]/(app)/leaderboard/page.tsx (`CardAchievements` JSX)
+- src/app/globals.css (`.wc-prize*`, `.wc-fut-card__badge*`)
+
+**Notes / gotchas**
+- Hall of Fame page (`src/components/hall-of-fame.tsx`) intentionally unchanged.
+
+---
+
+## 2026-06-26 — Make podium prizes prominent, distinct, and green
+**Plan item:** Leaderboard polish (rev 45)   **Status:** done (build clean)
+
+**What changed**
+- The podium prize chips read too much like the Hall-of-Fame badges on the same card
+  (both white pills with a small icon + tiny uppercase label; cash even used gold, the
+  HoF palette). Reworked so prizes clearly dominate the top-3 cards:
+  - Added a visible **"PRIZE" eyebrow** (`wc-prize__eyebrow`, lucide `Trophy`) above the
+    chip group, using the existing `prizes.label` string — heads the group so it never
+    reads as a badge row.
+  - **Bigger chips** vs HoF badges: larger padding, label `0.62rem→0.72rem` weight 900,
+    icon `0.82rem→1.05rem`.
+  - **Cash → bold solid green prize tag** (`#16a34a→#15803d`, white text) with a new
+    pulsing green halo keyframe `wc-cash-glow` (green analogue of `wc-nitro-glow`).
+  - **Money effect much bigger & green**: coins now green (`#4ade80`, green glow),
+    `0.62rem→0.86rem`; 5 particles (was 3); `wc-coin-rise` travel `-15px→-26px`.
+- Cash glow + coins disabled under `prefers-reduced-motion`.
+
+**Why**
+- User feedback: prizes should be the most apparent element of the top-3 cards, clearly
+  separate from HoF badges; money effect should be bigger and green.
+
+**Files touched**
+- src/app/[locale]/(app)/leaderboard/page.tsx (eyebrow JSX, `COIN_PARTICLES`)
+- src/app/globals.css (`.wc-prize*`, `wc-coin-rise`, new `wc-cash-glow`, reduced-motion)
+
+**Notes / gotchas**
+- Only the **cash** chip turned green; Nitro/role keep their purple palette and inherit
+  the new larger base sizing. `Trophy` was already imported in the page.
+
+## 2026-06-26 — Leaderboard prize badges (Discord tournament rewards)
+**Plan item:** Leaderboard polish (rev 44)   **Status:** done (lint + build clean)
+
+**What changed**
+- Added a `CardPrize` component to the leaderboard podium (top-3 FUT cards) that
+  renders the tournament reward chips **directly under each player's name**:
+  - **Gold (1st):** "50 SAR" cash chip (lucide `Coins`, gold sheen) with three
+    floating `$` coin particles (`wc-coin-rise`) **+ Custom Role** chip.
+  - **Silver (2nd):** purple **Nitro** chip (lucide `Gem` stand-in) with a pulsing
+    purple glow (`wc-nitro-glow`) **+ Custom Role** chip.
+  - **Bronze (3rd):** **Nitro** chip only.
+- Prizes are a hardcoded `PODIUM_PRIZES` map keyed by medal (display-only, mirrors
+  the existing scoring-tier pattern — not stored in the DB).
+- "Custom Role" renders as a **Discord-style role pill**: a blurple→purple dot
+  (`wc-prize__role-dot`) + uppercase label.
+- New `.wc-prize*` styles + `wc-coin-rise` / `wc-nitro-glow` keyframes in
+  `globals.css`, modeled on the existing `.wc-fut-card__badge` chip. RTL-safe
+  (logical properties only) and disabled/hidden under `prefers-reduced-motion`.
+- Added `leaderboard.prizes.{label,cash,nitro,customRole}` strings to `en.json`
+  and `ar.json` (Arabic: ٥٠ ر.س / نيترو / رتبة مخصصة).
+- Mirrored the chips into the design-system podium preview (`PreviewPrize` in
+  `sections/world-cup.tsx`) so the effect is viewable at `/[locale]/design-system`
+  without seeding leaderboard data or signing in.
+
+**Why**
+- The prediction competition runs in a Discord server with real prizes (1st = 50 SAR
+  + custom role, 2nd = Nitro + custom role, 3rd = Nitro). Surfacing the reward next to
+  each top player on the board is meant to motivate members.
+- Nitro uses a lucide `Gem` stand-in per the user's choice (real Nitro art can be
+  swapped in later); custom-role pill chosen for the most on-theme Discord look.
+
+**Files touched**
+- src/app/[locale]/(app)/leaderboard/page.tsx (CardPrize, PODIUM_PRIZES, COIN_PARTICLES, icon imports)
+- src/app/globals.css (.wc-prize* block, wc-coin-rise/wc-nitro-glow keyframes, reduced-motion entries)
+- messages/en.json, messages/ar.json (leaderboard.prizes.*)
+- src/app/[locale]/design-system/sections/world-cup.tsx (PreviewPrize in PodiumPreview)
+
+**Notes / gotchas**
+- Prizes only show on the podium (ranks 1-3); the rank 4+ `BoardRow` list is unchanged.
+- To swap the real Discord Nitro icon: replace the `Gem` import/usage in `CardPrize`
+  (and `PreviewPrize`) with an `<img src="/...">` asset dropped in `public/`.
+- The design-system `PodiumPreview` is the legacy "color-option comparison" scaffold
+  marked for eventual deletion — if it's removed, `PreviewPrize` goes with it; the real
+  feature lives entirely in the leaderboard page.
+
+## 2026-06-24 — Landing splash redesign + brand font swap
+**Plan item:** Branding polish   **Status:** done (build clean)
+
+**What changed**
+- Swapped the "Sudanship" wordmark font from **Anton** to **Bebas Neue**
+  (`next/font/google`, still `--font-display`); bumped `.wc-wordmark`
+  letter-spacing to `0.06em` for the taller, narrower face.
+- Redesigned the locale-root splash (`src/app/[locale]/page.tsx`): added two
+  blurred floodlight glow blobs behind the content, turned the "welcome" kicker
+  into a bordered glass pill, and enlarged the CTA to `h-14 px-10 text-lg` with
+  a hover/focus scale.
+- Enlarged the hero artwork in `BrandWordmark` (`h-32/44` → `h-56/72/80`) and
+  wrapped it in a new `.wc-splash__art` element: a breathing lime/gold halo
+  (`::before`, `wc-halo-pulse`) plus a floating drop-shadowed image
+  (`wc-float`). Both honour `prefers-reduced-motion`.
+
+**Why**
+- The splash is the brand front door; the user asked for a bigger image and a
+  fresher, more professional landing with a different wordmark font.
+
+**Files touched**
+- src/app/[locale]/layout.tsx
+- src/app/[locale]/page.tsx
+- src/components/brand-wordmark.tsx
+- src/app/globals.css
+
+**Notes / gotchas**
+- Bebas Neue is Latin-only and all-caps (same constraints as Anton); the
+  wordmark stays the Latin "SUDANSHIP".
+
+---
+
+## 2026-06-23 — Banner real transparency + language switcher visibility
+**Plan item:** Branding polish   **Status:** done (build clean)
+
+**What changed**
+- `public/sudanship-banner.png` was actually RGB (no alpha) with the
+  "transparency" checkerboard painted as opaque light-gray pixels — it rendered
+  as a light box around the player on the dark splash pitch. Added a one-off
+  `scripts/make-banner-transparent.mjs` (sharp) that keys out the light,
+  near-grayscale background to alpha=0 and re-exports a true RGBA PNG. Original
+  kept at `public/sudanship-banner.rgb-backup.png`. ~78% of pixels cleared.
+- `src/components/language-switcher.tsx`: the outline button now sets
+  `text-foreground` and a larger pill (`h-9 rounded-full px-4 text-sm
+  font-semibold`). Fixes the splash where the label inherited the parent's
+  `text-white` and was invisible, and makes it bigger everywhere.
+
+**Why**
+- The image had no alpha at all — `file` reported `8-bit/color RGB`. A CSS-only
+  fix was impossible; the source PNG itself had to be re-keyed.
+- The outline variant gives `bg-background` but no text color, so on a
+  `text-white` parent the label disappeared. `text-foreground` makes it
+  self-contained on any surface and theme.
+
+**Files touched**
+- scripts/make-banner-transparent.mjs (new, one-off)
+- public/sudanship-banner.png (regenerated RGBA), public/sudanship-banner.rgb-backup.png (new)
+- src/components/language-switcher.tsx
+
+**Notes / gotchas**
+- Background-key thresholds: `min(r,g,b) > 150` AND `max-min < 24`. If a future
+  banner art contains light/gray regions, re-tune or supply a clean transparent
+  source. The script is idempotent (skips backup if it exists).
+
+## 2026-06-23 — "Sudanship" splash landing + brand wordmark (rev 43)
+**Plan item:** Branding: splash page + logo banner   **Status:** done (build clean)
+
+**What changed**
+- Added the kicking-player artwork at `public/sudanship-banner.png` (transparent
+  PNG, 1916×821).
+- New reusable `BrandWordmark` component (`src/components/brand-wordmark.tsx`):
+  artwork + the text "Sudanship" in the Anton athletic display font (uppercase).
+  `size="sm"` for
+  the header, `size="hero"` for the splash; `tone="dark"` brightens the wordmark
+  for dark backgrounds.
+- The locale root `src/app/[locale]/page.tsx` no longer redirects to `/fixtures`;
+  it now renders a full-screen **splash hero** (pitch-gradient bg, language
+  switcher, welcome kicker, hero wordmark, tagline, lime **Start** button → `/fixtures`).
+- The logged-in header (`src/app/[locale]/(app)/layout.tsx`) swaps the old
+  soccer-ball icon + `appName` for `<BrandWordmark size="sm" />`.
+- Loaded **Anton** via `next/font/google` as `--font-display` in
+  `src/app/[locale]/layout.tsx`; added `.font-display`, `.wc-wordmark`, and
+  `.wc-wordmark--on-dark` utilities to `src/app/globals.css`.
+- Added `common.welcome` to `messages/en.json` ("Welcome to") and
+  `messages/ar.json` ("أهلاً بيك في").
+
+**Why**
+- The user wanted a branded front door instead of dropping visitors straight on
+  the login form, plus the same logo banner inside the app. The wordmark font
+  started as Great Vibes (cursive) but the user asked for a bigger, on-theme look,
+  so it's now **Anton** (athletic display caps) at larger sizes; splash set to
+  always show; header wordmark replaced (all confirmed with the user).
+
+**Files touched**
+- public/sudanship-banner.png (new)
+- src/components/brand-wordmark.tsx (new)
+- src/app/[locale]/page.tsx
+- src/app/[locale]/layout.tsx
+- src/app/[locale]/(app)/layout.tsx
+- src/app/globals.css
+- messages/en.json, messages/ar.json
+
+**Notes / gotchas**
+- The shadcn `Button` here (base-ui) has **no `asChild`** — to render a `Link` as
+  a button use `buttonVariants({ variant, size, className })` on the `Link`.
+- The Start button links to `/fixtures`; the existing Supabase middleware does the
+  auth routing (signed-in → fixtures, else → login). No new auth logic.
+- The splash is always shown at the root (not first-visit-only).
+- Anton is Latin-only and all-caps; the wordmark stays the Latin "SUDANSHIP" in
+  both locales (`.wc-wordmark` applies `text-transform: uppercase`).
+
+---
+
+## 2026-06-23 — Login by username instead of email
+**Plan item:** Auth: username + password login   **Status:** done (build clean)
+
+**What changed**
+- Sign-up and login now use a **username** (not an email). A username is
+  lowercase letters/digits only, 4–20 chars, no spaces/symbols, and must be
+  unique. The two-step login flow (enter identifier → password) is kept; the
+  first step now asks for the username and shows a rules hint on sign-up.
+- Each username maps to a deterministic **synthetic Supabase email**
+  `<username>@users.local` (same trick as phone auth's `@phone.local`), so RLS
+  keyed on `auth.uid()` is unchanged and Supabase's `auth.users.email`
+  uniqueness enforces username uniqueness — **no DB migration**.
+- Added username helpers (`normalizeUsername`, `isValidUsername`,
+  `usernameToEmail`, `usernameFromSyntheticEmail`, length constants) to
+  `password-policy.ts`; `findUserByUsername` to `users.ts`.
+- Admin is now also identified by username: `ADMIN_USERNAME = "admin"` +
+  `isAdminUsername` / `promoteUsernameAdminProfile`, wired into the signup/login
+  actions and `getProfile` auto-promotion (alongside the existing email/phone
+  admin checks, which remain).
+- i18n: added `usernameLabel`/`usernamePlaceholder`/`usernameHint` and
+  `invalidUsername`/`usernameTaken` errors; password/enter/set-password copy now
+  interpolates `{username}` (en + ar).
+
+**Why**
+- Owner wants a friendlier family login (pick a name, not an email). Synthetic
+  email reuses the proven phone-auth pattern and avoids schema/RLS churn.
+
+**Files touched**
+- src/lib/auth/password-policy.ts, src/lib/auth/users.ts,
+  src/lib/auth/phone-admin.ts, src/lib/profile.ts
+- src/app/[locale]/(auth)/signup/{actions.ts,signup-form.tsx,page.tsx}
+- src/app/[locale]/(auth)/login/{password-actions.ts,password-login-form.tsx,page.tsx}
+- messages/en.json, messages/ar.json
+
+**Notes / gotchas**
+- The **admin account** is username `admin` (owner uses password `6969`): sign
+  up with it once and it auto-promotes to admin. The old gmail-based admin
+  account is now unreachable via the UI (email/OTP/phone modes still compile but
+  aren't the default `password` mode).
+- "Stay logged in" already works in code: `src/proxy.ts` → `updateSession`
+  refreshes the Supabase session every request. To extend session lifetime in
+  prod, set Supabase Dashboard → Authentication → Sessions (disable inactivity
+  timeout / time-box). No code change.
+
+---
+
 ## 2026-06-22 — Podium cards show Hall-of-Fame honours
 **Plan item:** Board tab podium polish   **Status:** done (build clean)
 

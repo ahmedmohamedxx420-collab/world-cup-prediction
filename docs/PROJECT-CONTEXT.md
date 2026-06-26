@@ -3,7 +3,7 @@
 > **Single source of truth.** Read this before writing any code. If something here
 > is wrong or out of date, fix it here first, then build to match.
 >
-> **Last updated:** 2026-06-20 (rev 26) · **Status:** Email + password auth is the default; admin-driven password reset is repo-implemented, live `0011` apply/fresh-start wipe still pending
+> **Last updated:** 2026-06-23 (rev 42) · **Status:** Username + password auth is the default (synthetic `@users.local` emails); admin-driven password reset is repo-implemented, live `0011` apply/fresh-start wipe still pending
 
 ---
 
@@ -25,7 +25,7 @@ One sentence: **Predict the score, earn points by accuracy, climb one shared boa
 - **One shared leaderboard** for everyone.
 - **One admin** (the site owner) who enters fixtures and final scores.
 - World Cup only. No other competitions.
-- **In scope:** email + password login, admin-driven password reset, score predictions (editable until kickoff),
+- **In scope:** username + password login, admin-driven password reset, score predictions (editable until kickoff),
   prediction privacy before kickoff, simple accuracy-based scoring, one
   leaderboard, Hall of Fame aggregate award badges, per-player stats cards,
   manual score entry plus openfootball result sync, Arabic + English.
@@ -41,7 +41,7 @@ One sentence: **Predict the score, earn points by accuracy, climb one shared boa
 | Framework | **Next.js (App Router) + TypeScript** | Deployed on Vercel, zero-config |
 | Styling | **Tailwind CSS + shadcn/ui** | Mobile-first; clean sports-app look |
 | Backend / DB | **Supabase** | Postgres + Auth + Storage + RLS |
-| Auth | **Switchable (§4.11)** | Default email + password; `"phone"` = legacy no-verification phone sign-in, `"otp"` = legacy Supabase email OTP |
+| Auth | **Switchable (§4.11)** | Default username + password (synthetic `@users.local` emails); `"phone"` = legacy no-verification phone sign-in, `"otp"` = legacy Supabase email OTP |
 | i18n | **next-intl** | Arabic default + RTL, English secondary |
 | Hosting | **Vercel** | One-click Next.js deploys |
 
@@ -69,7 +69,7 @@ These were confirmed with the owner. Change them *here* if they change.
    Vercel Cron is not used on Hobby because its once/day limit is too coarse.
    Final scores from the sync flow through the scoring trigger (§5) and
    auto-score predictions.
-3. **Registration = open.** Anyone with the link can register (email + password, then full name/profile photo/locale).
+3. **Registration = open.** Anyone with the link can register (username + password, then full name/profile photo/locale).
    - *Implication:* the leaderboard is only as private as the URL. A shared
      invite-code gate is a documented, low-effort future enhancement (see §10) if
      the owner later wants to lock it down.
@@ -120,24 +120,32 @@ These were confirmed with the owner. Change them *here* if they change.
     (Login hard-navigates after OTP verify so the app loads without a manual
     refresh.)
 11. **Auth mode is switchable (`NEXT_PUBLIC_AUTH_MODE`).** Default/unset
-    `"password"`: email + password, no OTP and no confirmation email. Signup uses
-    the service-role admin client to create a confirmed Supabase auth user, signs
-    in with the cookie-bound server client, then sends the new user to onboarding
-    (name + optional avatar + locale). Login is email-first: an unknown email
-    redirects to `/signup?email=…` (prefilled); normal accounts ask for the
-    password; accounts with `profiles.password_reset_pending = true` ask for a
-    new password instead of the old one. Symmetrically, signing up with an email
-    that already has an account redirects to `/login?email=…` rather than
-    erroring. The shared lookup lives in `src/lib/auth/users.ts`. Admin reset is intentionally manual for this private app:
-    `/admin/users` lets the admin mark a profile pending and scramble the old
-    password; the next login sets a new one. The pending-claim window is accepted
-    as part of the app's trusted-family security posture. Set the flag to
-    `"phone"` to restore the legacy no-verification phone sign-in, or `"otp"` to
-    restore the original Supabase email six-digit-code flow. **How every mode
-    preserves RLS:** all policies key off `auth.uid()`, so every successful path
-    still mints a real Supabase session. Owner email
-    `ahmed.mohamed.xx420@gmail.com` and legacy phone `+966595440204` are
-    auto-promoted after their profile exists; the shared profile read also
+    `"password"`: **username** + password, no OTP and no confirmation email. A
+    username is lowercase letters/digits only, 4–20 chars, no spaces/symbols, and
+    unique. Each username maps to a deterministic **synthetic Supabase email**
+    `<username>@users.local` (same trick as legacy phone's `@phone.local`); since
+    the email is a pure function of the username, Supabase's `auth.users.email`
+    uniqueness enforces username uniqueness — no DB column or migration. Helpers
+    (`normalizeUsername`/`isValidUsername`/`usernameToEmail`/`usernameFromSyntheticEmail`)
+    live in `src/lib/auth/password-policy.ts`. Signup uses the service-role admin
+    client to create a confirmed Supabase auth user, signs in with the
+    cookie-bound server client, then sends the new user to onboarding (name +
+    optional avatar + locale — the display name stays separate from the username).
+    Login is username-first: an unknown username redirects to `/signup?username=…`
+    (prefilled); normal accounts ask for the password; accounts with
+    `profiles.password_reset_pending = true` ask for a new password instead of the
+    old one. Symmetrically, signing up with a taken username redirects to
+    `/login?username=…` rather than erroring. The shared lookup is
+    `findUserByUsername` in `src/lib/auth/users.ts`. Admin reset is intentionally
+    manual for this private app: `/admin/users` lets the admin mark a profile
+    pending and scramble the old password; the next login sets a new one. The
+    pending-claim window is accepted as part of the app's trusted-family security
+    posture. Set the flag to `"phone"` to restore the legacy no-verification phone
+    sign-in, or `"otp"` to restore the original Supabase email six-digit-code flow.
+    **How every mode preserves RLS:** all policies key off `auth.uid()`, so every
+    successful path still mints a real Supabase session. Admin username `admin`
+    (and legacy owner email `ahmed.mohamed.xx420@gmail.com` / phone `+966595440204`)
+    are auto-promoted after their profile exists; the shared profile read also
     self-heals those flags for already signed-in sessions. Lives in
     `src/lib/auth/mode.ts`, `(auth)/signup/*`, `(auth)/login/password-*`, and the
     legacy phone/OTP login files.
@@ -148,6 +156,12 @@ These were confirmed with the owner. Change them *here* if they change.
     winners are selected in TypeScript from aggregate per-user rows; ties use
     higher total points, then `full_name` ascending. Per-player breakdowns also
     show form dots, current/best streak, favourite scoreline, and best match.
+13. **Top-3 finishers win real Discord-tournament prizes**, advertised on the
+    podium next to each player: **1st = 50 SAR + custom role**, **2nd = Nitro +
+    custom role**, **3rd = Nitro**. These are display-only and hardcoded by medal
+    in the leaderboard page (`PODIUM_PRIZES`), not stored in the DB — they're a
+    one-off tournament arrangement, not a configurable feature. The Nitro icon is
+    a lucide `Gem` placeholder pending real art.
 
 ---
 
@@ -317,6 +331,12 @@ not just in the UI, so the API can never leak a hidden prediction.
 - **App routes:** the Next.js proxy refreshes Supabase auth cookies and redirects
   unauthenticated app requests to login. The app layout redirects authenticated
   users without a `profiles` row to onboarding.
+- **Brand front door:** the locale root (`/[locale]`) renders a **"Sudanship"
+  splash** (kicking-player artwork + Bebas Neue display-caps wordmark + Start button)
+  rather than redirecting to the app. Start → `/fixtures`, where the proxy above
+  routes signed-in users into the app and everyone else to login. The same lockup
+  (`BrandWordmark`) replaces the header logo on every logged-in page. "Sudanship"
+  is the displayed brand; `common.appName` stays the document/metadata title.
 
 ---
 
@@ -370,9 +390,10 @@ Documented defaults (change here if the owner decides otherwise):
 - **Invite-code registration gate:** not built (registration is open per decision
   §4.3). Low-effort future enhancement if privacy needs tightening.
 - **Account deletion / admin user removal:** not in v1 unless requested.
-- **Admin grant:** the owner email `ahmed.mohamed.xx420@gmail.com` and legacy
-  phone `+966595440204` are auto-promoted in server actions/profile reads once
-  their `profiles` row exists. No one-off SQL grant is needed.
+- **Admin grant:** the admin username `admin` (and legacy owner email
+  `ahmed.mohamed.xx420@gmail.com` / phone `+966595440204`) are auto-promoted in
+  server actions/profile reads once their `profiles` row exists. No one-off SQL
+  grant is needed.
 - **Fresh-start auth wipe:** requested for this auth switch, but not run by code.
   With explicit owner go-ahead, delete all rows from `auth.users`; profile and
   prediction rows cascade, while synced teams/fixtures/results/app settings stay.

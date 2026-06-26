@@ -14,6 +14,7 @@ export function MatchBanner({
   homeFlag,
   awayFlag,
   centerLabel,
+  centerLabelDirection = "auto",
   statusLabel,
   venue,
   topStart,
@@ -27,6 +28,7 @@ export function MatchBanner({
   awayFlag?: string | null;
   /** The score (e.g. "1 — 0") or a placeholder like "vs". */
   centerLabel: string;
+  centerLabelDirection?: "auto" | "ltr";
   /** Small line under the score: a clock, kickoff time, or stage. */
   statusLabel?: string;
   venue?: string | null;
@@ -54,14 +56,14 @@ export function MatchBanner({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 [direction:ltr]">
         <div className="grid min-w-0 justify-items-center gap-1.5 text-center">
           {homeFlag ? (
             <span className="text-4xl leading-none drop-shadow-md" aria-hidden>
               {homeFlag}
             </span>
           ) : null}
-          <span className="max-w-full truncate text-sm font-black">
+          <span className="max-w-full truncate text-sm font-black" dir="auto">
             {homeName}
           </span>
         </div>
@@ -70,7 +72,10 @@ export function MatchBanner({
           <span className="wc-banner__ball size-10">
             <SoccerBall className="wc-ball-svg" />
           </span>
-          <strong className="text-2xl font-black tabular-nums tracking-wide">
+          <strong
+            className="text-2xl font-black tabular-nums tracking-wide"
+            dir={centerLabelDirection}
+          >
             {centerLabel}
           </strong>
           {statusLabel ? (
@@ -84,7 +89,7 @@ export function MatchBanner({
               {awayFlag}
             </span>
           ) : null}
-          <span className="max-w-full truncate text-sm font-black">
+          <span className="max-w-full truncate text-sm font-black" dir="auto">
             {awayName}
           </span>
         </div>

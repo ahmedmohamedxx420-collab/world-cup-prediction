@@ -7,17 +7,22 @@ export default async function SignUpPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ email?: string }>;
+  searchParams: Promise<{ username?: string }>;
 }) {
   const { locale } = await params;
-  const { email } = await searchParams;
-  const defaultEmail = typeof email === "string" ? email : "";
+  const { username } = await searchParams;
+  const defaultUsername = typeof username === "string" ? username : "";
   setRequestLocale(locale);
   const t = await getTranslations("auth");
+  const tCommon = await getTranslations("common");
 
   return (
-    <AuthCard title={t("signupTitle")} description={t("signupDescription")}>
-      <SignUpForm locale={locale} defaultEmail={defaultEmail} />
+    <AuthCard
+      eyebrow={tCommon("competition")}
+      title={t("signupTitle")}
+      description={t("signupDescription")}
+    >
+      <SignUpForm locale={locale} defaultUsername={defaultUsername} />
     </AuthCard>
   );
 }

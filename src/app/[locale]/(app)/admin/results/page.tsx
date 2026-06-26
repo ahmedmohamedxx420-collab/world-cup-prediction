@@ -8,7 +8,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { sideName, formatKickoffUtc } from "@/lib/match-format";
+import {
+  formatKickoffUtc,
+  localizedTeamName,
+  sideName,
+} from "@/lib/match-format";
 import { listMatches } from "@/lib/matches";
 import { listTeams } from "@/lib/teams";
 import { ResultForm } from "./result-form";
@@ -37,16 +41,24 @@ export default async function AdminResultsPage({
         <EmptyState title={t("empty")} className="py-10" />
       ) : (
         ordered.map((match) => {
+          const homeTeam =
+            match.home_team_id != null
+              ? teamMap.get(match.home_team_id)
+              : undefined;
+          const awayTeam =
+            match.away_team_id != null
+              ? teamMap.get(match.away_team_id)
+              : undefined;
           const teamOptions =
             match.home_team_id != null && match.away_team_id != null
               ? [
                   {
                     id: match.home_team_id,
-                    name: teamMap.get(match.home_team_id)?.name_en ?? "",
+                    name: homeTeam ? localizedTeamName(homeTeam, locale) : "",
                   },
                   {
                     id: match.away_team_id,
-                    name: teamMap.get(match.away_team_id)?.name_en ?? "",
+                    name: awayTeam ? localizedTeamName(awayTeam, locale) : "",
                   },
                 ]
               : [];
@@ -54,20 +66,28 @@ export default async function AdminResultsPage({
           return (
             <Card key={match.id}>
               <CardHeader>
-                <CardTitle className="text-sm">
-                  {sideName(
-                    teamMap,
-                    match.home_team_id,
-                    match.home_label,
-                    f("tbd"),
-                  )}{" "}
-                  {f("vs")}{" "}
-                  {sideName(
-                    teamMap,
-                    match.away_team_id,
-                    match.away_label,
-                    f("tbd"),
-                  )}
+                <CardTitle className="flex min-w-0 items-center gap-1.5 text-sm [direction:ltr]">
+                  <span className="truncate" dir="auto">
+                    {sideName(
+                      teamMap,
+                      match.home_team_id,
+                      match.home_label,
+                      f("tbd"),
+                      locale,
+                    )}
+                  </span>
+                  <span className="shrink-0" dir="auto">
+                    {f("vs")}
+                  </span>
+                  <span className="truncate" dir="auto">
+                    {sideName(
+                      teamMap,
+                      match.away_team_id,
+                      match.away_label,
+                      f("tbd"),
+                      locale,
+                    )}
+                  </span>
                 </CardTitle>
                 <CardDescription>
                   {formatKickoffUtc(match.kickoff_at, locale)}

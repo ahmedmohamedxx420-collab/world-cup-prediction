@@ -10,12 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   MIN_PASSWORD_LENGTH,
-  normalizeEmail,
+  MIN_USERNAME_LENGTH,
+  normalizeUsername,
 } from "@/lib/auth/password-policy";
 import {
   lookupLogin,
   setNewPassword,
-  signInWithEmailPassword,
+  signInWithUsernamePassword,
   type LookupLoginState,
   type PasswordAuthState,
   type PasswordLoginStep,
@@ -47,20 +48,20 @@ function SubmitButton({
 }
 
 export function PasswordLoginForm({
-  defaultEmail = "",
+  defaultUsername = "",
 }: {
-  defaultEmail?: string;
+  defaultUsername?: string;
 }) {
   const t = useTranslations("auth");
   const locale = useLocale();
-  const [email, setEmail] = useState(defaultEmail);
-  const [isEditingEmail, setIsEditingEmail] = useState(true);
+  const [username, setUsername] = useState(defaultUsername);
+  const [isEditingUsername, setIsEditingUsername] = useState(true);
   const [lookupState, lookupAction] = useActionState(
     lookupLogin,
     lookupInitialState,
   );
   const [passwordState, passwordAction] = useActionState(
-    signInWithEmailPassword,
+    signInWithUsernamePassword,
     authInitialState,
   );
   const [resetState, resetAction] = useActionState(
@@ -71,14 +72,15 @@ export function PasswordLoginForm({
     useState<PasswordAuthState["error"]>(undefined);
   const resetError = resetClientError ?? resetState.error;
   const hasFreshLookup =
-    lookupState.email === normalizeEmail(email) && Boolean(lookupState.step);
-  const step: "email" | PasswordLoginStep =
-    isEditingEmail || !hasFreshLookup ? "email" : lookupState.step!;
-  const selectedEmail = hasFreshLookup ? lookupState.email! : email;
+    lookupState.username === normalizeUsername(username) &&
+    Boolean(lookupState.step);
+  const step: "username" | PasswordLoginStep =
+    isEditingUsername || !hasFreshLookup ? "username" : lookupState.step!;
+  const selectedUsername = hasFreshLookup ? lookupState.username! : username;
 
   function goBack() {
-    setEmail(selectedEmail);
-    setIsEditingEmail(true);
+    setUsername(selectedUsername);
+    setIsEditingUsername(true);
   }
 
   function handleResetSubmit(event: FormEvent<HTMLFormElement>) {
@@ -100,27 +102,31 @@ export function PasswordLoginForm({
     }
   }
 
-  if (step === "email") {
+  if (step === "username") {
     return (
       <form
         action={lookupAction}
         className="space-y-4"
-        onSubmit={() => setIsEditingEmail(false)}
+        onSubmit={() => setIsEditingUsername(false)}
       >
         <input type="hidden" name="locale" value={locale} />
 
         <div className="space-y-2">
-          <Label htmlFor="password-login-email">{t("emailLabel")}</Label>
+          <Label htmlFor="password-login-username">{t("usernameLabel")}</Label>
           <Input
-            id="password-login-email"
-            name="email"
-            type="email"
-            inputMode="email"
-            autoComplete="email"
+            id="password-login-username"
+            name="username"
+            type="text"
+            inputMode="text"
+            autoComplete="username"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             dir="ltr"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder={t("emailPlaceholder")}
+            minLength={MIN_USERNAME_LENGTH}
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            placeholder={t("usernamePlaceholder")}
             aria-invalid={Boolean(lookupState.error)}
             required
           />
@@ -152,12 +158,12 @@ export function PasswordLoginForm({
         onSubmit={handleResetSubmit}
       >
         <input type="hidden" name="locale" value={locale} />
-        <input type="hidden" name="email" value={selectedEmail} />
+        <input type="hidden" name="username" value={selectedUsername} />
 
         <div className="space-y-1">
           <h2 className="font-semibold">{t("setPasswordTitle")}</h2>
           <p className="text-sm text-muted-foreground">
-            {t("setPasswordDescription", { email: selectedEmail })}
+            {t("setPasswordDescription", { username: selectedUsername })}
           </p>
         </div>
 
@@ -214,12 +220,12 @@ export function PasswordLoginForm({
   return (
     <form action={passwordAction} className="space-y-4">
       <input type="hidden" name="locale" value={locale} />
-      <input type="hidden" name="email" value={selectedEmail} />
+      <input type="hidden" name="username" value={selectedUsername} />
 
       <div className="space-y-1">
         <h2 className="font-semibold">{t("enterPasswordTitle")}</h2>
         <p className="text-sm text-muted-foreground">
-          {t("enterPasswordDescription", { email: selectedEmail })}
+          {t("enterPasswordDescription", { username: selectedUsername })}
         </p>
       </div>
 

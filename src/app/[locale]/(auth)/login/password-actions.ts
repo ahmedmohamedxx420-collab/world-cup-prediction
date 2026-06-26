@@ -3,27 +3,28 @@
 import { hasLocale } from "next-intl";
 import { redirect } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
-import { promoteEmailAdminProfile } from "@/lib/auth/phone-admin";
+import { promoteUsernameAdminProfile } from "@/lib/auth/phone-admin";
 import {
-  isValidEmail,
+  isValidUsername,
   MIN_PASSWORD_LENGTH,
-  normalizeEmail,
+  normalizeUsername,
+  usernameToEmail,
 } from "@/lib/auth/password-policy";
-import { findUserByEmail } from "@/lib/auth/users";
+import { findUserByUsername } from "@/lib/auth/users";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type PasswordLoginStep = "enter_password" | "set_password";
 
 export type LookupLoginState = {
-  email?: string;
-  error?: "invalidEmail" | "generic";
+  username?: string;
+  error?: "invalidUsername" | "generic";
   step?: PasswordLoginStep;
 };
 
 export type PasswordAuthState = {
   error?:
-    | "invalidEmail"
+    | "invalidUsername"
     | "wrongPassword"
     | "passwordTooShort"
     | "passwordsDontMatch"
@@ -39,12 +40,12 @@ function resolveLocale(formData: FormData) {
 }
 
 async function redirectAfterSignIn({
-  email,
+  username,
   locale,
   supabase,
   userId,
 }: {
-  email: string;
+  username: string;
   locale: string;
   supabase: Awaited<ReturnType<typeof createClient>>;
   userId: string;
@@ -58,7 +59,7 @@ async function redirectAfterSignIn({
   if (profileError) return { error: "generic" as const };
 
   if (profile) {
-    const promotionError = await promoteEmailAdminProfile(userId, email);
+    const promotionError = await promoteUsernameAdminProfile(userId, username);
     if (promotionError) return { error: "generic" as const };
   }
 
@@ -71,12 +72,12 @@ export async function lookupLogin(
   formData: FormData,
 ): Promise<LookupLoginState> {
   const locale = resolveLocale(formData);
-  const email = normalizeEmail(String(formData.get("email") ?? ""));
+  const username = normalizeUsername(String(formData.get("username") ?? ""));
 
-  if (!isValidEmail(email)) return { email, error: "invalidEmail" };
+  if (!isValidUsername(username)) return { username, error: "invalidUsername" };
 
   try {
-    const user = await findUserByEmail(email);
+    const user = await findUserByUsername(username);
 
     if (user) {
       const admin = createAdminClient();
@@ -86,10 +87,10 @@ export async function lookupLogin(
         .eq("id", user.id)
         .maybeSingle();
 
-      if (error) return { email, error: "generic" };
+      if (error) return { username, error: "generic" };
 
       return {
-        email,
+        username,
         step: profile?.password_reset_pending
           ? "set_password"
           : "enter_password",
@@ -97,38 +98,38 @@ export async function lookupLogin(
     }
   } catch (error) {
     console.error("Password login lookup failed", error);
-    return { email, error: "generic" };
+    return { username, error: "generic" };
   }
 
-  // No account for this email — send them straight to sign-up with the email
-  // prefilled. (redirect() throws, so it must sit outside the try/catch above.)
-  redirect({ href: `/signup?email=${encodeURIComponent(email)}`, locale });
-  return { email };
+  // No account for this username — send them straight to sign-up with the
+  // username prefilled. (redirect() throws, so it sits outside the try/catch.)
+  redirect({ href: `/signup?username=${encodeURIComponent(username)}`, locale });
+  return { username };
 }
 
-export async function signInWithEmailPassword(
+export async function signInWithUsernamePassword(
   _previousState: PasswordAuthState,
   formData: FormData,
 ): Promise<PasswordAuthState> {
   const locale = resolveLocale(formData);
-  const email = normalizeEmail(String(formData.get("email") ?? ""));
+  const username = normalizeUsername(String(formData.get("username") ?? ""));
   const password = String(formData.get("password") ?? "");
 
-  if (!isValidEmail(email)) return { error: "invalidEmail" };
+  if (!isValidUsername(username)) return { error: "invalidUsername" };
   if (password.length < MIN_PASSWORD_LENGTH) {
     return { error: "passwordTooShort" };
   }
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({
-    email,
+    email: usernameToEmail(username),
     password,
   });
 
   const userId = data.user?.id;
   if (error || !userId) return { error: "wrongPassword" };
 
-  return redirectAfterSignIn({ email, locale, supabase, userId });
+  return redirectAfterSignIn({ username, locale, supabase, userId });
 }
 
 export async function setNewPassword(
@@ -136,11 +137,11 @@ export async function setNewPassword(
   formData: FormData,
 ): Promise<PasswordAuthState> {
   const locale = resolveLocale(formData);
-  const email = normalizeEmail(String(formData.get("email") ?? ""));
+  const username = normalizeUsername(String(formData.get("username") ?? ""));
   const password = String(formData.get("password") ?? "");
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
 
-  if (!isValidEmail(email)) return { error: "invalidEmail" };
+  if (!isValidUsername(username)) return { error: "invalidUsername" };
   if (password.length < MIN_PASSWORD_LENGTH) {
     return { error: "passwordTooShort" };
   }
@@ -149,7 +150,7 @@ export async function setNewPassword(
   }
 
   try {
-    const user = await findUserByEmail(email);
+    const user = await findUserByUsername(username);
     if (!user) return { error: "accountNotFound" };
 
     const admin = createAdminClient();
@@ -178,14 +179,14 @@ export async function setNewPassword(
 
     const supabase = await createClient();
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+      email: usernameToEmail(username),
       password,
     });
 
     const userId = data.user?.id;
     if (error || !userId) return { error: "generic" };
 
-    return redirectAfterSignIn({ email, locale, supabase, userId });
+    return redirectAfterSignIn({ username, locale, supabase, userId });
   } catch (error) {
     console.error("Password reset claim failed", error);
     return { error: "generic" };

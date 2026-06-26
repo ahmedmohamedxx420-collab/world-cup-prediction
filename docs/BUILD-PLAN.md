@@ -18,6 +18,70 @@
 
 ## Current Position
 
+➡️ **Prizes vs honours redesigned by shape (rev 46).** On the top-3 cards prizes and
+Hall-of-Fame honours were blending (both white icon+label pills). Now they differ by
+**shape**: prizes are **big full-width labeled bars** (column stack, larger padding,
+bigger icon/label, champion cash bar bumped further), while honours are **small round
+icon-only medallions** (`2rem` circles, `size-4` icon, label moved to `sr-only`).
+Scope: podium cards only — the Hall of Fame page is unchanged. Files:
+`leaderboard/page.tsx`, `globals.css`. `npm run build` clean. See CHANGELOG (rev 46).
+
+➡️ **Podium prizes made prominent + green (rev 45).** Reworked the top-3 `CardPrize`
+so prizes dominate the card and read as *prizes*, not Hall-of-Fame badges. Added a
+visible **"PRIZE" eyebrow** (lucide `Trophy`, reuses `prizes.label`) above the chips,
+enlarged the chips vs the HoF badge pills, turned the **cash** chip into a bold solid
+**green** tag (`#16a34a→#15803d`, white text) with a new pulsing green halo
+(`wc-cash-glow`), and made the money effect much bigger & green — green `$` coins,
+larger font, 5 particles (was 3), longer `wc-coin-rise` travel. Nitro/role keep purple
+and inherit the larger sizing. Cash glow + coins guarded by `prefers-reduced-motion`.
+Files: `leaderboard/page.tsx`, `globals.css`. `npm run build` clean.
+See CHANGELOG 2026-06-26 (rev 45).
+
+➡️ **Leaderboard prize badges (rev 44).** The top-3 podium cards now advertise the
+Discord-tournament rewards under each player's name via a new `CardPrize` component
+(`src/app/[locale]/(app)/leaderboard/page.tsx`): **1st** = a gold "50 SAR" cash chip
+with floating `$` coin particles **+ Custom Role**; **2nd** = a purple, glowing
+**Nitro** chip **+ Custom Role**; **3rd** = the **Nitro** chip. Prizes are hardcoded
+by medal (`PODIUM_PRIZES`, display-only — like the scoring mirror, not DB-driven).
+The Nitro icon is a lucide `Gem` stand-in (swap for real art later); "Custom Role" is
+a Discord-style role pill (colored dot + label). Styling/keyframes (`.wc-prize*`,
+`wc-coin-rise`, `wc-nitro-glow`) live in `globals.css`, RTL-safe and guarded by
+`prefers-reduced-motion`. New `leaderboard.prizes.*` strings in both locales. A static
+mirror was added to the design-system podium preview for an auth-free gallery view.
+`npm run lint` + `npm run build` clean. See CHANGELOG 2026-06-26 (rev 44).
+
+➡️ **"Sudanship" splash + brand wordmark (rev 43).** The app now has a brand
+identity. The locale root (`/[locale]`) used to redirect straight to `/fixtures`
+(→ login); it now renders a **splash hero**: the kicking-player artwork
+(`public/sudanship-banner.png`) + a large "Sudanship" wordmark in the **Bebas
+Neue** tall display font (uppercase, gold→lime gradient) + a tagline + a lime
+**Start** button → `/fixtures`
+(middleware still routes signed-in users in and everyone else to login). The same
+lockup (`src/components/brand-wordmark.tsx`) replaces the old soccer-ball + app
+name in the logged-in header, so it shows on every app page. Bebas Neue is loaded
+via `next/font/google` as `--font-display`; wordmark styling lives in
+`globals.css` (`.wc-wordmark` / `.wc-wordmark--on-dark`). Added `common.welcome`
+to both locales. `npm run build` clean; `/ar` + `/en` splash prerender + smoke-test
+200. See CHANGELOG 2026-06-23 (rev 43).
+
+**Follow-up polish (2026-06-23):** the banner shipped as RGB with a baked-in
+checkerboard (it showed a light box on the dark splash) — re-keyed to a true
+transparent RGBA PNG via `scripts/make-banner-transparent.mjs` (original backed
+up). The language switcher (`src/components/language-switcher.tsx`) is now a
+larger pill with `text-foreground` so its label is visible on the splash's
+`text-white` surface. `npm run build` clean. See CHANGELOG 2026-06-23.
+
+➡️ **Login switched from email → username (rev 42).** The default `password` auth
+mode now signs in with a **username** (lowercase letters/digits, 4–20 chars, unique)
+plus a password, instead of an email. Each username maps to a deterministic synthetic
+Supabase email `<username>@users.local` (mirrors phone auth's `@phone.local`), so RLS
+on `auth.uid()` is unchanged and email-uniqueness enforces username-uniqueness — **no
+migration**. Admin is also identifiable by username (`ADMIN_USERNAME = "admin"`,
+auto-promoted). The two-step login + admin-driven reset flow are preserved. Display
+name (`full_name` from onboarding) is kept separate. `npm run build` + `npm run lint`
+clean. Admin account = `admin` / `6969` (sign up once to auto-promote). See CHANGELOG
+2026-06-23 (rev 42).
+
 ➡️ **Podium cards motion pass (rev 41).** Added ambient motion to the FUT podium
 cards: each card gently bobs out of phase (gold highest) via `wc-podium-float` on
 the `translate` property, hover lifts via the `scale` property (so float + hover

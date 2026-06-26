@@ -193,6 +193,61 @@
 .shadow-silver { box-shadow: var(--shadow-silver); }
 .shadow-bronze { box-shadow: var(--shadow-bronze); }
 
+/* --- "Sudanship" brand wordmark (Bebas Neue tall display) ---------------- */
+.font-display { font-family: var(--font-display), sans-serif; }
+/* Default tone: gold -> pitch-green gradient caps, tuned for light surfaces
+   (the app header). Bebas Neue is a tall all-caps display face — uppercase +
+   a little tracking gives it that jersey/stadium feel. */
+.wc-wordmark {
+  font-family: var(--font-display), sans-serif;
+  font-weight: 400;
+  line-height: 0.92;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: linear-gradient(115deg, #e0a92e 0%, #2c7a48 92%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+/* On-dark tone (splash hero over the pitch gradient): brighter gold -> lime so
+   the wordmark glows against the deep green. */
+.wc-wordmark--on-dark {
+  background: linear-gradient(115deg, #f6d36b 0%, #c6f24e 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  filter: drop-shadow(0 3px 18px rgba(198, 242, 78, 0.45));
+}
+
+/* --- Splash landing hero ------------------------------------------------- */
+/* The kicker artwork is the centerpiece: a breathing lime/gold halo sits behind
+   it and the art floats gently above a soft shadow. */
+.wc-splash__art {
+  position: relative;
+  isolation: isolate;
+}
+.wc-splash__art::before {
+  position: absolute;
+  inset: -14% -8% 4%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 46%,
+    rgba(198, 242, 78, 0.42),
+    rgba(244, 197, 74, 0.14) 40%,
+    transparent 70%
+  );
+  content: "";
+  pointer-events: none;
+  animation: wc-halo-pulse 5.5s ease-in-out infinite;
+}
+.wc-splash__art img {
+  animation: wc-float 5.5s ease-in-out infinite;
+  filter:
+    drop-shadow(0 22px 44px rgba(0, 0, 0, 0.5))
+    drop-shadow(0 0 26px rgba(198, 242, 78, 0.28));
+}
+
 /* --- App shell field atmosphere ----------------------------------------- */
 .wc-app-shell {
   position: relative;
@@ -952,50 +1007,156 @@
   gap: 0.6rem 0.4rem;
   padding-top: 0.7rem;
 }
-/* Hall-of-Fame honour chips on a podium card (icon + name pill). */
+/* Hall-of-Fame honours on a podium card — small round icon-only medallions.
+   Deliberately shaped nothing like the prize bars so the two never blend. */
 .wc-fut-card__badges {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 0.3rem;
-  margin-top: -0.05rem;
+  gap: 0.35rem;
+  margin-top: 0.35rem;
 }
 .wc-fut-card__badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.28rem;
-  max-width: 100%;
-  padding: 0.16rem 0.42rem 0.16rem 0.18rem;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.82);
   box-shadow:
-    0 1px 2px rgb(15 26 20 / 0.18),
-    inset 0 0 0 1px rgb(255 255 255 / 0.6);
+    0 1px 2px rgb(15 26 20 / 0.22),
+    inset 0 0 0 1.5px rgb(255 255 255 / 0.7);
   text-shadow: none;
 }
-.wc-fut-card__badge:dir(rtl) {
-  padding: 0.16rem 0.18rem 0.16rem 0.42rem;
+
+/* --- Leaderboard prize bars (tournament rewards) -------------------------- */
+/* Big, bold, full-width banners — deliberately a different shape from the small
+   round HoF medallions so prizes are impossible to miss or confuse. */
+.wc-prize {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.4rem;
+  width: 100%;
+  margin-top: 0.5rem;
 }
-.wc-fut-card__badge-icon {
+/* "PRIZE" eyebrow — heads the bar group so prizes never read as HoF badges. */
+.wc-prize__eyebrow {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.25rem;
-  height: 1.25rem;
-  flex-shrink: 0;
-  border-radius: 999px;
-}
-.wc-fut-card__badge-label {
-  overflow: hidden;
-  color: rgb(15 26 20 / 0.82);
-  font-size: 0.6rem;
-  font-weight: 800;
+  gap: 0.26rem;
+  margin-bottom: 0.02rem;
+  font-size: 0.66rem;
+  font-weight: 900;
   line-height: 1;
-  letter-spacing: 0.01em;
-  text-overflow: ellipsis;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #15803d;
+}
+.wc-prize__eyebrow-icon {
+  width: 0.82rem;
+  height: 0.82rem;
+  flex-shrink: 0;
+}
+.wc-prize__chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  width: 100%;
+  /* visible (not hidden like the HoF badge) so the cash coins can float above */
+  overflow: visible;
+  isolation: isolate;
+  padding: 0.52rem 0.7rem;
+  border-radius: 0.85rem;
+  background: rgb(255 255 255 / 0.9);
+  box-shadow:
+    0 2px 6px rgb(15 26 20 / 0.2),
+    inset 0 0 0 1px rgb(255 255 255 / 0.6);
+  text-shadow: none;
+}
+.wc-prize__icon {
+  width: 1.3rem;
+  height: 1.3rem;
+  flex-shrink: 0;
+}
+.wc-prize__label {
+  font-size: 0.85rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   white-space: nowrap;
+}
+/* Champion card carries the headline cash prize — give it extra presence. */
+.wc-fut-card--champion .wc-prize__chip--cash {
+  padding-block: 0.6rem;
+}
+.wc-fut-card--champion .wc-prize__chip--cash .wc-prize__icon {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+.wc-fut-card--champion .wc-prize__chip--cash .wc-prize__label {
+  font-size: 0.95rem;
+}
+/* 1st place — cash, bold green prize tag with floating "$" particles + glow halo. */
+.wc-prize__chip--cash {
+  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+  box-shadow:
+    0 3px 14px rgb(22 163 74 / 0.5),
+    inset 0 0 0 1px rgb(255 255 255 / 0.32);
+  color: #ffffff;
+  animation: wc-cash-glow 2.6s ease-in-out infinite;
+}
+.wc-prize__chip--cash .wc-prize__icon,
+.wc-prize__chip--cash .wc-prize__label {
+  color: #ffffff;
+}
+.wc-prize__coin {
+  position: absolute;
+  bottom: 58%;
+  inset-inline-start: var(--wc-x, 50%);
+  color: #4ade80;
+  font-size: 0.86rem;
+  font-weight: 900;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  text-shadow: 0 0 8px rgb(34 197 94 / 0.85);
+  animation: wc-coin-rise 2.4s ease-in-out infinite;
+  animation-delay: var(--wc-delay, 0s);
+}
+/* 2nd & 3rd place — Discord Nitro, purple gradient with a soft pulsing glow. */
+.wc-prize__chip--nitro {
+  background: linear-gradient(135deg, #5865f2 0%, #b14aed 100%);
+  box-shadow:
+    0 2px 10px rgb(155 89 230 / 0.46),
+    inset 0 0 0 1px rgb(255 255 255 / 0.28);
+  color: #ffffff;
+  animation: wc-nitro-glow 2.8s ease-in-out infinite;
+}
+.wc-prize__chip--nitro .wc-prize__icon,
+.wc-prize__chip--nitro .wc-prize__label {
+  color: #ffffff;
+}
+/* 1st & 2nd place — "Custom Role" styled like a Discord role pill. */
+.wc-prize__chip--role {
+  box-shadow:
+    0 1px 2px rgb(15 26 20 / 0.18),
+    inset 0 0 0 1px rgb(88 101 242 / 0.32);
+  color: #3b3f63;
+}
+.wc-prize__role-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5865f2, #b14aed);
+  box-shadow: 0 0 5px rgb(88 101 242 / 0.62);
 }
 
 /* --- Podium color options (design-tab comparison only) -------------------- */
@@ -1448,6 +1609,37 @@
   30% { opacity: 1; }
   100% { opacity: 0; transform: translateY(-22px) scaleY(1.1); }
 }
+@keyframes wc-coin-rise {
+  0% { opacity: 0; transform: translate(-50%, 4px) scale(0.7); }
+  25% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -26px) scale(1.05); }
+}
+@keyframes wc-cash-glow {
+  0%, 100% {
+    box-shadow:
+      0 3px 12px rgb(22 163 74 / 0.45),
+      inset 0 0 0 1px rgb(255 255 255 / 0.3);
+  }
+  50% {
+    box-shadow:
+      0 3px 16px rgb(22 163 74 / 0.7),
+      0 0 22px 3px rgb(34 197 94 / 0.55),
+      inset 0 0 0 1px rgb(255 255 255 / 0.45);
+  }
+}
+@keyframes wc-nitro-glow {
+  0%, 100% {
+    box-shadow:
+      0 2px 10px rgb(155 89 230 / 0.46),
+      inset 0 0 0 1px rgb(255 255 255 / 0.28);
+  }
+  50% {
+    box-shadow:
+      0 2px 14px rgb(155 89 230 / 0.72),
+      0 0 18px 2px rgb(177 74 237 / 0.5),
+      inset 0 0 0 1px rgb(255 255 255 / 0.4);
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .wc-ball--spin .wc-ball-svg,
@@ -1460,6 +1652,8 @@
   .wc-banner__ball,
   .wc-banner__ball .wc-ball-svg,
   .wc-app-shell::before,
+  .wc-splash__art::before,
+  .wc-splash__art img,
   .wc-fixture-card:hover::before,
   .wc-momentum__sweep,
   .wc-trophy__halo,
@@ -1473,6 +1667,9 @@
   .wc-fut-card__points,
   .wc-fut-card__points::after,
   .wc-fut-card__rank-badge::after,
+  .wc-prize__chip--nitro,
+  .wc-prize__chip--cash,
+  .wc-prize__coin,
   .wc-crowned__halo,
   .wc-crown,
   .wc-reticle,
@@ -1486,7 +1683,8 @@
   .wc-goal-ring,
   .wc-sparkle,
   .wc-reticle__glint,
-  .wc-momentum-trail__spark {
+  .wc-momentum-trail__spark,
+  .wc-prize__coin {
     display: none !important;
   }
 }

@@ -1,4 +1,5 @@
-import { Crown, Info, Trophy } from "lucide-react";
+import { Coins, Crown, Gem, Info, Trophy } from "lucide-react";
+import type { CSSProperties } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { EmptyState } from "@/components/empty-state";
 import { BADGE_META, HallOfFame } from "@/components/hall-of-fame";
@@ -169,6 +170,24 @@ const MEDAL_EMOJI: Record<PodiumMedal, string> = {
   bronze: "🥉",
 };
 
+// Display-only tournament prizes shown on each podium card (top 3). These are a
+// one-off Discord-tournament config, so they live here rather than in the DB.
+type PrizeKind = "cash" | "nitro" | "role";
+const PODIUM_PRIZES: Record<PodiumMedal, PrizeKind[]> = {
+  gold: ["cash", "role"],
+  silver: ["nitro", "role"],
+  bronze: ["nitro"],
+};
+
+// Floating "$" particles layered over the cash chip — staggered for a money-rain feel.
+const COIN_PARTICLES = [
+  { delay: "-0.2s", x: "12%" },
+  { delay: "-0.9s", x: "34%" },
+  { delay: "-1.5s", x: "56%" },
+  { delay: "-2.1s", x: "78%" },
+  { delay: "-2.7s", x: "92%" },
+];
+
 function accuracyPct(row: LeaderboardRow) {
   if (row.scored_count <= 0) return 0;
   const hits = row.exact_count + row.gd_count + row.winner_count;
@@ -210,17 +229,81 @@ function CardAchievements({
         const Icon = BADGE_META[key].icon;
         const label = t(`hallOfFame.${key}Title`);
         return (
-          <span key={key} className="wc-fut-card__badge" title={label}>
+          <span
+            key={key}
+            className={cn("wc-fut-card__badge", BADGE_META[key].iconClassName)}
+            title={label}
+          >
+            <Icon className="size-4" aria-hidden />
+            <span className="sr-only">{label}</span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+// Tournament reward chips shown beneath a podium player's name.
+function CardPrize({ medal, t }: { medal: PodiumMedal; t: LeaderboardT }) {
+  const prizes = PODIUM_PRIZES[medal];
+  if (prizes.length === 0) return null;
+
+  return (
+    <span className="wc-prize" aria-label={t("prizes.label")}>
+      <span className="wc-prize__eyebrow" aria-hidden>
+        <Trophy className="wc-prize__eyebrow-icon" />
+        {t("prizes.label")}
+      </span>
+      {prizes.map((kind) => {
+        if (kind === "cash") {
+          const label = t("prizes.cash");
+          return (
             <span
-              className={cn(
-                "wc-fut-card__badge-icon",
-                BADGE_META[key].iconClassName,
-              )}
-              aria-hidden
+              key={kind}
+              className="wc-prize__chip wc-prize__chip--cash"
+              title={label}
             >
-              <Icon className="size-3" />
+              <Coins className="wc-prize__icon" aria-hidden />
+              <span className="wc-prize__label">{label}</span>
+              {COIN_PARTICLES.map((coin, i) => (
+                <span
+                  key={i}
+                  className="wc-prize__coin"
+                  style={
+                    { "--wc-delay": coin.delay, "--wc-x": coin.x } as CSSProperties
+                  }
+                  aria-hidden
+                >
+                  $
+                </span>
+              ))}
             </span>
-            <span className="wc-fut-card__badge-label">{label}</span>
+          );
+        }
+
+        if (kind === "nitro") {
+          const label = t("prizes.nitro");
+          return (
+            <span
+              key={kind}
+              className="wc-prize__chip wc-prize__chip--nitro"
+              title={label}
+            >
+              <Gem className="wc-prize__icon" aria-hidden />
+              <span className="wc-prize__label">{label}</span>
+            </span>
+          );
+        }
+
+        const label = t("prizes.customRole");
+        return (
+          <span
+            key={kind}
+            className="wc-prize__chip wc-prize__chip--role"
+            title={label}
+          >
+            <span className="wc-prize__role-dot" aria-hidden />
+            <span className="wc-prize__label">{label}</span>
           </span>
         );
       })}
@@ -365,6 +448,9 @@ function Podium({
                 {place.row.full_name}
                 {mine ? ` ${t("you")}` : ""}
               </span>
+
+              {/* Tournament prize */}
+              <CardPrize medal={place.medal} t={t} />
 
               {/* Hall-of-Fame honours */}
               <CardAchievements keys={achievements} t={t} />

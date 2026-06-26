@@ -2,6 +2,7 @@ import "server-only";
 
 import type { User } from "@supabase/supabase-js";
 
+import { usernameToEmail } from "@/lib/auth/password-policy";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // Look up an auth user by email. `email` must already be normalized
@@ -19,4 +20,12 @@ export async function findUserByEmail(email: string): Promise<User | null> {
     data.users.find((user) => user.email?.trim().toLowerCase() === email) ??
     null
   );
+}
+
+// Look up an auth user by username. `username` must already be normalized
+// (lowercased + trimmed) — see `normalizeUsername` in `password-policy.ts`.
+export async function findUserByUsername(
+  username: string,
+): Promise<User | null> {
+  return findUserByEmail(usernameToEmail(username));
 }

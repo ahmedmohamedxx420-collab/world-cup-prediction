@@ -2,11 +2,12 @@
 
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { MATCH_STAGES, type Match } from "@/lib/match-types";
+import { localizedTeamName } from "@/lib/match-format";
 import type { Team } from "@/lib/teams";
 import { saveFixture, type FixtureFormState } from "./actions";
 
@@ -45,6 +46,7 @@ export function FixtureForm({
   fixture?: Match;
 }) {
   const [state, formAction] = useActionState(saveFixture, initialState);
+  const locale = useLocale();
   const t = useTranslations("admin.fixtures");
   const c = useTranslations("admin.common");
   const stagesT = useTranslations("admin.fixtures.stages");
@@ -91,7 +93,7 @@ export function FixtureForm({
             <option value="">{t("tbd")}</option>
             {teams.map((team) => (
               <option key={team.id} value={String(team.id)}>
-                {team.name_en}
+                {localizedTeamName(team, locale)}
               </option>
             ))}
           </select>
@@ -107,7 +109,7 @@ export function FixtureForm({
             <option value="">{t("tbd")}</option>
             {teams.map((team) => (
               <option key={team.id} value={String(team.id)}>
-                {team.name_en}
+                {localizedTeamName(team, locale)}
               </option>
             ))}
           </select>

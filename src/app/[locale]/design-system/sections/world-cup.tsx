@@ -1,12 +1,14 @@
-import { type ReactNode } from "react";
+import { type CSSProperties, type ReactNode } from "react";
 import {
   CalendarDays,
   Check,
   ChevronDown,
   CircleAlert,
   Clock3,
+  Coins,
   Crown,
   Flame,
+  Gem,
   Goal,
   ImagePlus,
   ListChecks,
@@ -934,6 +936,48 @@ const podiumSample: PodiumSample[] = [
 
 const PODIUM_MEDAL: Record<2 | 3, string> = { 2: "🥈", 3: "🥉" };
 
+// Static mirror of the leaderboard <CardPrize> for the design-system gallery.
+function PreviewPrize({ rank }: { rank: 1 | 2 | 3 }) {
+  return (
+    <span className="wc-prize" aria-label="Prize">
+      <span className="wc-prize__eyebrow" aria-hidden>
+        <Trophy className="wc-prize__eyebrow-icon" />
+        Prize
+      </span>
+      {rank === 1 ? (
+        <span className="wc-prize__chip wc-prize__chip--cash">
+          <Coins className="wc-prize__icon" aria-hidden />
+          <span className="wc-prize__label">50 SAR</span>
+          {["12%", "34%", "56%", "78%", "92%"].map((x, i) => (
+            <span
+              key={i}
+              className="wc-prize__coin"
+              style={
+                { "--wc-delay": `${-0.2 - i * 0.9}s`, "--wc-x": x } as CSSProperties
+              }
+              aria-hidden
+            >
+              $
+            </span>
+          ))}
+        </span>
+      ) : null}
+      {rank !== 1 ? (
+        <span className="wc-prize__chip wc-prize__chip--nitro">
+          <Gem className="wc-prize__icon" aria-hidden />
+          <span className="wc-prize__label">Nitro</span>
+        </span>
+      ) : null}
+      {rank !== 3 ? (
+        <span className="wc-prize__chip wc-prize__chip--role">
+          <span className="wc-prize__role-dot" aria-hidden />
+          <span className="wc-prize__label">Custom Role</span>
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 function PodiumPreview({ variant }: { variant: string }) {
   // Render order places the champion in the middle (2nd, 1st, 3rd).
   const order: PodiumSample[] = [podiumSample[1], podiumSample[0], podiumSample[2]];
@@ -991,6 +1035,8 @@ function PodiumPreview({ variant }: { variant: string }) {
               >
                 {p.name}
               </span>
+
+              <PreviewPrize rank={p.rank} />
 
               <span className="wc-fut-card__attrs">
                 <span className="flex flex-col items-center gap-0.5">

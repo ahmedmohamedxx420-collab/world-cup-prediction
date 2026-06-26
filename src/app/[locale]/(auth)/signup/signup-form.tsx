@@ -8,9 +8,15 @@ import { BallLoader } from "@/components/ball-loader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MIN_PASSWORD_LENGTH } from "@/lib/auth/password-policy";
 import {
-  signUpWithEmailPassword,
+  isValidUsername,
+  MAX_USERNAME_LENGTH,
+  MIN_PASSWORD_LENGTH,
+  MIN_USERNAME_LENGTH,
+  normalizeUsername,
+} from "@/lib/auth/password-policy";
+import {
+  signUpWithUsernamePassword,
   type SignUpState,
 } from "./actions";
 
@@ -35,14 +41,14 @@ function SubmitButton() {
 
 export function SignUpForm({
   locale,
-  defaultEmail = "",
+  defaultUsername = "",
 }: {
   locale: string;
-  defaultEmail?: string;
+  defaultUsername?: string;
 }) {
   const t = useTranslations("auth");
   const [state, formAction] = useActionState(
-    signUpWithEmailPassword,
+    signUpWithUsernamePassword,
     initialState,
   );
   const [clientError, setClientError] = useState<SignUpState["error"]>(undefined);
@@ -50,10 +56,17 @@ export function SignUpForm({
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     const formData = new FormData(event.currentTarget);
+    const username = normalizeUsername(String(formData.get("username") ?? ""));
     const password = String(formData.get("password") ?? "");
     const confirmPassword = String(formData.get("confirmPassword") ?? "");
 
     setClientError(undefined);
+
+    if (!isValidUsername(username)) {
+      event.preventDefault();
+      setClientError("invalidUsername");
+      return;
+    }
 
     if (password.length < MIN_PASSWORD_LENGTH) {
       event.preventDefault();
@@ -72,19 +85,26 @@ export function SignUpForm({
       <input type="hidden" name="locale" value={locale} />
 
       <div className="space-y-2">
-        <Label htmlFor="signup-email">{t("emailLabel")}</Label>
+        <Label htmlFor="signup-username">{t("usernameLabel")}</Label>
         <Input
-          id="signup-email"
-          name="email"
-          type="email"
-          inputMode="email"
-          autoComplete="email"
+          id="signup-username"
+          name="username"
+          type="text"
+          inputMode="text"
+          autoComplete="username"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
           dir="ltr"
-          defaultValue={defaultEmail}
-          placeholder={t("emailPlaceholder")}
-          aria-invalid={error === "invalidEmail" || error === "emailTaken"}
+          minLength={MIN_USERNAME_LENGTH}
+          maxLength={MAX_USERNAME_LENGTH}
+          pattern="[a-z0-9]+"
+          defaultValue={defaultUsername}
+          placeholder={t("usernamePlaceholder")}
+          aria-invalid={error === "invalidUsername" || error === "usernameTaken"}
           required
         />
+        <p className="text-xs text-muted-foreground">{t("usernameHint")}</p>
       </div>
 
       <div className="space-y-2">

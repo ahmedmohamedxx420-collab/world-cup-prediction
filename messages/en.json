@@ -2,7 +2,9 @@
   "common": {
     "appName": "World Cup Predictions",
     "tagline": "Predict the scores and compete with the server crew on one board.",
-    "start": "Get started"
+    "start": "Get started",
+    "welcome": "Welcome to",
+    "competition": "FIFA World Cup match-prediction tournament"
   },
   "toasts": {
     "profileSaved": "Profile saved.",
@@ -30,11 +32,14 @@
   "auth": {
     "title": "Welcome",
     "description": "Enter your email and we'll send you a six-digit login code.",
-    "passwordDescription": "Enter your email, then use your password to sign in.",
+    "passwordDescription": "Enter your username, then use your password to sign in.",
     "signupTitle": "Create your account",
-    "signupDescription": "Use your email and a password. No confirmation code needed.",
+    "signupDescription": "Pick a username and a password. No email or confirmation code needed.",
     "emailLabel": "Email",
     "emailPlaceholder": "you@example.com",
+    "usernameLabel": "Username",
+    "usernamePlaceholder": "yourname",
+    "usernameHint": "Lowercase letters and numbers only — no spaces or symbols, at least 4 characters. Must be unique.",
     "passwordLabel": "Password",
     "newPasswordLabel": "New password",
     "confirmPasswordLabel": "Confirm password",
@@ -48,9 +53,9 @@
     "haveAccount": "Already have an account?",
     "signInLink": "Sign in",
     "enterPasswordTitle": "Enter your password",
-    "enterPasswordDescription": "Signing in as {email}.",
+    "enterPasswordDescription": "Signing in as {username}.",
     "setPasswordTitle": "Create a new password",
-    "setPasswordDescription": "An admin reset this account. Set a new password for {email}.",
+    "setPasswordDescription": "An admin reset this account. Set a new password for {username}.",
     "loginSubmit": "Log in",
     "loggingIn": "Signing in...",
     "savePassword": "Save new password",
@@ -147,7 +152,9 @@
       "invalidCode": "That code is invalid or expired. Try again or resend it.",
       "invalidPhone": "Enter a valid phone number.",
       "invalidEmail": "Enter a valid email address.",
+      "invalidUsername": "Use 4–20 lowercase letters or numbers, with no spaces or symbols.",
       "emailTaken": "That email already has an account. Sign in instead.",
+      "usernameTaken": "That username is already taken. Sign in instead.",
       "wrongPassword": "That password didn't work. Try again.",
       "passwordTooShort": "Use at least {count} characters.",
       "passwordsDontMatch": "The passwords don't match.",
@@ -257,9 +264,15 @@
     "favouriteScore": "Favourite score",
     "bestMatch": "Best match",
     "bestMatchValue": "{match}, {points} pts",
+    "prizes": {
+      "label": "Prize",
+      "cash": "50 SAR",
+      "nitro": "Nitro",
+      "customRole": "Custom Role"
+    },
     "hallOfFame": {
       "title": "Hall of Fame",
-      "description": "The family's standout predictors — crowned for the calls nobody else made.",
+      "description": "The server's standout predictors — badges awarded automatically by accuracy, streaks, and scoring rate across scored matches. Compete to claim your spot.",
       "crownedTitle": "Crowned",
       "moreTitle": "More honours",
       "emptyTitle": "No awards yet",
@@ -373,12 +386,12 @@
     "footnote": "Checked top to bottom — the first match wins, points never stack.",
     "exactTitle": "Exact score",
     "exactBlurb": "Both numbers right.",
-    "marginTitle": "Right margin",
+    "marginTitle": "Right goal difference",
     "marginBlurb": "Correct goal gap and winner.",
     "winnerTitle": "Right winner",
     "winnerBlurb": "Right side, wrong margin.",
-    "missTitle": "Miss",
-    "missBlurb": "Wrong outcome."
+    "missTitle": "Wrong result",
+    "missBlurb": "Neither number right."
   },
   "admin": {
     "title": "Admin",

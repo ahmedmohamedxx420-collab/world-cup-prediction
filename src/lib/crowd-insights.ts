@@ -2,6 +2,7 @@ import "server-only";
 
 import type { AppSettings } from "@/lib/app-settings";
 import type { Match } from "@/lib/match-types";
+import { formatScoreline } from "@/lib/match-format";
 import type { PredictionWithProfile } from "@/lib/predictions";
 import { scoreTier, tierPoints } from "@/lib/scoring";
 
@@ -88,7 +89,7 @@ export function computeCrowdInsights(
   // Most-common scorelines (top 3).
   const tally = new Map<string, number>();
   for (const p of predictions) {
-    const key = `${p.home_score}-${p.away_score}`;
+    const key = formatScoreline(p.home_score, p.away_score) as string;
     tally.set(key, (tally.get(key) ?? 0) + 1);
   }
   const topScorelines: ScorelineCount[] = [...tally.entries()]
@@ -111,7 +112,10 @@ export function computeCrowdInsights(
   );
   const boldest = {
     member: memberOf(boldestPick),
-    score: `${boldestPick.home_score}-${boldestPick.away_score}`,
+    score: formatScoreline(
+      boldestPick.home_score,
+      boldestPick.away_score,
+    ) as string,
     total: boldestPick.home_score + boldestPick.away_score,
   };
 

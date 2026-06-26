@@ -4,10 +4,13 @@ import { cache } from "react";
 import {
   isAdminEmail,
   isAdminPhoneDigits,
+  isAdminUsername,
   phoneDigitsFromSyntheticEmail,
   promoteEmailAdminProfile,
   promotePhoneAdminProfile,
+  promoteUsernameAdminProfile,
 } from "@/lib/auth/phone-admin";
+import { usernameFromSyntheticEmail } from "@/lib/auth/password-policy";
 import { createClient } from "@/lib/supabase/server";
 
 export type Profile = {
@@ -48,9 +51,17 @@ export const getProfile = cache(async (): Promise<Profile | null> => {
   const profile = (data as Profile | null) ?? null;
 
   const phoneDigits = phoneDigitsFromSyntheticEmail(user.email);
+  const username = usernameFromSyntheticEmail(user.email);
 
   if (profile && !profile.is_admin && isAdminPhoneDigits(phoneDigits)) {
     const promotionError = await promotePhoneAdminProfile(user.id, phoneDigits);
+
+    if (promotionError) throw promotionError;
+    return { ...profile, is_admin: true };
+  }
+
+  if (profile && !profile.is_admin && isAdminUsername(username)) {
+    const promotionError = await promoteUsernameAdminProfile(user.id, username);
 
     if (promotionError) throw promotionError;
     return { ...profile, is_admin: true };

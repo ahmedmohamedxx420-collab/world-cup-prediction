@@ -11,17 +11,12 @@ import type {
   UserResult,
 } from "@/lib/leaderboard";
 import type { FormDot, PlayerStats } from "@/lib/hall-of-fame";
-import { sideName } from "@/lib/match-format";
+import { formatScoreline, sideName } from "@/lib/match-format";
 import { scoreTier } from "@/lib/scoring";
 import { ScoringStrip } from "@/components/scoring-legend";
 import { TIER_META } from "@/components/scoring-tiers";
 import type { Team } from "@/lib/teams";
 import { cn } from "@/lib/utils";
-
-function scoreText(home: number | null, away: number | null) {
-  if (home == null || away == null) return null;
-  return `${home}-${away}`;
-}
 
 function StatChip({
   label,
@@ -112,8 +107,15 @@ export async function ResultsBreakdown({
             ? fixturesT("matchNumber", {
                 number: bestMatch.match.match_number,
               })
-            : scoreText(bestMatch.match.home_score, bestMatch.match.away_score) ??
-              `${bestMatch.home_score}-${bestMatch.away_score}`,
+            : formatScoreline(
+                bestMatch.match.home_score,
+                bestMatch.match.away_score,
+                { isolate: true },
+              ) ??
+              formatScoreline(bestMatch.home_score, bestMatch.away_score, {
+                isolate: true,
+              }) ??
+              "-",
         points: bestMatch.points_awarded ?? 0,
       })
     : "-";
@@ -186,7 +188,13 @@ export async function ResultsBreakdown({
           <StatChip label={t("bestStreak")} value={playerStats.bestStreak} />
           <StatChip
             label={t("favouriteScore")}
-            value={playerStats.favouriteScoreline ?? "-"}
+            value={
+              playerStats.favouriteScoreline ? (
+                <span dir="ltr">{playerStats.favouriteScoreline}</span>
+              ) : (
+                "-"
+              )
+            }
           />
           <StatChip
             label={t("bestMatch")}
@@ -224,14 +232,16 @@ export async function ResultsBreakdown({
               match.home_team_id,
               match.home_label,
               fixturesT("tbd"),
+              locale,
             );
             const awayName = sideName(
               teamMap,
               match.away_team_id,
               match.away_label,
               fixturesT("tbd"),
+              locale,
             );
-            const actual = scoreText(match.home_score, match.away_score);
+            const actual = formatScoreline(match.home_score, match.away_score);
             const tier =
               match.home_score != null &&
               match.away_score != null &&
@@ -267,8 +277,11 @@ export async function ResultsBreakdown({
                     ) : null}
                   </div>
 
-                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-                    <span className="truncate text-start text-sm font-semibold">
+                  <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 [direction:ltr]">
+                    <span
+                      className="truncate text-start text-sm font-semibold"
+                      dir="auto"
+                    >
                       {homeName}
                     </span>
                     <span
@@ -278,10 +291,14 @@ export async function ResultsBreakdown({
                           ? "bg-gold/20 text-foreground"
                           : "bg-muted text-muted-foreground",
                       )}
+                      dir={actual ? "ltr" : "auto"}
                     >
                       {actual ?? fixturesT("vs")}
                     </span>
-                    <span className="truncate text-start text-sm font-semibold">
+                    <span
+                      className="truncate text-start text-sm font-semibold"
+                      dir="auto"
+                    >
                       {awayName}
                     </span>
                   </div>
@@ -301,15 +318,18 @@ export async function ResultsBreakdown({
                       <span className="block text-xs text-muted-foreground">
                         {t("prediction")}
                       </span>
-                      <span className="text-base font-semibold tabular-nums">
-                        {result.home_score}-{result.away_score}
+                      <span className="text-base font-semibold tabular-nums" dir="ltr">
+                        {formatScoreline(result.home_score, result.away_score)}
                       </span>
                     </div>
                     <div className="rounded-xl bg-muted/40 px-3 py-2">
                       <span className="block text-xs text-muted-foreground">
                         {t("actual")}
                       </span>
-                      <span className="text-base font-semibold tabular-nums">
+                      <span
+                        className="text-base font-semibold tabular-nums"
+                        dir={actual ? "ltr" : "auto"}
+                      >
                         {actual ?? t("resultPending")}
                       </span>
                     </div>

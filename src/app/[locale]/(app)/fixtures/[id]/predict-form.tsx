@@ -36,7 +36,10 @@ function ScoreStepper({
 }) {
   return (
     <div className="wc-fixture-card rounded-2xl border bg-card/95 p-4 shadow-sm">
-      <div className="truncate text-center text-sm font-black tracking-normal">
+      <div
+        className="truncate text-center text-sm font-black tracking-normal"
+        dir="auto"
+      >
         {label}
       </div>
       <div className="mt-4 flex items-center justify-center gap-3">
@@ -50,7 +53,10 @@ function ScoreStepper({
         >
           <Minus aria-hidden />
         </Button>
-        <output className="min-w-16 text-center text-4xl font-black tabular-nums text-foreground">
+        <output
+          className="min-w-16 text-center text-4xl font-black tabular-nums text-foreground"
+          dir="ltr"
+        >
           {value}
         </output>
         <Button
@@ -216,7 +222,7 @@ export function PredictForm({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2 [direction:ltr]">
         <ScoreStepper
           label={homeName}
           value={homeScore}
