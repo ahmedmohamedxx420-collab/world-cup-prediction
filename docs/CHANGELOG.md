@@ -215,7 +215,7 @@
   `globals.css`, modeled on the existing `.wc-fut-card__badge` chip. RTL-safe
   (logical properties only) and disabled/hidden under `prefers-reduced-motion`.
 - Added `leaderboard.prizes.{label,cash,nitro,customRole}` strings to `en.json`
-  and `ar.json` (Arabic: ٥٠ ر.س / نيترو / رتبة مخصصة).
+  and `ar.json` (Arabic: ٥٠ ر.س / نيترو / رول خاص).
 - Mirrored the chips into the design-system podium preview (`PreviewPrize` in
   `sections/world-cup.tsx`) so the effect is viewable at `/[locale]/design-system`
   without seeding leaderboard data or signing in.

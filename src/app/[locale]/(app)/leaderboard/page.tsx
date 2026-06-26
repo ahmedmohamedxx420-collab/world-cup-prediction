@@ -65,7 +65,8 @@ function TabLink({
 const STAT_TONES = {
   lime: "bg-lime/20 text-foreground",
   gold: "bg-gold/20 text-gold-foreground",
-  emerald: "bg-primary/10 text-primary",
+  emerald:
+    "border border-primary/25 bg-white/90 text-[#0f2a1d] shadow-sm dark:border-white/20 dark:bg-white/90 dark:text-[#0f2a1d]",
   muted: "bg-muted/50 text-muted-foreground",
 } as const;
 
