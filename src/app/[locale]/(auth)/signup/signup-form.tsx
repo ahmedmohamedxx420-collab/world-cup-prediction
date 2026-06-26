@@ -22,6 +22,13 @@ import {
 
 const initialState: SignUpState = {};
 
+function sanitizeUsername(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, MAX_USERNAME_LENGTH);
+}
+
 function SubmitButton() {
   const { pending } = useFormStatus();
   const t = useTranslations("auth");
@@ -42,11 +49,16 @@ function SubmitButton() {
 export function SignUpForm({
   locale,
   defaultUsername = "",
+  notFound = false,
 }: {
   locale: string;
   defaultUsername?: string;
+  notFound?: boolean;
 }) {
   const t = useTranslations("auth");
+  const [username, setUsername] = useState(() =>
+    sanitizeUsername(defaultUsername),
+  );
   const [state, formAction] = useActionState(
     signUpWithUsernamePassword,
     initialState,
@@ -84,6 +96,20 @@ export function SignUpForm({
     <form action={formAction} className="space-y-4" onSubmit={handleSubmit}>
       <input type="hidden" name="locale" value={locale} />
 
+      {notFound ? (
+        <div
+          className="space-y-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm"
+          role="status"
+        >
+          <p className="font-medium text-destructive">
+            {t("signupNotFoundTitle")}
+          </p>
+          <p className="text-muted-foreground">
+            {t("signupNotFoundDescription", { username })}
+          </p>
+        </div>
+      ) : null}
+
       <div className="space-y-2">
         <Label htmlFor="signup-username">{t("usernameLabel")}</Label>
         <Input
@@ -99,7 +125,10 @@ export function SignUpForm({
           minLength={MIN_USERNAME_LENGTH}
           maxLength={MAX_USERNAME_LENGTH}
           pattern="[a-z0-9]+"
-          defaultValue={defaultUsername}
+          value={username}
+          onChange={(event) =>
+            setUsername(sanitizeUsername(event.target.value))
+          }
           placeholder={t("usernamePlaceholder")}
           aria-invalid={error === "invalidUsername" || error === "usernameTaken"}
           required

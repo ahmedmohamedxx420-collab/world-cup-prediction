@@ -64,6 +64,8 @@
     "passwordResetTipBody": "Open a ticket on Discord and contact Mr. Boss Baby. He can reset your password for you.",
     "accountNotFoundTitle": "No account found",
     "accountNotFoundDescription": "We couldn't find an account for {email}. Create one to join.",
+    "signupNotFoundTitle": "Username not found",
+    "signupNotFoundDescription": "We couldn't find an account for \"{username}\". Create one below to join.",
     "sendCode": "Send code",
     "sending": "Sending…",
     "codeLabel": "Login code",

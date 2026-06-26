@@ -28,6 +28,42 @@
 
 ---
 
+## 2026-06-26 - Mobile UI polish: scores, podium, Hall of Fame, avatars, reveal links
+**Plan item:** Mobile UI polish batch   **Status:** done (lint + build clean)
+
+**What changed**
+- Prevented finished-match score badges from wrapping at the hyphen in the fixtures list
+  and member results breakdown by adding no-wrap centered badge text.
+- Reflowed the top-3 leaderboard podium on mobile: champion spans the top row, silver
+  and bronze sit side-by-side below, and the original 2-1-3 desktop podium returns at
+  `sm+`. The champion lift margin now only applies at `sm+` so mobile spacing stays tight.
+- Strengthened Hall of Fame awarded crowned cards with a deeper gold wash, and replaced
+  unawarded card opacity fades with solid muted dashed-card treatments.
+- Made avatar initials a solid high-contrast primary chip instead of a faint tint.
+- Turned revealed prediction cards on past match pages into locale-aware profile links
+  to `/leaderboard/<userId>` with row hover affordance.
+
+**Why**
+- Direct mobile polish pass: scorelines needed to stay legible, podium cards needed
+  breathing room, empty HoF cards needed to look solid rather than transparent, initials
+  needed clearer contrast, and revealed predictions should let members jump to profiles.
+
+**Files touched**
+- src/app/[locale]/(app)/fixtures/page.tsx
+- src/app/[locale]/(app)/fixtures/[id]/page.tsx
+- src/app/[locale]/(app)/leaderboard/page.tsx
+- src/app/globals.css
+- src/components/hall-of-fame.tsx
+- src/components/results-breakdown.tsx
+- src/components/ui/avatar.tsx
+- docs/BUILD-PLAN.md
+- docs/CHANGELOG.md
+
+**Notes / gotchas**
+- This remains a light-mode-only fix; no `next-themes` wiring or dark-mode toggle was added.
+- Authenticated mobile visual QA still needs a logged-in browser/session, but static checks
+  passed: `npm run lint` and `npm run build`.
+
 ## 2026-06-26 — Copywriting & UX polish (scoring labels, Hall of Fame, splash skip, competition framing)
 **Plan item:** Copy/UX polish pass   **Status:** done (build clean)
 

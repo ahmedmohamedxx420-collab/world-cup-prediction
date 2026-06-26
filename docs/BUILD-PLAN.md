@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-21 (rev 39)
+> **Last updated:** 2026-06-26 (rev 47)
 
 ---
 
@@ -17,6 +17,18 @@
 - ⊘ **Blocked / skipped** (note why inline)
 
 ## Current Position
+
+=> **Mobile UI polish for scores, podium, Hall of Fame, avatars, and reveal links (rev 47).**
+Fixed the reported light-mode mobile polish batch: finished-match score badges in
+fixtures and member result breakdowns now stay on one line; the leaderboard podium
+stacks the champion full-width above silver/bronze on mobile and returns to the
+2-1-3 podium at `sm+`; the champion lift margin is desktop-only; Hall of Fame
+awarded crowned cards have a stronger gold wash while unawarded cards stay solid
+muted instead of faded; avatar initials use a solid high-contrast primary chip;
+and past-match prediction reveal cards now link to `/leaderboard/<userId>`.
+Files: `fixtures/page.tsx`, `fixtures/[id]/page.tsx`, `leaderboard/page.tsx`,
+`globals.css`, `hall-of-fame.tsx`, `results-breakdown.tsx`, `ui/avatar.tsx`.
+`npm run lint` and `npm run build` clean. See CHANGELOG 2026-06-26 (rev 47).
 
 ➡️ **Prizes vs honours redesigned by shape (rev 46).** On the top-3 cards prizes and
 Hall-of-Fame honours were blending (both white icon+label pills). Now they differ by

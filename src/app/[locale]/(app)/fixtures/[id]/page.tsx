@@ -7,6 +7,7 @@ import { MatchBanner } from "@/components/match-banner";
 import { CrowdInsights } from "@/components/crowd-insights";
 import { GoalBurst } from "@/components/goal-burst";
 import { Avatar } from "@/components/ui/avatar";
+import { Link } from "@/i18n/navigation";
 import { getAppSettings } from "@/lib/app-settings";
 import { computeCrowdInsights } from "@/lib/crowd-insights";
 import { getMatch } from "@/lib/matches";
@@ -80,38 +81,45 @@ function RevealList({
             prediction.profile?.full_name ?? t("unknownMember");
 
           return (
-            <li
-              key={prediction.id}
-              className={cn(
-                "wc-fixture-card flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5",
-                mine ? "border-primary/30 bg-primary/5" : "bg-card",
-              )}
-            >
-              <span className="flex min-w-0 items-center gap-2.5">
-                <Avatar
-                  src={prediction.profile?.avatar_url}
-                  name={displayName}
-                  className="size-9"
-                />
-                <span className="min-w-0">
-                  <span className="block truncate text-sm font-semibold">
-                    {displayName}
-                    {mine ? ` ${t("you")}` : ""}
+            <li key={prediction.id}>
+              <Link
+                href={`/leaderboard/${prediction.user_id}`}
+                className={cn(
+                  "wc-fixture-card flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 transition-colors",
+                  mine
+                    ? "border-primary/30 bg-primary/5 hover:bg-primary/10"
+                    : "bg-card hover:bg-muted/40",
+                )}
+              >
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <Avatar
+                    src={prediction.profile?.avatar_url}
+                    name={displayName}
+                    className="size-9"
+                  />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold">
+                      {displayName}
+                      {mine ? ` ${t("you")}` : ""}
+                    </span>
+                    {prediction.points_awarded == null ? (
+                      <span className="block text-xs text-muted-foreground">
+                        {t("pointsPending")}
+                      </span>
+                    ) : (
+                      <span className="mt-0.5 inline-flex items-center rounded-full bg-gold/20 px-2 py-0.5 text-xs font-bold tabular-nums text-gold-foreground">
+                        {t("points", { points: prediction.points_awarded })}
+                      </span>
+                    )}
                   </span>
-                  {prediction.points_awarded == null ? (
-                    <span className="block text-xs text-muted-foreground">
-                      {t("pointsPending")}
-                    </span>
-                  ) : (
-                    <span className="mt-0.5 inline-flex items-center rounded-full bg-gold/20 px-2 py-0.5 text-xs font-bold tabular-nums text-gold-foreground">
-                      {t("points", { points: prediction.points_awarded })}
-                    </span>
-                  )}
                 </span>
-              </span>
-              <span className="shrink-0 text-lg font-bold tabular-nums" dir="ltr">
-                {formatScoreline(prediction.home_score, prediction.away_score)}
-              </span>
+                <span
+                  className="shrink-0 text-lg font-bold tabular-nums"
+                  dir="ltr"
+                >
+                  {formatScoreline(prediction.home_score, prediction.away_score)}
+                </span>
+              </Link>
             </li>
           );
         })}

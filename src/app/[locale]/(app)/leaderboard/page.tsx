@@ -335,8 +335,8 @@ function Podium({
   ];
 
   return (
-    <section className="wc-podium-cards px-0.5 pt-3 sm:px-2">
-      <div className="grid grid-cols-3 items-end gap-2 sm:gap-3 [direction:ltr]">
+    <section className="wc-podium-cards pt-3">
+      <div className="grid grid-cols-2 gap-3 px-2 sm:grid-cols-3 sm:items-end sm:gap-3 [direction:ltr]">
         {places.map((place) => {
           const isChampion = place.displayRank === 1;
           const mine = place.row.user_id === currentUserId;
@@ -353,7 +353,8 @@ function Podium({
               className={cn(
                 "wc-fut-card group",
                 `wc-fut-card--${place.medal}`,
-                isChampion && "wc-fut-card--champion",
+                isChampion &&
+                  "order-first col-span-2 wc-fut-card--champion sm:order-none sm:col-span-1",
                 mine && "wc-fut-card--mine",
               )}
             >

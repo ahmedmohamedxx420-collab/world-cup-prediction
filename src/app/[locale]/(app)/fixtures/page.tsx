@@ -508,7 +508,7 @@ export default async function FixturesPage({
                             </span>
                             <span
                               className={cn(
-                                "rounded-full px-3 py-1.5 text-xs font-black tabular-nums shadow-sm",
+                                "rounded-full px-3 py-1.5 text-center text-xs font-black tabular-nums whitespace-nowrap shadow-sm",
                                 result
                                   ? "bg-gold-grad text-gold-foreground"
                                   : "bg-muted text-muted-foreground",

@@ -230,8 +230,8 @@ function CrownedCard({
       className={cn(
         "relative items-center gap-4 overflow-hidden rounded-2xl text-center transition-all hover:-translate-y-0.5 hover:shadow-lg",
         awarded
-          ? "border-gold/40 bg-gradient-to-b from-gold/10 to-card shadow-gold"
-          : "border-dashed opacity-80",
+          ? "border-gold/40 bg-gradient-to-b from-gold/20 to-card shadow-gold"
+          : "border-dashed bg-muted/30",
       )}
     >
       <CardHeader className="w-full justify-items-center gap-2 text-center">
@@ -303,7 +303,7 @@ function StandardCard({
       size="sm"
       className={cn(
         "min-h-44 justify-between rounded-xl transition-all hover:-translate-y-0.5 hover:shadow-md",
-        awarded ? "shadow-sm" : "border-dashed opacity-75",
+        awarded ? "shadow-sm" : "border-dashed bg-muted/30",
       )}
     >
       <CardHeader className="gap-3">

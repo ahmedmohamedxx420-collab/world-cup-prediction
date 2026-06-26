@@ -286,7 +286,7 @@ export async function ResultsBreakdown({
                     </span>
                     <span
                       className={cn(
-                        "rounded-md px-2 py-1 text-xs font-bold tabular-nums",
+                        "rounded-md px-2 py-1 text-center text-xs font-bold tabular-nums whitespace-nowrap",
                         actual
                           ? "bg-gold/20 text-foreground"
                           : "bg-muted text-muted-foreground",

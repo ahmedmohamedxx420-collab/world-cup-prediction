@@ -7,11 +7,12 @@ export default async function SignUpPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ username?: string }>;
+  searchParams: Promise<{ username?: string; reason?: string }>;
 }) {
   const { locale } = await params;
-  const { username } = await searchParams;
+  const { username, reason } = await searchParams;
   const defaultUsername = typeof username === "string" ? username : "";
+  const notFound = reason === "notfound";
   setRequestLocale(locale);
   const t = await getTranslations("auth");
   const tCommon = await getTranslations("common");
@@ -22,7 +23,11 @@ export default async function SignUpPage({
       title={t("signupTitle")}
       description={t("signupDescription")}
     >
-      <SignUpForm locale={locale} defaultUsername={defaultUsername} />
+      <SignUpForm
+        locale={locale}
+        defaultUsername={defaultUsername}
+        notFound={notFound}
+      />
     </AuthCard>
   );
 }

@@ -29,7 +29,7 @@ function Avatar({
     <span
       data-slot="avatar"
       className={cn(
-        "relative flex size-10 shrink-0 overflow-hidden rounded-full bg-primary/10 text-sm font-semibold text-primary ring-1 ring-primary/20",
+        "relative flex size-10 shrink-0 overflow-hidden rounded-full bg-primary text-sm font-semibold text-primary-foreground ring-1 ring-primary/30",
         className,
       )}
       {...props}

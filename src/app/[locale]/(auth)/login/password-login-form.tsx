@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  MAX_USERNAME_LENGTH,
   MIN_PASSWORD_LENGTH,
   MIN_USERNAME_LENGTH,
   normalizeUsername,
@@ -24,6 +25,13 @@ import {
 
 const lookupInitialState: LookupLoginState = {};
 const authInitialState: PasswordAuthState = {};
+
+function sanitizeUsername(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, MAX_USERNAME_LENGTH);
+}
 
 function SubmitButton({
   label,
@@ -54,7 +62,9 @@ export function PasswordLoginForm({
 }) {
   const t = useTranslations("auth");
   const locale = useLocale();
-  const [username, setUsername] = useState(defaultUsername);
+  const [username, setUsername] = useState(() =>
+    sanitizeUsername(defaultUsername),
+  );
   const [isEditingUsername, setIsEditingUsername] = useState(true);
   const [lookupState, lookupAction] = useActionState(
     lookupLogin,
@@ -124,8 +134,11 @@ export function PasswordLoginForm({
             spellCheck={false}
             dir="ltr"
             minLength={MIN_USERNAME_LENGTH}
+            maxLength={MAX_USERNAME_LENGTH}
             value={username}
-            onChange={(event) => setUsername(event.target.value)}
+            onChange={(event) =>
+              setUsername(sanitizeUsername(event.target.value))
+            }
             placeholder={t("usernamePlaceholder")}
             aria-invalid={Boolean(lookupState.error)}
             required

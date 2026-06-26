@@ -103,7 +103,10 @@ export async function lookupLogin(
 
   // No account for this username — send them straight to sign-up with the
   // username prefilled. (redirect() throws, so it sits outside the try/catch.)
-  redirect({ href: `/signup?username=${encodeURIComponent(username)}`, locale });
+  redirect({
+    href: `/signup?username=${encodeURIComponent(username)}&reason=notfound`,
+    locale,
+  });
   return { username };
 }
 
