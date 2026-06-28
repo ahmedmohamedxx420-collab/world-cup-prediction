@@ -349,6 +349,7 @@
     "celebrateWord": "GOAL!",
     "celebrateExact": "You nailed the exact score!",
     "draw": "Draw",
+    "teamToWin": "{team} to win",
     "insightsTitle": "Crowd insights",
     "verdictTitle": "Server verdict",
     "verdictLeg": "{pct}% · {count}",

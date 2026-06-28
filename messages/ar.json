@@ -349,6 +349,7 @@
     "celebrateWord": "هدف!",
     "celebrateExact": "أصبت النتيجة بالضبط!",
     "draw": "تعادل",
+    "teamToWin": "فوز {team}",
     "insightsTitle": "نظرة ناس السيرفر",
     "verdictTitle": "حكم ناس السيرفر",
     "verdictLeg": "{pct}% · {count}",

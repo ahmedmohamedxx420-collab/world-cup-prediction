@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-26 (rev 48)
+> **Last updated:** 2026-06-29 (rev 49)
 
 ---
 
@@ -18,7 +18,19 @@
 
 ## Current Position
 
-=> **Hall of Fame opacity and podium initials follow-up (rev 48).**
+=> **Prediction form backed-team confirmation (rev 49).**
+The fixture prediction form now keeps the correct forced-LTR score grid, but
+adds an in-place confirmation of what the current score means: the live line
+names the backed team (or draw) and shows an isolated scoreline, steppers include
+team flags, and the strictly leading side gets a gold ring plus Crown marker.
+No save/scoring semantics changed: the left/home stepper still writes
+`home_score`, the right/away stepper still writes `away_score`, and all reveal
+views remain consistent with that mapping. Files: `scoring.ts`,
+`fixtures/[id]/predict-form.tsx`, `fixtures/[id]/page.tsx`, `messages/en.json`,
+`messages/ar.json`. `npm run lint` and `npm run build` clean. See CHANGELOG
+2026-06-29 (rev 49).
+
+-> **Hall of Fame opacity and podium initials follow-up (rev 48).**
 Closed two remaining phone-visible regressions from the mobile polish pass:
 unawarded Hall of Fame crowned/standard cards now use solid `bg-muted` dashed
 surfaces instead of `bg-muted/30`, so the `Card` surface is opaque after
@@ -588,6 +600,9 @@ Vercel URL exists and run it once.
 - ☑ Step 1 — Score stepper UI per match
 - ☑ Step 2 — Create/update prediction (blocked at/after kickoff, enforced by RLS)
 - ☑ Step 3 — "Saved" / "locked" states
+- ☑ Step 4 — Prediction form clarifies which team the entered score backs with
+  flags, a live outcome sentence, isolated scoreline, and leading-side highlight;
+  the forced-LTR home/away data mapping is unchanged.
 
 ### 3.3 Privacy & reveal ☑
 

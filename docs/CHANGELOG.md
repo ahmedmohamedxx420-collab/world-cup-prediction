@@ -28,6 +28,40 @@
 
 ---
 
+## 2026-06-29 - Prediction form confirms backed team
+**Plan item:** 3.2 Predict / edit follow-up   **Status:** done (lint + build clean)
+
+**What changed**
+- Added `matchOutcome(home, away)` to the client-safe scoring helpers.
+- Updated the fixture prediction form to show a live confirmation line beneath
+  the steppers: `{team} to win` or `Draw`, followed by an isolated scoreline.
+- Added each team's flag to its score stepper and highlighted only the strictly
+  leading side with a gold ring plus Crown marker.
+- Passed the existing fixture team flags into `PredictForm` and added the new
+  `predict.teamToWin` translation in English and Arabic.
+
+**Why**
+- The score grid is intentionally forced LTR so home remains left and away
+  remains right everywhere. In Arabic RTL reading, that can still invite a user
+  to put the winning number on the visually first control without realizing they
+  backed the home team. The fix clarifies the meaning at entry time rather than
+  swapping layout or changing saved data semantics.
+
+**Files touched**
+- src/lib/scoring.ts
+- src/app/[locale]/(app)/fixtures/[id]/predict-form.tsx
+- src/app/[locale]/(app)/fixtures/[id]/page.tsx
+- messages/en.json
+- messages/ar.json
+- docs/BUILD-PLAN.md
+- docs/CHANGELOG.md
+
+**Notes / gotchas**
+- No action/scoring/storage behavior changed: home stepper still writes
+  `home_score`; away stepper still writes `away_score`.
+- The new scoreline uses `formatScoreline(..., { isolate: true })` so digits keep
+  their LTR order inside Arabic UI text.
+
 ## 2026-06-26 - Hall of Fame opacity and podium initials follow-up
 **Plan item:** Mobile UI polish follow-up   **Status:** done (lint + build clean; dev route smoke checked)
 

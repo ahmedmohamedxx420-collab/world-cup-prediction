@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, CircleAlert, Lock, Minus, Plus } from "lucide-react";
+import { Check, CircleAlert, Crown, Lock, Minus, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { BallLoader } from "@/components/ball-loader";
+import { formatScoreline } from "@/lib/match-format";
+import { matchOutcome } from "@/lib/scoring";
 import { cn } from "@/lib/utils";
 import { savePrediction, type PredictionFormState } from "./actions";
 
@@ -21,26 +23,45 @@ function kickoffHasPassed(iso: string) {
 
 function ScoreStepper({
   label,
+  flag,
   value,
+  leading,
   disabled,
   increaseLabel,
   decreaseLabel,
   onChange,
 }: {
   label: string;
+  flag?: string | null;
   value: number;
+  leading: boolean;
   disabled: boolean;
   increaseLabel: string;
   decreaseLabel: string;
   onChange: (nextValue: number) => void;
 }) {
   return (
-    <div className="wc-fixture-card rounded-2xl border bg-card/95 p-4 shadow-sm">
+    <div
+      className={cn(
+        "wc-fixture-card rounded-2xl border bg-card/95 p-4 shadow-sm transition-colors",
+        leading && "border-gold/55 bg-gold/10 ring-2 ring-gold/45",
+      )}
+    >
       <div
-        className="truncate text-center text-sm font-black tracking-normal"
+        className="flex min-w-0 items-center justify-center gap-2 text-center text-sm font-black tracking-normal"
         dir="auto"
       >
-        {label}
+        {flag ? (
+          <span className="shrink-0 text-xl leading-none" aria-hidden>
+            {flag}
+          </span>
+        ) : null}
+        <span className="min-w-0 truncate">{label}</span>
+        {leading ? (
+          <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-gold/20 ring-1 ring-gold/40">
+            <Crown className="size-3.5 text-gold" aria-hidden />
+          </span>
+        ) : null}
       </div>
       <div className="mt-4 flex items-center justify-center gap-3">
         <Button
@@ -79,6 +100,8 @@ export function PredictForm({
   kickoffAt,
   homeName,
   awayName,
+  homeFlag,
+  awayFlag,
   initialHomeScore,
   initialAwayScore,
   hasPrediction,
@@ -89,6 +112,8 @@ export function PredictForm({
   kickoffAt: string;
   homeName: string;
   awayName: string;
+  homeFlag?: string | null;
+  awayFlag?: string | null;
   initialHomeScore: number;
   initialAwayScore: number;
   hasPrediction: boolean;
@@ -191,6 +216,14 @@ export function PredictForm({
   }
 
   const effectiveStatus = locked ? "locked" : status;
+  const outcome = matchOutcome(homeScore, awayScore);
+  const outcomeLabel =
+    outcome === "home"
+      ? t("teamToWin", { team: homeName })
+      : outcome === "away"
+        ? t("teamToWin", { team: awayName })
+        : t("draw");
+  const scoreline = formatScoreline(homeScore, awayScore, { isolate: true });
 
   const indicator = {
     idle: {
@@ -225,7 +258,9 @@ export function PredictForm({
       <div className="grid gap-3 sm:grid-cols-2 [direction:ltr]">
         <ScoreStepper
           label={homeName}
+          flag={homeFlag}
           value={homeScore}
+          leading={outcome === "home"}
           disabled={disabled}
           increaseLabel={t("increase", { team: homeName })}
           decreaseLabel={t("decrease", { team: homeName })}
@@ -233,13 +268,29 @@ export function PredictForm({
         />
         <ScoreStepper
           label={awayName}
+          flag={awayFlag}
           value={awayScore}
+          leading={outcome === "away"}
           disabled={disabled}
           increaseLabel={t("increase", { team: awayName })}
           decreaseLabel={t("decrease", { team: awayName })}
           onChange={updateAway}
         />
       </div>
+
+      <p
+        role="status"
+        aria-live="polite"
+        className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/25 bg-primary/10 py-3 pe-4 ps-4 text-start text-sm font-bold text-primary"
+      >
+        <span dir="auto">{outcomeLabel}</span>
+        <span className="text-primary/60" aria-hidden>
+          {"\u00B7"}
+        </span>
+        <span className="tabular-nums text-foreground" dir="ltr">
+          {scoreline}
+        </span>
+      </p>
 
       <div role="status" aria-live="polite" className="flex justify-center">
         <span

@@ -4,6 +4,7 @@
 // label *how* a prediction earned its points without re-querying.
 
 export type ScoreTier = "exact" | "margin" | "winner" | "miss";
+export type MatchOutcome = "home" | "draw" | "away";
 
 // Top-down order — the first matching tier wins; points never stack.
 export const SCORE_TIERS: ScoreTier[] = ["exact", "margin", "winner", "miss"];
@@ -14,6 +15,12 @@ export type TierPoints = {
   margin: number;
   winner: number;
 };
+
+export function matchOutcome(home: number, away: number): MatchOutcome {
+  if (home > away) return "home";
+  if (home < away) return "away";
+  return "draw";
+}
 
 // Which tier a prediction lands in against an actual result. Goal difference is
 // signed (home − away), so a correct margin also implies the correct winner.

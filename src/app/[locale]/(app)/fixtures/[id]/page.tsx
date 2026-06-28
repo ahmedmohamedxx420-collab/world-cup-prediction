@@ -259,6 +259,8 @@ export default async function FixtureDetailPage({
           kickoffAt={match.kickoff_at}
           homeName={homeName}
           awayName={awayName}
+          homeFlag={teamMap.get(match.home_team_id ?? -1)?.flag}
+          awayFlag={teamMap.get(match.away_team_id ?? -1)?.flag}
           initialHomeScore={myPrediction?.home_score ?? 0}
           initialAwayScore={myPrediction?.away_score ?? 0}
           hasPrediction={Boolean(myPrediction)}
