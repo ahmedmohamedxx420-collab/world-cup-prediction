@@ -28,6 +28,36 @@
 
 ---
 
+## 2026-06-29 - Fix leaderboard board order on tied podium ranks
+**Plan item:** Leaderboard polish (bug fix)   **Status:** done (build clean)
+
+**What changed**
+- Leaderboard board tiers (`chase` / `top10` / `top20` / `rest`) are now derived
+  from each row's **standing** (1-based position in the sorted board) instead of
+  the SQL `rank` value. Renamed `rankTier` → `standingTier` and gave
+  `tierSections` a `startStanding` argument (4 with a podium, 1 without).
+
+**Why**
+- `rank()` produces ties, e.g. two players tied for 3rd → standings `1,2,3,3,5`.
+  The podium only renders 3 cards (`slice(0,3)`), so the second rank-3 player
+  spilled into the field list still carrying `rank = 3`. `rankTier(3)` returned
+  `top10`, which renders *after* the `chase` tier (rank 4-5), so that tied-3rd
+  player (the highest-scoring person in the field) was drawn **below** the
+  lower-scoring 4th/5th place players. A user reported a 7-point player sitting
+  far under 3rd/4th. Standing is strictly increasing, so tiering off it keeps the
+  list points-descending regardless of rank ties.
+
+**Files touched**
+- src/app/[locale]/(app)/leaderboard/page.tsx
+
+**Notes / gotchas**
+- Row badge numbers and the `wc-board-card--rank*` styling still use `row.rank`,
+  so competition ranks (with ties) display correctly — only the section
+  ordering/grouping moved to standing. No DB/RLS change; `get_leaderboard`
+  already ordered correctly.
+
+---
+
 ## 2026-06-29 - Prediction form confirms backed team
 **Plan item:** 3.2 Predict / edit follow-up   **Status:** done (lint + build clean)
 

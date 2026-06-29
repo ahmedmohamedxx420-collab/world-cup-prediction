@@ -150,18 +150,35 @@ const BOARD_TIER_STYLES: Record<
   },
 };
 
-function rankTier(rank: number): RankTier {
-  if (rank >= 4 && rank <= 5) return "chase";
-  if (rank <= 10) return "top10";
-  if (rank <= 20) return "top20";
+// Tier is derived from a row's *standing* (its 1-based position in the sorted
+// board), not from `rank`. `rank` (SQL rank()) contains ties and gaps, so two
+// players can share a rank. Since the podium only has 3 cards, a player tied
+// into a top-3 rank can spill into the field list with rank <= 3, land in the
+// `top10` tier, and render *below* the lower-scoring rank 4-5 `chase` players.
+// Standing is strictly increasing, so tier sections always stay in
+// points-descending order.
+function standingTier(standing: number): RankTier {
+  if (standing <= 5) return "chase";
+  if (standing <= 10) return "top10";
+  if (standing <= 20) return "top20";
   return "rest";
 }
 
-function tierSections(rows: LeaderboardRow[], t: LeaderboardT) {
+function tierSections(
+  rows: LeaderboardRow[],
+  startStanding: number,
+  t: LeaderboardT,
+) {
+  const ranked = rows.map((row, index) => ({
+    row,
+    standing: startStanding + index,
+  }));
   return TIER_ORDER.map((tier) => ({
     tier,
     label: t(TIER_LABEL_KEYS[tier]),
-    rows: rows.filter((row) => rankTier(row.rank) === tier),
+    rows: ranked
+      .filter((entry) => standingTier(entry.standing) === tier)
+      .map((entry) => entry.row),
   })).filter((section) => section.rows.length > 0);
 }
 
@@ -604,7 +621,10 @@ export default async function LeaderboardPage({
     : undefined;
   const hasPodium = leaderboard.length >= 3;
   const fieldRows = hasPodium ? leaderboard.slice(3) : leaderboard;
-  const boardSections = tierSections(fieldRows, t);
+  // Standing = 1-based position in the full board. The podium shows the first 3
+  // cards, so the field list continues from standing 4 (or 1 with no podium).
+  const startStanding = hasPodium ? 4 : 1;
+  const boardSections = tierSections(fieldRows, startStanding, t);
 
   // Display-only mirror of the scoring tiers (DB stays the source of truth).
   const scoringPoints = {
