@@ -188,6 +188,18 @@ const MEDAL_EMOJI: Record<PodiumMedal, string> = {
   bronze: "🥉",
 };
 
+// Medal is derived from the player's competition `rank` (SQL rank(), which shares
+// a value across ties), not from their podium slot / array index. This is the
+// single source of truth used by both the podium and the field rows, so a tie
+// reads identically everywhere: co-leaders share a medal, and a medal-rank player
+// pushed off the 3-card podium still gets the matching accent in the field list.
+function rankMedal(rank: number): PodiumMedal | null {
+  if (rank === 1) return "gold";
+  if (rank === 2) return "silver";
+  if (rank === 3) return "bronze";
+  return null;
+}
+
 // Display-only tournament prizes shown on each podium card (top 3). These are a
 // one-off Discord-tournament config, so they live here rather than in the DB.
 type PrizeKind = "cash" | "nitro" | "role";
@@ -357,6 +369,9 @@ function Podium({
       <div className="grid grid-cols-2 gap-3 px-2 sm:grid-cols-3 sm:items-end sm:gap-3 [direction:ltr]">
         {places.map((place) => {
           const isChampion = place.displayRank === 1;
+          // Medal follows the player's real rank (ties), not the podium slot. The
+          // slot medal is only a type-safe fallback — podium rows always rank <= 3.
+          const medal = rankMedal(place.row.rank) ?? place.medal;
           const mine = place.row.user_id === currentUserId;
           const achievements = badgesByUser.get(place.row.user_id) ?? [];
           const ariaLabel = isChampion
@@ -370,7 +385,7 @@ function Podium({
               aria-label={ariaLabel}
               className={cn(
                 "wc-fut-card group",
-                `wc-fut-card--${place.medal}`,
+                `wc-fut-card--${medal}`,
                 isChampion &&
                   "order-first col-span-2 wc-fut-card--champion sm:order-none sm:col-span-1",
                 mine && "wc-fut-card--mine",
@@ -405,7 +420,7 @@ function Podium({
                     {isChampion ? (
                       "1"
                     ) : (
-                      MEDAL_EMOJI[place.medal]
+                      MEDAL_EMOJI[medal]
                     )}
                   </span>
                   {isChampion && leadGap > 0 ? (
@@ -469,7 +484,7 @@ function Podium({
               </span>
 
               {/* Tournament prize */}
-              <CardPrize medal={place.medal} t={t} />
+              <CardPrize medal={medal} t={t} />
 
               {/* Hall-of-Fame honours */}
               <CardAchievements keys={achievements} t={t} />
@@ -521,6 +536,9 @@ function BoardRow({
   tier: RankTier;
 }) {
   const tierStyle = BOARD_TIER_STYLES[tier];
+  // A field row tied into a medal rank (1-3) keeps its long-card layout but gains
+  // the matching medal tint + emoji. rank 4/5 stay the lime "chaser" accent below.
+  const medal = rankMedal(row.rank);
 
   return (
     <li>
@@ -532,6 +550,7 @@ function BoardRow({
           tierStyle.density,
           row.rank === 1 && "wc-board-card--rank1",
           row.rank === 2 && "wc-board-card--rank2",
+          row.rank === 3 && "wc-board-card--rank3",
           row.rank === 4 && "wc-board-card--rank4",
           row.rank === 5 && "wc-board-card--rank5",
           mine && "border-primary/30 bg-primary/5",
@@ -576,8 +595,10 @@ function BoardRow({
 
         <span className="flex items-end justify-between gap-3 sm:flex-col sm:justify-center sm:text-end">
           <span className="inline-flex items-center gap-1.5">
-            {row.rank === 1 ? (
-              <Trophy className="size-5 text-gold" aria-hidden />
+            {medal ? (
+              <span className="text-lg leading-none" aria-hidden dir="ltr">
+                {MEDAL_EMOJI[medal]}
+              </span>
             ) : null}
             <span className={cn("font-black tabular-nums", tierStyle.points)}>
               {row.total_points}

@@ -1328,6 +1328,7 @@
 
 .wc-board-card--rank1,
 .wc-board-card--rank2,
+.wc-board-card--rank3,
 .wc-board-card--rank4,
 .wc-board-card--rank5 {
   -webkit-backdrop-filter: blur(16px) saturate(1.16);
@@ -1351,6 +1352,15 @@
     0 16px 34px rgba(125, 147, 165, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.46);
 }
+.wc-board-card--rank3 {
+  border-color: color-mix(in oklch, #cd7f32 60%, transparent);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(205, 127, 50, 0.3), transparent 24rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.58), rgba(205, 127, 50, 0.22) 46%, rgba(20, 83, 60, 0.12));
+  box-shadow:
+    0 16px 34px rgba(205, 127, 50, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.44);
+}
 .wc-board-card--rank4,
 .wc-board-card--rank5 {
   border-color: color-mix(in oklch, var(--lime) 58%, transparent);
@@ -1370,6 +1380,11 @@
   background:
     radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.18), transparent 23rem),
     linear-gradient(135deg, rgba(174, 184, 196, 0.22), rgba(20, 83, 60, 0.3) 58%, rgba(255, 255, 255, 0.07));
+}
+.dark .wc-board-card--rank3 {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(205, 127, 50, 0.22), transparent 24rem),
+    linear-gradient(135deg, rgba(205, 127, 50, 0.2), rgba(20, 83, 60, 0.32) 58%, rgba(255, 255, 255, 0.08));
 }
 .dark .wc-board-card--rank4,
 .dark .wc-board-card--rank5 {

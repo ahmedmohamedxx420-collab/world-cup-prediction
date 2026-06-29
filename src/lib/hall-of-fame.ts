@@ -90,9 +90,16 @@ function badge(key: BadgeKey, candidate: Candidate | null): Badge {
 }
 
 export function computeHallOfFame(rows: MemberStatsRow[]): Badge[] {
-  const exactHitRate = (row: MemberStatsRow) => {
-    if (row.scored_count < 5 || row.exact_points <= 0) return null;
-    return row.total_points / (row.scored_count * row.exact_points);
+  // Sharpshooter = true hit rate: the share of scored matches that earned any
+  // points (exact, goal-diff, or winner). The previous formula used points
+  // efficiency (total_points / max possible), which isn't a hit rate at all —
+  // it just re-ranked by total points, so a player who landed every *winner*
+  // read far below their real accuracy. Gated to >= 5 scored matches so a single
+  // lucky pick can't top the board (matches the "after five scored" copy).
+  const hitRate = (row: MemberStatsRow) => {
+    if (row.scored_count < 5) return null;
+    const hits = row.exact_count + row.gd_count + row.winner_count;
+    return hits / row.scored_count;
   };
 
   return BADGE_KEYS.map((key) => {
@@ -119,7 +126,7 @@ export function computeHallOfFame(rows: MemberStatsRow[]): Badge[] {
           ),
         );
       case "sharpshooter":
-        return badge(key, winner(rows, exactHitRate));
+        return badge(key, winner(rows, hitRate));
       case "lastMinuteLarry":
         return badge(
           key,

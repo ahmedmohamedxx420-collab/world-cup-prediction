@@ -28,6 +28,107 @@
 
 ---
 
+## 2026-06-29 — Hall of Fame "Sharpshooter" now measures a real hit rate
+**Plan item:** Hall of Fame audit (live-data check)   **Status:** done (build + lint clean)
+
+**What changed**
+- `computeHallOfFame()` in `src/lib/hall-of-fame.ts`: the Sharpshooter metric was
+  `total_points / (scored_count * exact_points)` — points *efficiency*, not a hit
+  rate. Replaced with a true hit rate: `(exact_count + gd_count + winner_count) /
+  scored_count`, still gated to `scored_count >= 5`.
+- No SQL/schema change; all needed counts already come from `get_member_stats()`.
+
+**Why**
+- The badge title ("Sharpshooter"), copy ("Best hit rate after five scored
+  matches"), and `%` formatting all describe a hit rate, but the old formula just
+  re-ranked players by total points. Verified against live DB: the holder
+  (Mr. Boss Baby) was shown as **31%** when his actual accuracy is **60%** (3/5),
+  and a player with the same 3/5 accuracy but fewer points (Cj) read as 17%.
+- After the fix the badge shows 60% and ties (Mr. Boss Baby vs Cj, both 3/5) break
+  on points as intended.
+
+**Files touched**
+- src/lib/hall-of-fame.ts
+
+**Notes / gotchas**
+- Verified by calling `get_member_stats()` with the service-role key (42 members).
+- The other 7 badges matched their copy. Known-but-intentional: Goal Machine / The
+  Wall average predicted goals over *all* predictions (incl. unscored) with no
+  minimum-predictions threshold — fine for a prediction-*style* badge, left as-is.
+
+## 2026-06-29 — Leaderboard uses dense ranking (no skipped places)
+**Plan item:** Leaderboard polish (follow-up to tied-medal fix)   **Status:** code done (build clean); live DB apply pending
+
+**What changed**
+- New migration `0012_leaderboard_dense_rank.sql` `create or replace`s
+  `get_leaderboard()` to use `dense_rank()` instead of `rank()` in the ranking
+  window. Same `order by total_points desc, exact_count desc` — only the window
+  function word changed.
+- No app-code change: `page.tsx` already derives the medal (`rankMedal`), the "my
+  rank" chip, and the board-card accents from the `rank` value, so dense ranks flow
+  through automatically.
+
+**Why**
+- Two players tied on both total points **and** exact-count shared `rank() = 1`, and
+  the next distinct score jumped to `rank = 3` — competition ranking skips 2. On the
+  board this read as "1st, 1st, 3rd" (no 2nd) and the podium's silver medal never
+  appeared. Dense ranking (1, 1, 2) keeps genuine ties shared but removes the gap, so
+  the sequence reads correctly and silver reappears.
+
+**Files touched**
+- supabase/migrations/0012_leaderboard_dense_rank.sql (new)
+
+**Notes / gotchas**
+- **Owner action:** paste `0012_leaderboard_dense_rank.sql` into the Supabase SQL
+  editor and run it (this repo applies migrations manually). Verify with
+  `select full_name, total_points, exact_count, rank from get_leaderboard() order by rank;`
+  — a tied top score should show two `rank = 1` rows then `rank = 2`.
+- Expected tied-leader podium: two gold cards (only `rows[0]` keeps the champion
+  crown/size by slot), and the third card becomes rank 2 → silver + 2nd-place prize.
+  This is the agreed dense-rank semantics, not a bug.
+
+---
+
+## 2026-06-29 — Leaderboard medal styling follows tied ranks
+**Plan item:** Leaderboard polish (follow-up to board-order fix)   **Status:** done (build clean)
+
+**What changed**
+- Added a `rankMedal(rank)` helper (1/2/3 → gold/silver/bronze, else none) as the
+  single source of truth for the medal look, shared by the podium and the field rows.
+- **Podium:** each card's medal **color, corner emoji, and prize chips** now derive
+  from the player's `rank` instead of their podium slot. Tied co-leaders read as the
+  same medal (two players tied for 1st both show gold + 🥇; `100,100,90` → gold/gold/
+  bronze). The center card stays the single "champion" (crown + larger size) by slot —
+  no grid reflow.
+- **Field "long cards":** added the missing bronze accent (`wc-board-card--rank3`,
+  light + dark) and now render the medal emoji (🥇/🥈/🥉) for `rank <= 3`, replacing the
+  rank-1-only `Trophy`. A medal-rank player tied past the 3-card podium (standing 4/5+)
+  now gets the matching tint + emoji on their row.
+
+**Why**
+- The previous entry fixed tied-rank *ordering* but left medal *styling* keyed on the
+  podium slot / array index (and the field cards had no bronze and no emoji). So ties
+  looked wrong: three players tied for 1st rendered gold/silver/bronze, and a player
+  tied into 2nd/3rd who spilled off the podium had no medal accent. `rank` (SQL `rank()`)
+  already encodes ties, so deriving the medal from it makes podium and field agree.
+  User-requested.
+
+**Files touched**
+- src/app/[locale]/(app)/leaderboard/page.tsx
+- src/app/globals.css
+
+**Notes / gotchas**
+- Confirmed design choice: tied-1st **side** cards take only the medal color + emoji;
+  the crown/larger "champion" treatment stays on the center slot (`isChampion`), so the
+  3-card layout never reflows. `leadGap > 0` already hides the "+N ahead" chip when tied.
+- The `wc-board-card--rank4/rank5` lime "chaser" accent is unchanged; medal ranks (1-3)
+  and chaser ranks (4-5) are disjoint and never collide on one row.
+- Tied-1st cards each show the gold prize set (display-only one-off tournament config) —
+  acceptable. No DB/RLS/i18n change (emoji/colors aren't localized; `get_leaderboard`
+  already returns `rank`).
+
+---
+
 ## 2026-06-29 - Fix leaderboard board order on tied podium ranks
 **Plan item:** Leaderboard polish (bug fix)   **Status:** done (build clean)
 
