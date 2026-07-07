@@ -1,5 +1,12 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { CalendarDays, Clock3, Goal, MapPin, Trophy } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronRight,
+  Clock3,
+  Goal,
+  MapPin,
+  Trophy,
+} from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { LiveBadge } from "@/components/live-badge";
 import { LocalKickoff } from "@/components/local-kickoff";
@@ -162,8 +169,8 @@ function RowCta({
         <LiveBadge label={t("inProgress")} />
         <span
           className={cn(
-            buttonVariants({ variant: "outline", size: "sm" }),
-            "pointer-events-none",
+            buttonVariants({ variant: "outline", size: "default" }),
+            "pointer-events-none font-semibold",
           )}
         >
           {t("view")}
@@ -183,8 +190,8 @@ function RowCta({
         </span>
         <span
           className={cn(
-            buttonVariants({ variant: "outline", size: "sm" }),
-            "pointer-events-none",
+            buttonVariants({ variant: "outline", size: "default" }),
+            "pointer-events-none font-semibold",
           )}
         >
           {t("view")}
@@ -201,8 +208,8 @@ function RowCta({
         </span>
         <span
           className={cn(
-            buttonVariants({ variant: "outline", size: "sm" }),
-            "pointer-events-none",
+            buttonVariants({ variant: "outline", size: "default" }),
+            "pointer-events-none font-semibold",
           )}
         >
           {t("edit")}
@@ -213,7 +220,10 @@ function RowCta({
 
   return (
     <span
-      className={cn(buttonVariants({ size: "sm" }), "pointer-events-none")}
+      className={cn(
+        buttonVariants({ variant: "lime", size: "default" }),
+        "pointer-events-none font-semibold",
+      )}
     >
       {t("predict")}
     </span>
@@ -251,7 +261,8 @@ export default async function FixturesPage({
   const notFinished = matches.filter((match) => !isFinished(match));
   const live = notFinished.filter((match) => isLiveMatch(match, now));
   const notStarted = notFinished.filter(
-    (match) => !isLiveMatch(match, now) && !isLocked(match, now),
+    (match) =>
+      !isLiveMatch(match, now) && !isLocked(match, now) && !isTbd(match),
   );
   const showOngoing = live.length > 0;
   const activeTab: Tab =
@@ -261,18 +272,9 @@ export default async function FixturesPage({
         ? "ongoing"
         : "upcoming";
 
-  // Upcoming shows only the next not-yet-started "batch": matches that fall
-  // within 24h of the earliest upcoming one (listMatches() pre-sorts by kickoff
-  // ascending, so notStarted[0] is next).
-  const batchAnchor = notStarted[0]
-    ? Date.parse(notStarted[0].kickoff_at)
-    : null;
-  const nextBatch =
-    batchAnchor == null
-      ? notStarted
-      : notStarted.filter(
-          (match) => Date.parse(match.kickoff_at) < batchAnchor + DAY_MS,
-        );
+  // Upcoming shows every votable game: all not-yet-started matches whose teams
+  // are known (TBD knockout slots are filtered out in `notStarted` above).
+  const nextBatch = notStarted;
 
   const visibleMatches =
     activeTab === "upcoming"
@@ -560,7 +562,7 @@ export default async function FixturesPage({
                           </span>
                         </span>
 
-                        <span className="flex items-center justify-between gap-3 sm:justify-end">
+                        <span className="flex items-center justify-between gap-2 sm:justify-end">
                           <RowCta
                             match={match}
                             locked={locked}
@@ -568,6 +570,10 @@ export default async function FixturesPage({
                             prediction={prediction}
                             tbd={tbd}
                             t={t}
+                          />
+                          <ChevronRight
+                            className="size-5 shrink-0 text-muted-foreground rtl:rotate-180"
+                            aria-hidden
                           />
                         </span>
                       </Link>

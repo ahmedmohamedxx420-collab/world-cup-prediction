@@ -96,18 +96,21 @@ function normalizeMatch(match: RawUserResult["match"]): Match | null {
 }
 
 function compareResults(a: UserResult, b: UserResult) {
-  const aNumber = a.match.match_number ?? Number.MAX_SAFE_INTEGER;
-  const bNumber = b.match.match_number ?? Number.MAX_SAFE_INTEGER;
-  if (aNumber !== bNumber) return aNumber - bNumber;
-
   const aKickoff = Date.parse(a.match.kickoff_at);
   const bKickoff = Date.parse(b.match.kickoff_at);
-  if (!Number.isNaN(aKickoff) && !Number.isNaN(bKickoff)) {
-    const kickoffDelta = aKickoff - bKickoff;
-    if (kickoffDelta !== 0) return kickoffDelta;
+  if (
+    !Number.isNaN(aKickoff) &&
+    !Number.isNaN(bKickoff) &&
+    aKickoff !== bKickoff
+  ) {
+    return bKickoff - aKickoff; // most recent kickoff first
   }
 
-  return a.match_id - b.match_id;
+  const aNumber = a.match.match_number ?? Number.MAX_SAFE_INTEGER;
+  const bNumber = b.match.match_number ?? Number.MAX_SAFE_INTEGER;
+  if (aNumber !== bNumber) return bNumber - aNumber;
+
+  return b.match_id - a.match_id;
 }
 
 export async function getLeaderboard(): Promise<LeaderboardRow[]> {

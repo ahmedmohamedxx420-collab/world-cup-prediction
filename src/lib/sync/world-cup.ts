@@ -187,6 +187,33 @@ function matchRow(m: OfMatch, teams: Map<string, TeamRef>): MatchSyncRow {
     shootoutWinner = pen[0] > pen[1] ? home.id : away.id;
   }
 
+  // The openfootball feed reports Belgium vs Senegal (group) as 2-2; the real
+  // result was 3-2 to Belgium. Force the correct score on every sync so it
+  // stops getting overwritten. Feed home/away order isn't guaranteed, so map
+  // 3/2 to whichever side is Belgium.
+  const isBelSen =
+    (homeCode === "BEL" && awayCode === "SEN") ||
+    (homeCode === "SEN" && awayCode === "BEL");
+  if (isBelSen) {
+    const belIsHome = homeCode === "BEL";
+    return {
+      api_fixture_id: externalId(m),
+      match_number: m.num ?? null,
+      stage: stageOf(m),
+      group_letter: groupLetter(m),
+      home_team_id: home?.id ?? null,
+      away_team_id: away?.id ?? null,
+      home_label: home ? null : placeholderLabel(m.team1),
+      away_label: away ? null : placeholderLabel(m.team2),
+      kickoff_at: toUtcIso(m.date, m.time),
+      venue: m.ground ?? null,
+      status: "finished" as const,
+      home_score: belIsHome ? 3 : 2,
+      away_score: belIsHome ? 2 : 3,
+      shootout_winner_team_id: null,
+    };
+  }
+
   return {
     api_fixture_id: externalId(m),
     match_number: m.num ?? null,

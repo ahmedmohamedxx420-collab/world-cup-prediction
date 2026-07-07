@@ -331,6 +331,7 @@
     "back": "Back to fixtures",
     "tbdLocked": "Predictions open once both teams are assigned.",
     "lockedNoPrediction": "This match is locked and you did not save a prediction.",
+    "save": "Save",
     "saving": "Saving...",
     "saved": "Prediction saved",
     "locked": "Locked",

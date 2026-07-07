@@ -5,7 +5,7 @@
 > execution, update the status markers below and the "Current Position" pointer,
 > then append a matching entry to `[CHANGELOG.md](./CHANGELOG.md)`.**
 >
-> **Last updated:** 2026-06-29 (rev 49)
+> **Last updated:** 2026-07-02 (rev 50)
 
 ---
 
@@ -18,17 +18,43 @@
 
 ## Current Position
 
-=> **Prediction form backed-team confirmation (rev 49).**
-The fixture prediction form now keeps the correct forced-LTR score grid, but
-adds an in-place confirmation of what the current score means: the live line
-names the backed team (or draw) and shows an isolated scoreline, steppers include
-team flags, and the strictly leading side gets a gold ring plus Crown marker.
-No save/scoring semantics changed: the left/home stepper still writes
-`home_score`, the right/away stepper still writes `away_score`, and all reveal
-views remain consistent with that mapping. Files: `scoring.ts`,
-`fixtures/[id]/predict-form.tsx`, `fixtures/[id]/page.tsx`, `messages/en.json`,
-`messages/ar.json`. `npm run lint` and `npm run build` clean. See CHANGELOG
-2026-06-29 (rev 49).
+=> **Votable-fixtures list, recent-first history, Belgium–Senegal override (rev 52).**
+Three tweaks. (1) A player's past-results history now lists the **most recent
+match first** — `compareResults` in `src/lib/leaderboard.ts` sorts by `kickoff_at`
+descending (then `match_number`/`match_id` desc). (2) The Fixtures **Upcoming**
+tab now shows **all votable games** instead of just the next-24h batch: the
+`notStarted` filter in `fixtures/page.tsx` gained `!isTbd(match)` (so unknown-team
+knockout slots are hidden) and the `batchAnchor`/24h window was dropped
+(`nextBatch = notStarted`). (3) `matchRow()` in `src/lib/sync/world-cup.ts` now
+force-writes **Belgium 3–2 Senegal** on every sync (feed reports 2-2), mapped to
+whichever side is BEL. `npm run build` clean.
+See CHANGELOG 2026-07-07 (rev 52).
+
+-> **Save button + card CTA prominence pass (rev 51).**
+Mobile visibility polish. The fixture prediction **Save** button is now a tall
+(`h-12`), bolder full-width lime CTA (`text-base font-bold`, `shadow-lg`) that
+grows an attention ring while the pick has unsaved edits (`hasInteracted &&
+status !== "saved" && !disabled`) and settles once saved/locked — no behavioural
+change to auto-save or `handleSaveClick`. Fixtures-list rows now read as tappable:
+each row shows a reading-forward `ChevronRight` (`rtl:rotate-180`, matching
+`back-link.tsx`), the unpredicted-match chip is upgraded to a prominent **lime**
+`Predict`, and `View`/`Edit` chips move to `size="default"` + `font-semibold`.
+Profile's **View my results** history link goes `outline` → `secondary` with a
+chevron. No new i18n keys. Files: `fixtures/[id]/predict-form.tsx`,
+`fixtures/page.tsx`, `profile/page.tsx`. `npm run build` clean.
+See CHANGELOG 2026-07-02 (rev 51).
+
+-> **Prediction form explicit Save button (rev 50).**
+The fixture prediction form now has a full-width lime **Save** button below the
+outcome summary. It forces an immediate persist — flushing the 600 ms auto-save
+debounce so a quick close-out still saves — and shows click→loading→"Saved"
+feedback on the button itself. Pressing it on an already-saved pick replays a
+~500 ms client-only confirmation "flourish" with no redundant network write.
+Auto-save is otherwise unchanged and still fires on its own. Save logic was
+extracted into a shared `runSave` callback; no change to the `savePrediction`
+server action, scoring, or the home/away → `home_score`/`away_score` mapping.
+Files: `fixtures/[id]/predict-form.tsx`, `messages/en.json`, `messages/ar.json`.
+`npm run lint` and `npm run build` clean. See CHANGELOG 2026-07-02 (rev 50).
 
 -> **Hall of Fame opacity and podium initials follow-up (rev 48).**
 Closed two remaining phone-visible regressions from the mobile polish pass:

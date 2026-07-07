@@ -1,4 +1,5 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { ChevronRight } from "lucide-react";
 import { Link, redirect } from "@/i18n/navigation";
 import { getLeaderboard } from "@/lib/leaderboard";
 import { getCurrentUser, getProfile } from "@/lib/profile";
@@ -86,9 +87,13 @@ export default async function ProfilePage({
           <CardFooter>
             <Link
               href="/leaderboard?tab=my-results"
-              className={cn(buttonVariants({ variant: "outline" }), "w-full")}
+              className={cn(
+                buttonVariants({ variant: "secondary" }),
+                "w-full font-semibold",
+              )}
             >
               {leaderboardT("viewMyResults")}
+              <ChevronRight className="size-4 rtl:rotate-180" aria-hidden />
             </Link>
           </CardFooter>
         </Card>

@@ -28,6 +28,174 @@
 
 ---
 
+## 2026-07-07 — Votable-fixtures list, recent-first history, Belgium–Senegal score override
+**Plan item:** rev 52   **Status:** done
+
+**What changed**
+- **Past-results history is now most-recent-first** ([leaderboard.ts](../src/lib/leaderboard.ts)):
+  `compareResults` now sorts by `kickoff_at` **descending** first (then
+  `match_number` desc, then `match_id` desc as tiebreaks) instead of ascending by
+  `match_number`. This reorders the "My results" tab and each member's results
+  page (both consume `getUserResults`).
+- **Fixtures → Upcoming shows all votable games** ([fixtures/page.tsx](../src/app/[locale]/(app)/fixtures/page.tsx)):
+  the `notStarted` filter gained `!isTbd(match)` so knockout slots with unknown
+  teams are hidden, and the 24-hour "next batch" window (`batchAnchor`) was
+  removed — `nextBatch = notStarted`, so every not-yet-locked, known-team match is
+  listed regardless of date.
+- **Belgium 3–2 Senegal is forced on every sync** ([world-cup.ts](../src/lib/sync/world-cup.ts)):
+  `matchRow()` now detects the BEL/SEN group pairing and returns a `finished` row
+  with the correct 3–2 (mapped to whichever side is Belgium), overriding the
+  openfootball feed's incorrect 2–2.
+
+**Why**
+- History reads better newest-first (the match you just watched is at the top).
+- The old today/tomorrow batch hid votable matches the family could already
+  predict; TBD slots aren't votable so they're now suppressed rather than shown
+  with a disabled CTA.
+- The feed persistently reports Belgium–Senegal as 2–2, overwriting the correct
+  3–2 on every sync and forcing a manual fix; the override makes it idempotent
+  (`sameMatchRow` sees the corrected value as already-current, no thrash).
+
+**Files touched**
+- src/lib/leaderboard.ts
+- src/app/[locale]/(app)/fixtures/page.tsx
+- src/lib/sync/world-cup.ts
+
+**Notes / gotchas**
+- Writing `home_score`/`away_score` fires the 0006 scoring trigger, so predictions
+  on Belgium–Senegal re-score to the 3–2 result after the next sync.
+- `scripts/set-match-score.mjs` (manual 3–2 override) is now redundant for this
+  match since the fix survives syncs.
+- `isTbd`/`DAY_MS` remain used elsewhere in `fixtures/page.tsx`; only `batchAnchor`
+  was removed.
+
+---
+
+## 2026-07-02 — Save button + card CTA prominence (mobile visibility)
+**Plan item:** UI polish (rev 51)   **Status:** done
+
+**What changed**
+- **Predict page Save button** ([predict-form.tsx](../src/app/[locale]/(app)/fixtures/[id]/predict-form.tsx)):
+  now `h-12` full-width lime with `text-base font-bold shadow-lg`, and a leading
+  icon bumped to `size-5`. Grows a `ring-2 ring-lime/50 ring-offset-2` attention
+  ring while there are unsaved edits (`!disabled && hasInteracted &&
+  effectiveStatus !== "saved"`), settling once saved/locked.
+- **Fixtures list** ([fixtures/page.tsx](../src/app/[locale]/(app)/fixtures/page.tsx)):
+  added a reading-forward `ChevronRight` (`rtl:rotate-180`) at each row's action
+  end so whole-card links read as tappable on touch (no hover). The unpredicted
+  chip is now `variant="lime" size="default"` ("Predict" pops); `View`/`Edit`
+  chips moved from `size="sm"` to `size="default"` + `font-semibold`.
+- **Profile "View my results"** ([profile/page.tsx](../src/app/[locale]/(app)/profile/page.tsx)):
+  `outline` → `secondary`, `font-semibold`, with a trailing chevron.
+
+**Why**
+- Owner reported the Save button wasn't visible enough on mobile and that the
+  card CTAs (Predict/Edit/View, history links) didn't read as clickable.
+- Chose bigger inline Save over a sticky bar: the app already has a fixed bottom
+  tab bar and predictions auto-save 0.6s after any edit, so a second sticky bar
+  would compete. The unsaved-changes ring pulls focus without new state.
+- Chevron mirrors the existing `back-link.tsx` `rtl:rotate-180` pattern, so it
+  points reading-forward in both Arabic (default) and English.
+
+**Files touched**
+- src/app/[locale]/(app)/fixtures/[id]/predict-form.tsx
+- src/app/[locale]/(app)/fixtures/page.tsx
+- src/app/[locale]/(app)/profile/page.tsx
+
+**Notes / gotchas**
+- No new i18n keys (reuses `fixtures.predict/edit/view`, `leaderboard.viewMyResults`).
+- Purely visual; no change to save/auto-save behaviour or the whole-card
+  `pointer-events-none` link pattern. `npm run build` clean.
+- Follow-up (deferred): the same muted chevron could be added to leaderboard
+  board rows and the fixture-detail "Server picks" reveal rows for consistency.
+
+---
+
+## 2026-07-02 — Correct Belgium vs Senegal final score (3–2)
+**Plan item:** data maintenance   **Status:** done
+
+**What changed**
+- Fixed match id=714 (Belgium vs Senegal): score was logged as 2–2, corrected to
+  Belgium 3 – 2 Senegal (home 3 : away 2).
+- Added `scripts/set-match-score.mjs`, a one-off maintenance script to set a
+  single match's final score (dry-run by default, `--apply` to write).
+
+**Why**
+- The recorded result was wrong; the match finished 3–2 to Belgium.
+
+**Files touched**
+- scripts/set-match-score.mjs
+
+**Notes / gotchas**
+- Writing `matches.home_score/away_score` fires the `0006_scoring.sql` triggers,
+  which mark the match finished and rescore every prediction automatically. All
+  21 predictions on this match were recomputed (1×exact, 10×goal-diff, 2×winner,
+  8×miss). No manual prediction rescoring needed.
+
+## 2026-07-02 — Explicit "Save" button on the prediction form (rev 50)
+**Plan item:** prediction form UX   **Status:** done
+
+**What changed**
+- Added a full-width lime **Save** button to `predict-form.tsx`, below the
+  outcome summary and above the existing status pill. Its inner content mirrors
+  the shared `status` (Save icon → BallLoader "Saving…" → Check "Saved").
+- Extracted the save body out of the debounce `setTimeout` into a reusable
+  `runSave(home, away)` `useCallback` (same `saveIdRef` race guard). The debounce
+  effect now just calls it; its timer id is kept in `debounceRef`.
+- Button behaviour: if there's an unsaved change (or a never-persisted 0-0), it
+  **flushes** the pending debounce and calls `runSave` immediately; if the pick
+  is already persisted (`status === "saved"`, or an untouched loaded prediction),
+  it plays a ~500 ms client-only "flourish" (spinner → "Saved") with **no**
+  network write. Auto-save still fires on its own if the button is never pressed.
+- Added `predict.save` → "Save" / "حفظ" in `messages/en.json` + `ar.json`.
+
+**Why**
+- Auto-save is debounced 600 ms, so users who tapped a score and closed the page
+  immediately lost their vote. The button forces an immediate persist (flushing
+  the debounce) and gives satisfying click→loading→saved feedback on the pressed
+  element. The already-saved "flourish" is intentional reassurance without a
+  redundant/possibly-locked write (chosen over re-calling the server action).
+
+**Files touched**
+- src/app/[locale]/(app)/fixtures/[id]/predict-form.tsx
+- messages/en.json
+- messages/ar.json
+
+**Notes / gotchas**
+- No change to the `savePrediction` server action or scoring; home/away stepper →
+  `home_score`/`away_score` mapping is unchanged. The existing status pill is kept
+  as-is (it shares `status`, so silent auto-saves still surface feedback).
+- `alreadySaved` uses `hasSavedPrediction` to distinguish "loaded/just-saved" from
+  "0-0 never persisted" so the flourish never falsely claims an unsaved 0-0 is
+  saved. `npm run lint` and `npm run build` clean.
+
+## 2026-07-01 — Backfill حمود's forgotten England vs DR Congo prediction
+**Plan item:** maintenance (one-off data fix)   **Status:** done
+
+**What changed**
+- Added `scripts/add-single-prediction.mjs` and used it to insert one prediction
+  for user حمود on match id 712 (England 2 - 1 DR Congo). Actual result was 2:1,
+  so the pick is exact → `points_awarded = 7`.
+
+**Why**
+- The user forgot to vote before kickoff. The match had already finished, so the
+  scoring trigger (`0006_scoring.sql`) — which only fires on a *match* score write
+  — would never re-fire for a newly inserted prediction. Following the
+  `seed-demo.mjs` pattern, the script computes `points_awarded` in JS at insert
+  time so the pick counts on the leaderboard.
+
+**Files touched**
+- scripts/add-single-prediction.mjs (new)
+- docs/CHANGELOG.md
+
+**Notes / gotchas**
+- Script defaults to a dry run; `--apply` writes. It refuses to overwrite an
+  existing prediction and aborts unless exactly one user and one fixture match.
+- Uses the service-role client (bypasses RLS), which is required because
+  predictions INSERT is normally blocked after kickoff.
+- If match 712's final score is ever re-entered by the admin, the trigger will
+  recompute this row's points correctly (still 7 for an exact 2:1).
+
 ## 2026-06-29 — Hall of Fame "Sharpshooter" now measures a real hit rate
 **Plan item:** Hall of Fame audit (live-data check)   **Status:** done (build + lint clean)
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { Check, CircleAlert, Crown, Lock, Minus, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Check, CircleAlert, Crown, Lock, Minus, Plus, Save } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { BallLoader } from "@/components/ball-loader";
@@ -134,20 +134,20 @@ export function PredictForm({
   // Bumped on every successful save so the "saved" pill re-mounts and replays
   // its pop animation even when two saves land back-to-back.
   const [savedTick, setSavedTick] = useState(0);
+  // Monotonic id guarding against out-of-order saves; also lets a real save
+  // invalidate a running "flourish" (and vice-versa).
   const saveIdRef = useRef(0);
+  // Pending auto-save timer, so the Save button can flush it before forcing a
+  // save (avoids a duplicate write).
+  const debounceRef = useRef<number | undefined>(undefined);
+  // Timer for the client-only confirmation replay on an already-saved pick.
+  const flourishRef = useRef<number | undefined>(undefined);
 
-  useEffect(() => {
-    const updateLock = () => setLocked(kickoffHasPassed(kickoffAt));
-    updateLock();
-
-    const interval = window.setInterval(updateLock, 30_000);
-    return () => window.clearInterval(interval);
-  }, [kickoffAt]);
-
-  useEffect(() => {
-    if (!hasInteracted || locked || tbd) return;
-
-    const timer = window.setTimeout(async () => {
+  // The real persist, shared by the debounced auto-save and the Save button.
+  // Scores are passed in (not read from closure) so a flushed save always uses
+  // the latest values.
+  const runSave = useCallback(
+    async (home: number, away: number) => {
       const saveId = saveIdRef.current + 1;
       saveIdRef.current = saveId;
       setStatus("saving");
@@ -155,8 +155,8 @@ export function PredictForm({
 
       const formData = new FormData();
       formData.set("match_id", String(matchId));
-      formData.set("home_score", String(homeScore));
-      formData.set("away_score", String(awayScore));
+      formData.set("home_score", String(home));
+      formData.set("away_score", String(away));
 
       try {
         const result = await savePrediction({}, formData);
@@ -182,10 +182,31 @@ export function PredictForm({
         setError("generic");
         setStatus("error");
       }
+    },
+    [matchId],
+  );
+
+  useEffect(() => {
+    const updateLock = () => setLocked(kickoffHasPassed(kickoffAt));
+    updateLock();
+
+    const interval = window.setInterval(updateLock, 30_000);
+    return () => window.clearInterval(interval);
+  }, [kickoffAt]);
+
+  useEffect(() => {
+    if (!hasInteracted || locked || tbd) return;
+
+    const timer = window.setTimeout(() => {
+      runSave(homeScore, awayScore);
     }, 600);
+    debounceRef.current = timer;
 
     return () => window.clearTimeout(timer);
-  }, [awayScore, hasInteracted, homeScore, locked, matchId, tbd]);
+  }, [awayScore, hasInteracted, homeScore, locked, runSave, tbd]);
+
+  // Cancel any pending confirmation replay on unmount.
+  useEffect(() => () => window.clearTimeout(flourishRef.current), []);
 
   const disabled = locked || tbd;
 
@@ -216,6 +237,40 @@ export function PredictForm({
   }
 
   const effectiveStatus = locked ? "locked" : status;
+
+  // Client-only confirmation replay for a pick that is already persisted — the
+  // "pseudo" save effect: a quick spinner then "saved", no network write.
+  const playFlourish = () => {
+    const saveId = saveIdRef.current + 1;
+    saveIdRef.current = saveId;
+    setError(undefined);
+    setStatus("saving");
+    window.clearTimeout(flourishRef.current);
+    flourishRef.current = window.setTimeout(() => {
+      if (saveIdRef.current !== saveId) return;
+      setStatus("saved");
+      setSavedTick((tick) => tick + 1);
+    }, 500);
+  };
+
+  const handleSaveClick = () => {
+    if (disabled) return; // locked / tbd
+    if (effectiveStatus === "saving") return; // loader already showing
+
+    const alreadySaved =
+      status === "saved" || (!hasInteracted && hasSavedPrediction);
+
+    if (alreadySaved) {
+      playFlourish();
+      return;
+    }
+
+    // Unsaved change (or never-persisted 0-0): flush the pending auto-save and
+    // persist the current scoreline immediately.
+    window.clearTimeout(debounceRef.current);
+    runSave(homeScore, awayScore);
+  };
+
   const outcome = matchOutcome(homeScore, awayScore);
   const outcomeLabel =
     outcome === "home"
@@ -252,6 +307,19 @@ export function PredictForm({
       className: "bg-destructive/10 text-destructive",
     },
   }[effectiveStatus];
+
+  const saveButton = {
+    idle: { icon: <Save className="size-5" aria-hidden />, text: t("save") },
+    saving: { icon: <BallLoader variant="inline" />, text: t("saving") },
+    saved: { icon: <Check className="size-5" aria-hidden />, text: t("saved") },
+    locked: { icon: <Lock className="size-5" aria-hidden />, text: t("locked") },
+    error: { icon: <Save className="size-5" aria-hidden />, text: t("save") },
+  }[effectiveStatus];
+
+  // The pick has been edited but isn't confirmed persisted yet — pull focus to
+  // the Save button so the primary action is unmissable on mobile.
+  const hasUnsavedChanges =
+    !disabled && hasInteracted && effectiveStatus !== "saved";
 
   return (
     <div className="space-y-4">
@@ -291,6 +359,21 @@ export function PredictForm({
           {scoreline}
         </span>
       </p>
+
+      <Button
+        type="button"
+        variant="lime"
+        size="lg"
+        className={cn(
+          "h-12 w-full text-base font-bold shadow-lg",
+          hasUnsavedChanges && "ring-2 ring-lime/50 ring-offset-2 ring-offset-background",
+        )}
+        disabled={disabled || effectiveStatus === "saving"}
+        onClick={handleSaveClick}
+      >
+        {saveButton.icon}
+        <span>{saveButton.text}</span>
+      </Button>
 
       <div role="status" aria-live="polite" className="flex justify-center">
         <span
